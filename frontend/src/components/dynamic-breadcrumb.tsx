@@ -16,7 +16,7 @@ const labelMap: Record<string, string> = {
   dashboard: "Overview",
   portfolio: "Portfolio & Orders",
   risk: "Risk Centre",
-  agents: "AI Agent Activity",
+  agents: "Agent Activity",
   analytics: "Performance Analytics",
   audit: "Audit Log",
 }

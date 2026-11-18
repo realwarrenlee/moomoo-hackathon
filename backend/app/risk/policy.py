@@ -1,3 +1,4 @@
+from collections.abc import Mapping
 from datetime import datetime, timedelta
 from decimal import Decimal
 
@@ -29,9 +30,16 @@ class RiskGate:
         max_account_age_seconds: int = 60,
         max_clock_skew_seconds: int = 5,
         approval_ttl_seconds: int = 30,
+        leverage_by_symbol: Mapping[str, Decimal] | None = None,
+        allow_leveraged: bool = False,
     ) -> None:
         self.expected_account_fingerprint = expected_account_fingerprint
         self.allowed_symbols = allowed_symbols
+        self.leverage_by_symbol = {
+            symbol: Decimal(value)
+            for symbol, value in (leverage_by_symbol or {}).items()
+        }
+        self.allow_leveraged = allow_leveraged
         self.max_single_exposure = max_single_exposure
         self.max_total_exposure = max_total_exposure
         self.max_open_positions = max_open_positions
@@ -70,6 +78,16 @@ class RiskGate:
 
         if proposal.symbol not in self.allowed_symbols:
             reject("R002", "Symbol is outside the approved allowlist", symbol=proposal.symbol)
+        leverage = self.leverage_by_symbol.get(proposal.symbol, Decimal("1"))
+        if leverage <= 0:
+            reject("R007", "Instrument leverage metadata is invalid", symbol=proposal.symbol)
+        if leverage > 1 and not self.allow_leveraged:
+            reject(
+                "R015",
+                "Leveraged instruments require separate leverage approval",
+                symbol=proposal.symbol,
+                leverage=leverage,
+            )
 
         position = next(
             (item for item in account.positions if item.symbol == proposal.symbol),
@@ -166,9 +184,12 @@ class RiskGate:
 
             if quote_valid and quote is not None:
                 requested_notional = quote.price * proposal.requested_quantity
+                effective_requested = requested_notional * leverage
                 pending_single = sum(
                     (
-                        order.reference_price * order.remaining_quantity
+                        order.reference_price
+                        * order.remaining_quantity
+                        * self.leverage_by_symbol.get(order.symbol, Decimal("1"))
                         for order in account.open_orders
                         if order.symbol == proposal.symbol and order.side is OrderSide.BUY
                     ),
@@ -176,17 +197,27 @@ class RiskGate:
                 )
                 pending_total = sum(
                     (
-                        order.reference_price * order.remaining_quantity
+                        order.reference_price
+                        * order.remaining_quantity
+                        * self.leverage_by_symbol.get(order.symbol, Decimal("1"))
                         for order in account.open_orders
                         if order.side is OrderSide.BUY
                     ),
                     Decimal("0"),
                 )
-                current_total = sum((item.market_value for item in account.positions), Decimal("0"))
+                current_total = sum(
+                    (
+                        item.market_value
+                        * self.leverage_by_symbol.get(item.symbol, Decimal("1"))
+                        for item in account.positions
+                    ),
+                    Decimal("0"),
+                )
                 single_limit = account.equity * self.max_single_exposure
                 total_limit = account.equity * self.max_total_exposure
-                post_single = position.market_value + pending_single + requested_notional
-                post_total = current_total + pending_total + requested_notional
+                effective_position = position.market_value * leverage
+                post_single = effective_position + pending_single + effective_requested
+                post_total = current_total + pending_total + effective_requested
                 # Cash-only: never use broker margin even if buying power is higher.
                 available_funds = max(
                     Decimal("0"),

@@ -2,6 +2,7 @@ from datetime import timedelta
 from decimal import Decimal
 
 from app.models.contracts import PolicyDecision, Position, ProposalAction
+from app.risk.policy import RiskGate
 
 
 def rule_ids(decision):
@@ -227,3 +228,67 @@ def test_first_paper_order_requires_explicit_approval(risk_gate, proposal, accou
     decision = risk_gate.evaluate(proposal, account, quote, control, now)
 
     assert "R014" in rule_ids(decision)
+
+
+def _leveraged_gate(fingerprint: str, allow_leveraged: bool):
+    return RiskGate(
+        expected_account_fingerprint=fingerprint,
+        allowed_symbols=frozenset({"QQQ", "TQQQ"}),
+        leverage_by_symbol={"TQQQ": Decimal("3")},
+        allow_leveraged=allow_leveraged,
+    )
+
+
+def test_leveraged_instrument_is_rejected_by_default(proposal, account, quote, control, now):
+    proposal = proposal.model_copy(update={"symbol": "TQQQ", "requested_quantity": 2})
+    quote = quote.model_copy(update={"symbol": "TQQQ"})
+
+    decision = _leveraged_gate(account.account_fingerprint, allow_leveraged=False).evaluate(
+        proposal, account, quote, control, now
+    )
+
+    assert "R015" in rule_ids(decision)
+    assert "R004" not in rule_ids(decision)
+    assert decision.approved_quantity == 0
+
+
+def test_leveraged_instrument_is_exposure_checked_when_opted_in(
+    proposal, account, quote, control, now
+):
+    proposal = proposal.model_copy(update={"symbol": "TQQQ", "requested_quantity": 100})
+    quote = quote.model_copy(update={"symbol": "TQQQ"})
+
+    decision = _leveraged_gate(account.account_fingerprint, allow_leveraged=True).evaluate(
+        proposal, account, quote, control, now
+    )
+
+    assert "R015" not in rule_ids(decision)
+    assert "R004" in rule_ids(decision)
+    assert decision.approved_quantity == 0
+
+
+def test_small_leveraged_order_passes_exposure_limits_when_opted_in(
+    proposal, account, quote, control, now
+):
+    proposal = proposal.model_copy(update={"symbol": "TQQQ", "requested_quantity": 20})
+    quote = quote.model_copy(update={"symbol": "TQQQ"})
+
+    decision = _leveraged_gate(account.account_fingerprint, allow_leveraged=True).evaluate(
+        proposal, account, quote, control, now
+    )
+
+    assert decision.decision is PolicyDecision.APPROVE
+    assert decision.approved_quantity == 20
+
+
+def test_invalid_leverage_metadata_is_rejected(proposal, account, quote, control, now):
+    gate = RiskGate(
+        expected_account_fingerprint=account.account_fingerprint,
+        allowed_symbols=frozenset({"QQQ"}),
+        leverage_by_symbol={"QQQ": Decimal("0")},
+    )
+
+    decision = gate.evaluate(proposal, account, quote, control, now)
+
+    assert "R007" in rule_ids(decision)
+    assert decision.approved_quantity == 0

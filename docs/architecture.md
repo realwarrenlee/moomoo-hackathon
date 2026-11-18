@@ -4,20 +4,20 @@
 
 ## One-sentence system design
 
-Qoder Cloud Agents propose and review trades; an independent Python policy engine validates them; a paper-only broker adapter submits authorised orders through Moomoo MCP; an append-only event store and reconciler supply a read-only dashboard.
+Qoder Cloud Agents review a deterministic SPY signal and its proposal; an independent Python policy engine validates it; a separately supervised paper-only broker adapter is the only possible order path; an append-only event store and reconciler supply a read-only dashboard.
 
 ## Logical flow
 
 ```mermaid
 flowchart TD
-    S[Local Task Scheduler / approved manual run] --> R[Research agent]
-    R --> A[Strategy agent]
-    A --> V[Risk review agent]
-    V --> G{Deterministic risk gate}
+    S[Local Task Scheduler / approved manual run] --> A[Coordinator agent]
+    A --> R[Researcher agent]
+    R --> V[Risk auditor agent]
+    V --> G{Deterministic signal + risk gate}
     G -->|Reject| L[Audit event ledger]
-    G -->|Approve| E[Execution/reporting agent]
+    G -->|Approve| E[Operator-only supervised CLI]
     E --> B[Paper-only broker adapter]
-    B --> M[Moomoo competition MCP]
+    B --> M[Moomoo competition paper account]
     M --> C[Order status and account reconciliation]
     C --> L
     L --> API[FastAPI read models / controls]
@@ -28,20 +28,20 @@ flowchart TD
 
 **Non-negotiable boundary:** agents may propose and explain, but only the deterministic gate and paper-only broker adapter authorise order submission. The diagram shows the logical flow, not a guarantee that Qoder exposes every desired execution interface.
 
-**Implemented research path (dry-run only):** `backend/app/research/` screens `SPY`/`QQQ`/`IWM` from timestamped bars and news, builds a typed `TradeProposal`, and calls `RiskGate.evaluate` directly. It does not call `TradingService`, the mock broker or any Moomoo order tool.
+**Implemented research path (dry-run only):** `backend/app/research/` computes the fixed SPY directional signal from completed daily bars, selects one of SPY, UPRO, SH, SPXU or CASH, accounts for the current broker holding and builds a typed `TradeProposal`. Signal arithmetic, HOLD/exit/reversal state and sizing are deterministic. It does not call `TradingService`, the mock broker or any Moomoo order tool. The active production allowlist is unchanged, so SH/UPRO/SPXU proposals fail closed with `R002`; `R015` separately blocks leverage until approved.
 
 **Implemented supervised boundary (operator-only):** `backend/app/supervised.py` composes the existing execution OAuth, read-only REST broker, quote feed, `MoomooPaperBroker`, `RiskGate`, ledger and `TradingService`. The only write-capable entry point is `moomoo-supervised-execute`, which requires both `--enable-order-writes` and an exact `--confirm-client-order-key`, a durable approval bound to that proposal, a fresh regular-session quote, a reconciled competition account, a clean kill switch and every gate rule. Submission happens once; ambiguous outcomes become `UNKNOWN` with no retry; fills are accepted only from read-only reconciliation. Qoder and MCP agent sessions have no path to these commands.
 
-**Implemented read-only Qoder workflow:** `backend/scripts/qoder_readonly_run.py` coordinates three Cloud Agents: a coordinator that validates the run boundary and closes the report, a researcher that calls `research_market`, and an independent auditor that reviews the result (and would call `evaluate_proposal` only if a proposal existed). Custom tools are executed in local Python by `backend/app/qoder_tools.py`, whose handler allowlist, strict input schemas, pinned run state and proposal-to-research binding prevent arbitrary commands or modified proposals. Agents receive no Moomoo MCP tools, Vault bindings, repository resources or order authority. A completed run persisted sessions and sanitized artifacts under `evidence/qoder/`. This does not provide a transport for local Python to use Vault-injected Moomoo credentials.
+**Implemented read-only Qoder workflow:** `backend/scripts/qoder_readonly_run.py` coordinates three Cloud Agents: a coordinator that validates the run boundary and closes the report, a researcher that calls `research_market`, and an independent auditor that reviews the result and calls `evaluate_proposal` when a proposal exists. The researcher reviews runner-pinned SPY bars and, in current mode, sanitized read-only account and quote inputs; agents cannot alter the deterministic signal or write market data. Custom tools are executed in local Python by `backend/app/qoder_tools.py`, whose handler allowlist, strict input schemas, pinned run state and proposal-to-research binding prevent arbitrary commands or modified proposals. Agents receive no Moomoo MCP tools, Vault bindings, repository resources or order authority.
 
 ## Services and responsibilities
 
 | Component | Owns | May perform broker writes? |
 |---|---|---|
 | Account lock | Exact simulated-account resolution by masked id + SHA-256 fingerprint; rejects live, other-paper and market-only matches | No |
-| Research agent | Timestamped evidence + source IDs, data-quality flags | No |
-| Strategy agent | `BUY`/`SELL`/`NO_TRADE` proposal, thesis, invalidation | No |
-| Risk-review agent | Challenge and human-readable risk critique | No |
+| Coordinator agent | Validates the run boundary and closes the report from sanitized deterministic artifacts | No |
+| Researcher agent | Reviews the SPY trend, 10-session return, volatility, target ETF or CASH and data-quality flags | No |
+| Risk auditor agent | Independent challenge of thesis, stale data, concentration, leverage and downside | No |
 | Policy gate (Python) | Instrument allowlist, sizes, cash, exposure, drawdown, position count, first-order approval, circuit breaker, kill switch | Authorises only; no direct writes |
 | Executor + broker adapter | Paper account route, idempotency, order submission and status checks | Yes, after validation |
 | Reconciler | Broker/ledger comparison, uncertain states, sync health | Read-only; cancellation only if separately authorised |
@@ -51,7 +51,7 @@ flowchart TD
 
 ## Trust boundaries
 
-1. **Market and agent text:** untrusted. Research/news cannot modify permissions, instruments, limits or code.
+1. **Market and agent text:** untrusted. Research, news and model output cannot modify permissions, instruments, limits, event direction or code.
 2. **Cloud agent environment:** uses least-privilege connector scopes. No live accounts. Store secrets in Qoder-supported secure storage, not agent prompts.
 3. **Policy engine:** deterministic Python with versioned rules; accepts validated typed proposals only.
 4. **Broker adapter:** owns the only order-write path. Must match the competition account identifier/fingerprint, not merely a flag passed by an LLM.
@@ -66,15 +66,15 @@ Agent proposal (illustrative shape, not a Moomoo API contract):
 {
   "schema_version": "1",
   "run_id": "example-run-001",
-  "strategy_version": "momentum-v1",
-  "decision_time_utc": "2026-11-18T14:30:00Z",
-  "data_as_of_utc": "2026-11-18T14:29:00Z",
-  "symbol": "QQQ",
+  "strategy_version": "spy-directional",
+  "decision_time_utc": "2026-11-18T21:00:00Z",
+  "data_as_of_utc": "2026-11-17T21:00:00Z",
+  "symbol": "SH",
   "action": "BUY",
-  "requested_quantity": 2,
-  "thesis": "Predefined conditions passed",
-  "invalidation": "Regime filter fails",
-  "evidence_ids": ["evidence-001"]
+  "requested_quantity": 147,
+  "thesis": "SPY 10-session return and trend are bearish; target inverse exposure through SH",
+  "invalidation": "Exit at the next open after a neutral, opposite or volatility-ceiling signal",
+  "evidence_ids": ["bar:SPY:2026-11-17", "bar:SH:20261117"]
 }
 ```
 
@@ -137,7 +137,7 @@ Materialised dashboard views may be rebuilt from events and verified broker snap
 
 ## Technology decision
 
-The existing `plan.md` originally proposed React + Vite. Because the chosen UI reference is **Shadcn Fintech (Next.js)**, this starter package standardises on **Next.js + TypeScript** to avoid a needless rewrite. Treat the template as optional until its licence, provenance, dependencies and compatibility are checked.
+The dashboard uses **Next.js + TypeScript**, adapted from the MIT-licensed Shadcn Fintech template, over the Python 3.11+ / FastAPI / Pydantic backend. The template's licence, provenance and dependencies were reviewed; attribution is preserved in `frontend/ATTRIBUTION.md`.
 
 ## Failure modes to test before enabling order writes
 

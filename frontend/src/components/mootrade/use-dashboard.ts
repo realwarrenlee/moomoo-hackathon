@@ -2,7 +2,11 @@
 
 import { useCallback, useEffect, useRef, useState } from "react"
 
-import { DashboardFetchError, fetchDashboard } from "@/lib/mootrade"
+import {
+  DASHBOARD_REFRESH_EVENT,
+  DashboardFetchError,
+  fetchDashboard,
+} from "@/lib/mootrade"
 
 type UseDashboardResult<T> = {
   data: T | null
@@ -59,9 +63,12 @@ export function useDashboard<T>(
         if (document.visibilityState === "visible") void load(true)
       }, refreshMs)
     }
+    const onRefresh = () => void load(true)
+    window.addEventListener(DASHBOARD_REFRESH_EVENT, onRefresh)
     return () => {
       active.current = false
       if (timer) clearInterval(timer)
+      window.removeEventListener(DASHBOARD_REFRESH_EVENT, onRefresh)
     }
   }, [load, refreshMs])
 

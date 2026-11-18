@@ -1,53 +1,52 @@
+"""Deterministic daily SPY directional policy.
+
+The signal is evaluated only on completed SPY daily bars. A decision made after
+the close is eligible for the next open. Leveraged products require a strong,
+controlled-volatility signal plus separate leverage approval.
+"""
+
 from __future__ import annotations
 
-import re
-from dataclasses import dataclass
-from datetime import datetime, timedelta
-from decimal import Decimal
+import math
+import statistics
+from dataclasses import dataclass, replace
+from datetime import datetime
+from decimal import ROUND_FLOOR, Decimal
 
-from app.models.contracts import ProposalAction, TradeProposal
-from app.research.data import UNIVERSE, MarketHistory, NewsArchive, NewsItem
-
-REGIME_SYMBOL = "SPY"
-SMA_WINDOW = 20
-MOMENTUM_WINDOW = 5
-NEWS_LOOKBACK = timedelta(hours=72)
-
-_POSITIVE = re.compile(
-    r"\b(?:rally|rallies|surge|surges|gain|gains|rise|rises|climb|climbs|record high|"
-    r"inflow|inflows|upgrade|upgrades|beat|beats|strong|strength|growth|optimism|"
-    r"rebound|rebounds|bullish|buy|outperform|outperforms|higher)\b|"
-    r"上涨|大涨|攀升|走高|反弹|新高|创纪录|流入|看涨|买入|上调|强劲|增长|超预期|乐观|利好",
-    re.IGNORECASE,
+from app.models.contracts import AccountSnapshot, ProposalAction, TradeProposal
+from app.research.data import MarketHistory
+from app.research.instruments import (
+    CANDIDATE_SYMBOLS,
+    INSTRUMENTS,
+    Instrument,
+    select_instrument,
 )
-_NEGATIVE = re.compile(
-    r"\b(?:fall|falls|drop|drops|decline|declines|plunge|plunges|selloff|sell-off|"
-    r"crisis|concern|concerns|risk|risks|downgrade|downgrades|miss|misses|weak|"
-    r"weakness|outflow|outflows|pressure|bearish|sell|underperform|lower|correction)\b|"
-    r"下跌|大跌|回落|走低|重挫|暴跌|新低|流出|看跌|卖出|下调|疲弱|下降|不及预期|悲观|利空|危机|风险",
-    re.IGNORECASE,
-)
+
+STRATEGY_VERSION = "spy-directional"
+RETURN_LOOKBACK = 10
+TREND_WINDOW = 50
+VOLATILITY_WINDOW = 20
+MIN_COMPLETED_SESSIONS = TREND_WINDOW + 1
+DIRECTION_THRESHOLD = Decimal("0.015")
+STRONG_RETURN_THRESHOLD = Decimal("0.03")
+MAX_VOLATILITY_FOR_DIRECTION = Decimal("0.40")
+MAX_VOLATILITY_FOR_LEVERAGE = Decimal("0.30")
+POSITION_FRACTION = Decimal("0.05")
+
+BULLISH_STATES = frozenset({"BULLISH", "STRONG_BULLISH"})
+BEARISH_STATES = frozenset({"BEARISH", "STRONG_BEARISH"})
 
 
 @dataclass(frozen=True)
 class Candidate:
     symbol: str
-    close: Decimal
-    sma20: Decimal
-    return_5d: Decimal
-    regime_ok: bool
-    above_sma: bool
-    news_count: int
-    positive_news_count: int
-    news_score: Decimal
-    news_ids: tuple[str, ...]
+    direction: int
+    leverage: Decimal
+    effective_exposure: Decimal
+    close: Decimal | None
     eligible: bool
     selected: bool
     reasons: tuple[str, ...]
-
-    @property
-    def signal_strength(self) -> Decimal:
-        return self.return_5d
 
 
 @dataclass(frozen=True)
@@ -55,237 +54,389 @@ class ResearchSnapshot:
     strategy_version: str
     decision_time_utc: datetime
     data_as_of_utc: datetime
-    regime_ok: bool
-    regime_reason: str
+    spy_session_date: str | None
+    spy_close: Decimal | None
+    spy_return_10d: Decimal | None
+    spy_sma50: Decimal | None
+    spy_trend_pct: Decimal | None
+    spy_volatility_20d: Decimal | None
+    market_state: str
+    direction: str | None
+    target_symbol: str | None
+    target_effective_exposure: Decimal
+    current_symbol: str | None
+    current_quantity: int
+    action: str
+    reentry_symbol: str | None
     candidates: tuple[Candidate, ...]
     selected_symbol: str | None
+    decision_reason: str
     no_trade_reason: str | None
 
 
-def _sma(values: tuple[Decimal, ...], window: int) -> Decimal:
-    return sum(values[-window:], Decimal("0")) / Decimal(window)
-
-
-def _news_polarity(item: NewsItem) -> int:
-    text = f"{item.title} {item.abstract}"
-    positive = len(_POSITIVE.findall(text))
-    negative = len(_NEGATIVE.findall(text))
-    return (positive > negative) - (negative > positive)
-
-
-def _news_score(items: tuple[NewsItem, ...], decision_time_utc: datetime) -> tuple[int, int, Decimal]:
-    score = Decimal("0")
-    positive = 0
-    for item in items:
-        polarity = _news_polarity(item)
-        if polarity > 0:
-            positive += 1
-        age_hours = (decision_time_utc - item.published_at_utc).total_seconds() / 3600
-        recency = Decimal(str(0.5 ** (age_hours / 24)))
-        score += Decimal(polarity) * recency
-    return len(items), positive, score
-
-
-def _candidate_reasons(
-    close: Decimal,
-    sma20: Decimal,
-    return_5d: Decimal,
-    regime_ok: bool,
-    news_count: int,
-    news_score: Decimal,
-    strategy_version: str,
-) -> tuple[str, ...]:
-    reasons: list[str] = []
-    if not regime_ok:
-        reasons.append("Broad-market regime negative (SPY below its 20-session SMA)")
-    if close <= sma20:
-        reasons.append(f"Close {close} is not above its 20-session SMA {sma20:.4f}")
-    if return_5d <= 0:
-        reasons.append(f"5-session return {return_5d:.4%} is not positive")
-    if strategy_version == "news-catalyst-v1":
-        if news_count == 0:
-            reasons.append("No relevant news in the prior 72 hours")
-        elif news_score <= 0:
-            reasons.append(f"News catalyst is not positive (score {news_score:.4f})")
-    return tuple(reasons)
-
-
-def _assess_symbol(
-    history: MarketHistory,
-    news: NewsArchive,
-    symbol: str,
+def _empty_snapshot(
     decision_time_utc: datetime,
-    strategy_version: str,
-    regime_ok: bool,
-) -> Candidate | None:
-    bars = history.bars_as_of(symbol, decision_time_utc)
-    if len(bars) < SMA_WINDOW + 1:
-        return None
-    closes = tuple(bar.close for bar in bars)
-    close = closes[-1]
-    sma20 = _sma(closes, SMA_WINDOW)
-    return_5d = closes[-1] / closes[-1 - MOMENTUM_WINDOW] - 1
-    above_sma = close > sma20
-    news_items = news.items_for(symbol, decision_time_utc, NEWS_LOOKBACK)
-    news_count, positive_news_count, news_score = _news_score(news_items, decision_time_utc)
-    reasons = _candidate_reasons(
-        close,
-        sma20,
-        return_5d,
-        regime_ok,
-        news_count,
-        news_score,
-        strategy_version,
+    reason: str,
+    *,
+    market_state: str = "INSUFFICIENT_DATA",
+) -> ResearchSnapshot:
+    return ResearchSnapshot(
+        strategy_version=STRATEGY_VERSION,
+        decision_time_utc=decision_time_utc,
+        data_as_of_utc=decision_time_utc,
+        spy_session_date=None,
+        spy_close=None,
+        spy_return_10d=None,
+        spy_sma50=None,
+        spy_trend_pct=None,
+        spy_volatility_20d=None,
+        market_state=market_state,
+        direction=None,
+        target_symbol=None,
+        target_effective_exposure=Decimal("0"),
+        current_symbol=None,
+        current_quantity=0,
+        action="NO_TRADE",
+        reentry_symbol=None,
+        candidates=(),
+        selected_symbol=None,
+        decision_reason=reason,
+        no_trade_reason=reason,
     )
-    eligible = regime_ok and above_sma and return_5d > 0 and not reasons
+
+
+def _volatility(closes: tuple[Decimal, ...]) -> Decimal:
+    returns = [
+        float(closes[index] / closes[index - 1] - 1)
+        for index in range(len(closes) - VOLATILITY_WINDOW, len(closes))
+    ]
+    return Decimal(str(statistics.stdev(returns) * math.sqrt(252)))
+
+
+def _candidate(
+    symbol: str,
+    direction: int,
+    leverage: Decimal,
+    close: Decimal | None,
+    allow_leveraged: bool,
+) -> Candidate:
+    instrument: Instrument = INSTRUMENTS[symbol]
+    reasons: list[str] = []
+    if close is None:
+        reasons.append(f"No completed bar is available for {symbol}")
+    if direction == 0:
+        reasons.append("The SPY signal is neutral")
+    elif instrument.direction != direction:
+        reasons.append("Instrument direction does not match the SPY signal")
+    if instrument.leveraged and not allow_leveraged:
+        reasons.append("Daily 3x execution requires separate leverage approval")
+    eligible = close is not None and instrument.direction == direction and (
+        not instrument.leveraged or allow_leveraged
+    )
     return Candidate(
         symbol=symbol,
+        direction=instrument.direction,
+        leverage=instrument.leverage,
+        effective_exposure=instrument.effective_exposure,
         close=close,
-        sma20=sma20,
-        return_5d=return_5d,
-        regime_ok=regime_ok,
-        above_sma=above_sma,
-        news_count=news_count,
-        positive_news_count=positive_news_count,
-        news_score=news_score,
-        news_ids=tuple(item.evidence_id for item in news_items),
         eligible=eligible,
         selected=False,
-        reasons=reasons,
+        reasons=tuple(reasons),
     )
 
 
 def screen(
     history: MarketHistory,
-    news: NewsArchive,
     decision_time_utc: datetime,
-    strategy_version: str = "momentum-v1",
+    strategy_version: str = STRATEGY_VERSION,
+    *,
+    allow_leveraged: bool = False,
 ) -> ResearchSnapshot:
-    if strategy_version not in {"momentum-v1", "news-catalyst-v1"}:
+    if strategy_version != STRATEGY_VERSION:
         raise ValueError(f"unknown strategy {strategy_version!r}")
-    regime_bars = history.bars_as_of(REGIME_SYMBOL, decision_time_utc)
-    if len(regime_bars) < SMA_WINDOW + 1:
-        return ResearchSnapshot(
-            strategy_version=strategy_version,
-            decision_time_utc=decision_time_utc,
-            data_as_of_utc=decision_time_utc,
-            regime_ok=False,
-            regime_reason="insufficient SPY history for the 20-session regime filter",
-            candidates=(),
-            selected_symbol=None,
-            no_trade_reason="Insufficient history; abstain",
+    if decision_time_utc.tzinfo is None:
+        raise ValueError("decision time must be timezone-aware")
+    if "SPY" not in history.symbols:
+        return _empty_snapshot(decision_time_utc, "SPY history is unavailable")
+    spy_bars = history.bars_as_of("SPY", decision_time_utc)
+    if len(spy_bars) < MIN_COMPLETED_SESSIONS:
+        return _empty_snapshot(
+            decision_time_utc,
+            f"SPY requires {MIN_COMPLETED_SESSIONS} completed sessions",
         )
-    spy_closes = tuple(bar.close for bar in regime_bars)
-    spy_sma = _sma(spy_closes, SMA_WINDOW)
-    regime_ok = spy_closes[-1] > spy_sma
-    regime_reason = (
-        f"SPY close {spy_closes[-1]} {'above' if regime_ok else 'below'} "
-        f"20-session SMA {spy_sma:.4f}"
+
+    closes = tuple(bar.close for bar in spy_bars)
+    close = closes[-1]
+    return_10d = close / closes[-1 - RETURN_LOOKBACK] - 1
+    sma50 = sum(closes[-TREND_WINDOW:], Decimal("0")) / TREND_WINDOW
+    trend_pct = close / sma50 - 1
+    volatility = _volatility(closes)
+
+    direction = 0
+    market_state = "NEUTRAL"
+    reason = (
+        f"SPY 10-session return {return_10d:.2%}, close {close} versus "
+        f"50-session SMA {sma50:.2f}, annualized 20-session volatility {volatility:.2%}."
     )
-    assessed = [
-        candidate
-        for candidate in (
-            _assess_symbol(history, news, symbol, decision_time_utc, strategy_version, regime_ok)
-            for symbol in UNIVERSE
-        )
-        if candidate is not None
-    ]
-    eligible = sorted(
-        (candidate for candidate in assessed if candidate.eligible),
-        key=lambda candidate: (-candidate.return_5d, candidate.symbol),
-    )
-    selected_symbol = eligible[0].symbol if eligible else None
-    annotated = tuple(
-        Candidate(
-            symbol=candidate.symbol,
-            close=candidate.close,
-            sma20=candidate.sma20,
-            return_5d=candidate.return_5d,
-            regime_ok=candidate.regime_ok,
-            above_sma=candidate.above_sma,
-            news_count=candidate.news_count,
-            positive_news_count=candidate.positive_news_count,
-            news_score=candidate.news_score,
-            news_ids=candidate.news_ids,
-            eligible=candidate.eligible,
-            selected=candidate.symbol == selected_symbol,
-            reasons=(
-                candidate.reasons
-                + (
-                    ("Selected: highest 5-session return among eligible candidates",)
-                    if candidate.symbol == selected_symbol
-                    else ("Eligible but ranked below the selected candidate",)
-                    if candidate.eligible
-                    else ()
-                )
-            ),
-        )
-        for candidate in assessed
-    )
-    if not regime_ok:
-        no_trade_reason = "Broad-market regime filter is negative; abstain from new entries"
-    elif selected_symbol is None:
-        no_trade_reason = (
-            "No candidate has a positive 5-session return above its 20-session SMA"
-            if strategy_version == "momentum-v1"
-            else "No price-momentum candidate has a positive news catalyst in the prior 72 hours"
-        )
+    if volatility > MAX_VOLATILITY_FOR_DIRECTION:
+        reason += f" Volatility exceeds the {MAX_VOLATILITY_FOR_DIRECTION:.0%} directional ceiling; hold cash."
+    elif return_10d >= DIRECTION_THRESHOLD and close > sma50:
+        direction = 1
+        market_state = "BULLISH"
+        if (
+            return_10d >= STRONG_RETURN_THRESHOLD
+            and volatility <= MAX_VOLATILITY_FOR_LEVERAGE
+        ):
+            market_state = "STRONG_BULLISH"
+        reason += f" Direction is {market_state.replace('_', ' ').lower()}; target long S&P 500 exposure."
+    elif return_10d <= -DIRECTION_THRESHOLD and close < sma50:
+        direction = -1
+        market_state = "BEARISH"
+        if (
+            return_10d <= -STRONG_RETURN_THRESHOLD
+            and volatility <= MAX_VOLATILITY_FOR_LEVERAGE
+        ):
+            market_state = "STRONG_BEARISH"
+        reason += f" Direction is {market_state.replace('_', ' ').lower()}; target inverse S&P 500 exposure."
     else:
-        no_trade_reason = None
-    data_as_of = max(
-        (bar.available_at_utc for symbol in UNIVERSE for bar in history.bars_as_of(symbol, decision_time_utc)),
-        default=decision_time_utc,
+        reason += " Direction is neutral; remain in cash."
+
+    strong = market_state.startswith("STRONG_")
+    target = select_instrument(direction, strong, allow_leveraged)
+    candidates = tuple(
+        replace(
+            _candidate(
+                symbol,
+                direction,
+                INSTRUMENTS[symbol].leverage,
+                history.bar_on(symbol, spy_bars[-1].session_date).close
+                if history.bar_on(symbol, spy_bars[-1].session_date) is not None
+                else None,
+                allow_leveraged,
+            ),
+            selected=symbol == target,
+        )
+        for symbol in CANDIDATE_SYMBOLS
+    )
+    target_bar = history.bar_on(target, spy_bars[-1].session_date) if target else None
+    data_as_of = spy_bars[-1].available_at_utc
+    if target_bar is not None:
+        data_as_of = max(data_as_of, target_bar.available_at_utc)
+    target_exposure = (
+        INSTRUMENTS[target].effective_exposure if target is not None else Decimal("0")
     )
     return ResearchSnapshot(
         strategy_version=strategy_version,
         decision_time_utc=decision_time_utc,
         data_as_of_utc=data_as_of,
-        regime_ok=regime_ok,
-        regime_reason=regime_reason,
-        candidates=annotated,
-        selected_symbol=selected_symbol,
-        no_trade_reason=no_trade_reason,
+        spy_session_date=spy_bars[-1].session_date.isoformat(),
+        spy_close=close,
+        spy_return_10d=return_10d,
+        spy_sma50=sma50,
+        spy_trend_pct=trend_pct,
+        spy_volatility_20d=volatility,
+        market_state=market_state,
+        direction="BULLISH" if direction > 0 else ("BEARISH" if direction < 0 else None),
+        target_symbol=target,
+        target_effective_exposure=target_exposure,
+        current_symbol=None,
+        current_quantity=0,
+        action="CASH" if target is None else "BUY",
+        reentry_symbol=None,
+        candidates=candidates,
+        selected_symbol=target,
+        decision_reason=reason,
+        no_trade_reason=None,
     )
 
 
-def build_proposal(
+def _proposal(
     snapshot: ResearchSnapshot,
+    symbol: str,
+    action: ProposalAction,
+    quantity: int,
     history: MarketHistory,
-    equity: Decimal,
-    position_fraction: Decimal = Decimal("0.05"),
-) -> TradeProposal | None:
-    if snapshot.selected_symbol is None:
-        return None
-    candidate = next(item for item in snapshot.candidates if item.selected)
-    quantity = int(equity * position_fraction / candidate.close)
-    if quantity < 1:
-        return None
-    evidence = [f"bar:{candidate.symbol}:{bar.session_date:%Y%m%d}" for bar in history.bars_as_of(
-        candidate.symbol, snapshot.decision_time_utc
-    )[-SMA_WINDOW:]]
-    regime_bar = history.bars_as_of(REGIME_SYMBOL, snapshot.decision_time_utc)[-1]
-    evidence.append(regime_bar.evidence_id)
-    evidence.extend(candidate.news_ids)
-    news_text = (
-        f" {candidate.positive_news_count} positive of {candidate.news_count} relevant headlines"
-        f" (sentiment score {candidate.news_score:.4f})."
-        if snapshot.strategy_version == "news-catalyst-v1"
-        else ""
-    )
+    account: AccountSnapshot,
+    *,
+    reentry_symbol: str | None,
+) -> TradeProposal:
+    instrument = INSTRUMENTS[symbol]
+    bar = history.bar_on(symbol, datetime.fromisoformat(str(snapshot.spy_session_date)).date())
+    evidence = (f"bar:SPY:{snapshot.spy_session_date}",)
+    if bar is not None:
+        evidence += (bar.evidence_id,)
+    exposure = instrument.effective_exposure
+    if action is ProposalAction.SELL:
+        thesis = (
+            f"Exit {symbol} because the completed {snapshot.spy_session_date} SPY signal is "
+            f"{snapshot.market_state.lower()} and the target is "
+            f"{reentry_symbol or 'CASH'}. {snapshot.decision_reason}"
+        )
+        invalidation = (
+            "The exit must fill and reconcile before any opposite position is considered. "
+            "The next run re-reads broker holdings and the SPY signal."
+        )
+    else:
+        thesis = (
+            f"SPY closed at {snapshot.spy_close} with a 10-session return of "
+            f"{snapshot.spy_return_10d:.2%}, a 50-session SMA of {snapshot.spy_sma50:.2f} "
+            f"and {snapshot.spy_volatility_20d:.2%} annualized volatility. "
+            f"{snapshot.market_state} targets {symbol} at {instrument.leverage}x daily "
+            f"leverage ({exposure:+} effective exposure), sized to 5% effective exposure."
+        )
+        invalidation = (
+            "Exit at the next open after a neutral, opposite or volatility-ceiling signal. "
+            "A leverage approval is required for UPRO or SPXU."
+        )
     return TradeProposal(
-        proposal_id=f"{snapshot.strategy_version}-{snapshot.decision_time_utc:%Y%m%d}-{candidate.symbol}",
-        run_id=f"dryrun-{snapshot.decision_time_utc:%Y%m%dT%H%M%SZ}-{snapshot.strategy_version}",
-        strategy_version=snapshot.strategy_version,
+        proposal_id=f"{STRATEGY_VERSION}-{snapshot.spy_session_date}-{symbol}-{action.value}",
+        run_id=f"dryrun-{snapshot.decision_time_utc:%Y%m%dT%H%M%SZ}-{STRATEGY_VERSION}",
+        strategy_version=STRATEGY_VERSION,
         decision_time_utc=snapshot.decision_time_utc,
         data_as_of_utc=snapshot.data_as_of_utc,
-        symbol=candidate.symbol,
-        action=ProposalAction.BUY,
+        symbol=symbol,
+        action=action,
         requested_quantity=quantity,
-        thesis=(
-            f"{candidate.symbol} closed at {candidate.close}, above its 20-session SMA "
-            f"{candidate.sma20:.4f}, with a {candidate.return_5d:.4%} 5-session return. "
-            f"{snapshot.regime_reason}.{news_text}"
+        thesis=thesis,
+        invalidation=invalidation,
+        evidence_ids=evidence,
+    )
+
+
+def decide(
+    snapshot: ResearchSnapshot,
+    history: MarketHistory,
+    account: AccountSnapshot,
+    *,
+    position_fraction: Decimal = POSITION_FRACTION,
+) -> tuple[ResearchSnapshot, TradeProposal | None]:
+    """Compare the target with broker holdings and produce one aggregate action."""
+    if not account.reconciled or account.unknown_orders:
+        failure = "Broker positions and open orders are not reconciled; no new decision"
+        return (
+            replace(
+                snapshot,
+                action="NO_TRADE",
+                current_symbol=None,
+                current_quantity=0,
+                decision_reason=failure,
+                no_trade_reason=failure,
+            ),
+            None,
+        )
+
+    held = [
+        position
+        for position in account.positions
+        if position.quantity > 0 and position.symbol in CANDIDATE_SYMBOLS
+    ]
+    pending = [
+        order for order in account.open_orders if order.symbol in CANDIDATE_SYMBOLS
+    ]
+    if len(held) > 1:
+        failure = "More than one strategy ETF is held; close the conflict manually before trading"
+        return (
+            replace(snapshot, action="NO_TRADE", decision_reason=failure, no_trade_reason=failure),
+            None,
+        )
+    if pending:
+        failure = "A strategy order is still working; defer the next decision until it reconciles"
+        return (
+            replace(snapshot, action="HOLD", decision_reason=failure, no_trade_reason=None),
+            None,
+        )
+
+    current = held[0] if held else None
+    current_symbol = current.symbol if current else None
+    current_quantity = current.quantity if current else 0
+    target = snapshot.selected_symbol
+    base = replace(
+        snapshot,
+        current_symbol=current_symbol,
+        current_quantity=current_quantity,
+        reentry_symbol=None,
+    )
+
+    if current_symbol is not None:
+        if target == current_symbol:
+            return (
+                replace(
+                    base,
+                    action="HOLD",
+                    decision_reason=f"{target} already matches the target; hold and re-evaluate next session.",
+                ),
+                None,
+            )
+        proposal = _proposal(
+            base,
+            current_symbol,
+            ProposalAction.SELL,
+            current_quantity,
+            history,
+            account,
+            reentry_symbol=target,
+        )
+        return (
+            replace(
+                base,
+                action="SELL",
+                reentry_symbol=target,
+                decision_reason=(
+                    f"Target is {target or 'CASH'} but {current_symbol} is held. Exit first; "
+                    "re-entry is considered only after the broker confirms the exit."
+                ),
+            ),
+            proposal,
+        )
+
+    if target is None:
+        return (
+            replace(
+                base,
+                action="CASH",
+                decision_reason="No directional target; remain in cash with no order.",
+            ),
+            None,
+        )
+
+    bar = history.bar_on(
+        target, datetime.fromisoformat(str(snapshot.spy_session_date)).date()
+    )
+    if bar is None or bar.close <= 0:
+        failure = f"No completed bar is available for {target}; cannot size an order"
+        return (
+            replace(base, action="NO_TRADE", decision_reason=failure, no_trade_reason=failure),
+            None,
+        )
+    leverage = INSTRUMENTS[target].leverage
+    quantity = int(
+        (account.equity * position_fraction / (bar.close * leverage)).to_integral_value(
+            rounding=ROUND_FLOOR
+        )
+    )
+    if quantity < 1:
+        failure = f"5% effective exposure does not fund one {target} share"
+        return (
+            replace(base, action="NO_TRADE", decision_reason=failure, no_trade_reason=failure),
+            None,
+        )
+    proposal = _proposal(
+        base,
+        target,
+        ProposalAction.BUY,
+        quantity,
+        history,
+        account,
+        reentry_symbol=None,
+    )
+    return (
+        replace(
+            base,
+            action="BUY",
+            decision_reason=(
+                f"{snapshot.market_state} target {target}; buy {quantity} shares for "
+                f"{position_fraction:.1%} effective exposure."
+            ),
         ),
-        invalidation="Close below the 20-session SMA or a daily drawdown limit breach.",
-        evidence_ids=tuple(evidence),
+        proposal,
     )

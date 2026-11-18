@@ -1,369 +1,259 @@
 "use client"
 
-import Link from "next/link"
-import { ArrowRightIcon, CheckCircle2Icon, ShieldAlertIcon } from "lucide-react"
-
 import {
-  EmptyRow,
+  Freshness,
+  InfoNote,
+  InlineLink,
   KeyValue,
   LoadingPage,
-  Metric,
-  MetricStrip,
-  NoticeBanner,
+  PageContainer,
   PageHeader,
-  RefreshButton,
-  SectionCard,
-  StatePanel,
-  TableShell,
+  PageState,
+  Section,
+  Stat,
+  StatGrid,
 } from "@/components/mootrade/primitives"
 import { useDashboard } from "@/components/mootrade/use-dashboard"
-import { Button } from "@/components/ui/button"
 import {
-  ageLabel,
-  humanState,
+  investedValue,
+  marketSession,
   money,
-  strategyLabel,
-  utcTimestamp,
-  type AuditResponse,
+  outcomeLabel,
   type OverviewResponse,
-  type QuoteView,
 } from "@/lib/mootrade"
 import { cn } from "@/lib/utils"
 
-function quoteStatus(quote: QuoteView) {
-  if (quote.state === "UNAVAILABLE")
-    return { label: "Unavailable", className: "text-muted-foreground" }
-  if (quote.stale)
-    return { label: "Stale", className: "text-amber-600 dark:text-amber-400" }
-  if (quote.fresh)
-    return { label: "Fresh", className: "text-emerald-600 dark:text-emerald-400" }
-  return { label: quote.state, className: "text-muted-foreground" }
-}
-
 export default function OverviewPage() {
-  const { data, error, loading, refreshing, refreshedAt, refresh } =
+  const { data, error, loading, refresh } =
     useDashboard<OverviewResponse>("overview", 60_000)
-  const audit = useDashboard<AuditResponse>("audit", 60_000)
 
   if (loading && !data) return <LoadingPage />
 
-  if (error && !data) {
+  if (!data) {
     return (
-      <div className="space-y-5 p-4 md:p-6">
-        <PageHeader
-          title="Overview"
-          description="Competition paper account status, market observations, and execution safety."
-        />
-        <StatePanel
-          kind="error"
+      <PageContainer>
+        <PageHeader title="Overview" />
+        <PageState
           title="Dashboard API unreachable"
-          description={`${error} Start the local FastAPI backend to view paper account data.`}
-          action={
-            <Button variant="outline" size="sm" onClick={refresh}>
-              Try again
-            </Button>
-          }
+          description={`${error ?? "No response"} Start the local MooTrade read-only API to view paper account data.`}
+          onRetry={refresh}
         />
-      </div>
+      </PageContainer>
     )
   }
 
-  if (!data) return null
-
   const account = data.account
   const run = data.latest_agent_run
+  const safety = data.safety
+  const session = marketSession(data.quotes)
+  const spy = data.quotes.find((quote) => quote.symbol === "SPY")
+  const invested = investedValue(account?.equity, account?.cash)
+  const staleQuotes = data.quotes.filter((quote) => quote.stale)
+
+  const blockers: string[] = []
+  if (!safety.order_writes_enabled) blockers.push("Order writes are disabled")
+  if (safety.first_order_approval_count === 0)
+    blockers.push("No first-order owner approval")
+  if (!session.open) blockers.push(`${session.label} · regular session required`)
+  if (staleQuotes.length > 0)
+    blockers.push(`${staleQuotes.length} quotes older than 300s`)
+  if (!safety.broker_order_endpoint_available)
+    blockers.push("No order endpoint is enabled")
+
+  const warnings = data.warnings.filter((warning) => {
+    if (warning === "US regular market session is not open.") return false
+    if (!session.open && warning.includes("outside the 300-second")) return false
+    return true
+  })
   const unavailable = data.state === "UNAVAILABLE"
-  const controls = data.safety
+
+  const proposal = run?.proposal
+  const proposalText = proposal
+    ? [proposal.action, proposal.requested_quantity, proposal.symbol]
+        .filter((value) => value !== null && value !== undefined && value !== "")
+        .join(" ")
+    : null
+  const headline = proposalText ?? outcomeLabel(run?.outcome)
+  const decision = run?.risk_decision?.decision?.toUpperCase()
+  const rejected = decision === "REJECT" || decision === "REJECTED"
+  const approved = decision === "APPROVE" || decision === "APPROVED"
+  const outcome = !run
+    ? null
+    : rejected
+      ? "Blocked by RiskGate — no order placed."
+      : approved
+        ? "Approved by RiskGate — no order submitted."
+        : run.outcome === "AGENT_ERROR"
+          ? "Run failed — no order placed."
+          : proposal
+            ? "Proposal only — execution not evaluated."
+            : "No order proposed."
 
   return (
-    <div className="space-y-5 p-4 md:p-6">
-      <PageHeader
-        title="Overview"
-        description="Competition paper account status, market observations, and execution safety."
-        actions={
-          <RefreshButton
-            onClick={refresh}
-            refreshing={refreshing}
-            refreshedAt={refreshedAt}
-          />
-        }
-      />
+    <PageContainer>
+      <PageHeader title="Overview" />
 
-      {/* Compact Account Context Bar */}
-      <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 rounded-lg border bg-card px-3.5 py-2 text-xs">
-        <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-          <span className="font-mono font-semibold tracking-tight text-foreground">
-            {account?.masked_id ?? "—"}
-          </span>
-          <span className="text-muted-foreground">·</span>
-          <span className="text-muted-foreground">
-            {account?.title ?? "Moomoo Competition Sim Account"}
-          </span>
-          <span className="hidden text-muted-foreground sm:inline">·</span>
-          <span className="hidden font-mono text-[11px] text-muted-foreground sm:inline">
-            US Simulated (type {account?.account_type ?? 2})
-          </span>
-        </div>
-
-        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px]">
-          {account?.verified ? (
-            <span className="flex items-center gap-1 font-medium text-emerald-600 dark:text-emerald-400">
-              <CheckCircle2Icon className="size-3" />
-              Verified
-            </span>
-          ) : null}
-          <span className="text-muted-foreground">·</span>
-          <span className="flex items-center gap-1.5 text-muted-foreground">
-            <span
-              className={cn(
-                "size-1.5 rounded-full",
-                account?.reconciled ? "bg-emerald-500" : "bg-amber-500"
-              )}
-            />
-            {account?.reconciled ? "Reconciled" : "Reconciliation attention"}
-          </span>
-          <span className="hidden text-muted-foreground md:inline">·</span>
-          <span className="hidden font-mono text-muted-foreground md:inline">
-            Snapshot {utcTimestamp(account?.as_of_utc)}
-          </span>
-        </div>
-      </div>
-
-      {data.warnings.length > 0 ? (
-        <NoticeBanner
-          tone={unavailable ? "danger" : "warning"}
-          title={unavailable ? "Account data unavailable" : "Attention required"}
-        >
+      {unavailable ? (
+        <InfoNote tone="danger">
+          <p className="font-medium">Account data unavailable</p>
           <ul className="list-disc space-y-0.5 pl-4">
-            {data.warnings.map((warning) => (
+            {(data.warnings.length ? data.warnings : ["No broker response."]).map(
+              (warning) => (
+                <li key={warning}>{warning}</li>
+              )
+            )}
+          </ul>
+        </InfoNote>
+      ) : warnings.length > 0 ? (
+        <InfoNote tone="warning">
+          <ul className="list-disc space-y-0.5 pl-4">
+            {warnings.map((warning) => (
               <li key={warning}>{warning}</li>
             ))}
           </ul>
-        </NoticeBanner>
+        </InfoNote>
       ) : null}
 
-      {/* Key Financial Metrics */}
-      <MetricStrip>
-        <Metric
-          label="Paper equity"
+      <StatGrid columns={3}>
+        <Stat
+          label="Equity"
           value={money(account?.equity)}
-          detail={
-            account
-              ? `Snapshot ${ageLabel(account.age_seconds)}`
-              : "Requires broker read connection"
-          }
-        />
-        <Metric
-          label="Cash balance"
-          value={money(account?.cash)}
-          detail="Unlevered broker cash"
-        />
-        <Metric
-          label="Buying power"
-          value={money(account?.buying_power)}
-          detail="Cash-only sizing (US$5 buffer)"
-        />
-        <Metric
-          label="Positions / orders"
-          value={
-            account
-              ? `${account.positions_count ?? 0} / ${account.open_orders_count ?? 0}`
-              : "—"
-          }
-          detail={
-            account
-              ? account.reconciled
-                ? "Clean broker state"
-                : "Reconciliation mismatch"
-              : "No snapshot"
-          }
-          tone={account?.reconciled === false ? "warning" : "neutral"}
-        />
-      </MetricStrip>
-
-      {/* Market Tape Table */}
-      <SectionCard
-        title="Market tape"
-        description="Moomoo quote observations for approved ETF universe. Stale quotes are never treated as executable."
-        contentClassName="space-y-2"
-      >
-        <TableShell>
-          <table className="w-full text-[11px]">
-            <thead>
-              <tr className="border-b text-left text-[10px] text-muted-foreground">
-                <th className="px-3 py-2 font-medium">Symbol</th>
-                <th className="px-3 py-2 text-right font-medium">Last</th>
-                <th className="hidden px-3 py-2 font-medium md:table-cell">
-                  Market data (UTC)
-                </th>
-                <th className="px-3 py-2 text-right font-medium">Age</th>
-                <th className="hidden px-3 py-2 font-medium sm:table-cell">Session</th>
-                <th className="px-3 py-2 text-right font-medium">Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              {data.quotes.length === 0 ? (
-                <EmptyRow colSpan={6} label="No quote observations returned." />
-              ) : (
-                data.quotes.map((quote) => {
-                  const status = quoteStatus(quote)
-                  return (
-                    <tr key={quote.symbol} className="border-b last:border-0">
-                      <td className="px-3 py-2 font-mono font-semibold">{quote.symbol}</td>
-                      <td className="px-3 py-2 text-right font-mono tabular-nums">
-                        {money(quote.price)}
-                      </td>
-                      <td className="hidden px-3 py-2 font-mono text-[10px] text-muted-foreground md:table-cell">
-                        {utcTimestamp(quote.as_of_utc)}
-                      </td>
-                      <td className="px-3 py-2 text-right text-muted-foreground">
-                        {ageLabel(quote.age_seconds)}
-                      </td>
-                      <td className="hidden px-3 py-2 text-muted-foreground sm:table-cell">
-                        {quote.market_state ? humanState(quote.market_state) : "—"}
-                      </td>
-                      <td className={cn("px-3 py-2 text-right font-medium", status.className)}>
-                        {status.label}
-                      </td>
-                    </tr>
-                  )
-                })
-              )}
-            </tbody>
-          </table>
-        </TableShell>
-      </SectionCard>
-
-      {/* Tri-Column Operations Surface: Safety, Latest Agent Run, Recent Ledger */}
-      <div className="grid gap-4 lg:grid-cols-3">
-        {/* Execution Safety Status */}
-        <SectionCard
-          title="Execution safety"
-          description="Deterministic preflight gate state."
-        >
-          <div className="flex items-center justify-between border-b pb-2">
-            <span className="text-[11px] text-muted-foreground">Status</span>
-            <span className="inline-flex items-center gap-1 font-mono text-[11px] font-semibold text-rose-600 dark:text-rose-400">
-              <ShieldAlertIcon className="size-3" />
-              LOCKED
-            </span>
-          </div>
-          <KeyValue
-            label="Order writes"
-            value={
-              <span className="text-rose-600 dark:text-rose-400">
-                {controls.order_writes_enabled ? "ENABLED" : "DISABLED"}
+          hint={
+            account ? (
+              <span className="inline-flex items-center gap-1">
+                Account snapshot · <Freshness seconds={account.age_seconds} />
               </span>
-            }
-          />
-          <KeyValue
-            label="Kill switch"
-            value={controls.kill_switch_engaged ? "ENGAGED" : "Clear (persisted)"}
-          />
-          <KeyValue
-            label="First order approval"
-            value={
-              controls.first_order_approval_count > 0
-                ? `Approved (${controls.first_order_approval_count})`
-                : "Not granted"
-            }
-          />
-          <KeyValue
-            label="Order transport"
-            value={controls.broker_order_endpoint_available ? "Available" : "Not implemented"}
-          />
-          <Button
-            render={<Link href="/risk" />}
-            nativeButton={false}
-            variant="ghost"
-            size="sm"
-            className="mt-2 -ml-2 h-7 px-2 text-[11px] text-muted-foreground hover:text-foreground"
-          >
-            Open Risk Centre
-            <ArrowRightIcon className="size-3" />
-          </Button>
-        </SectionCard>
+            ) : (
+              "Broker read unavailable"
+            )
+          }
+        />
+        <Stat
+          label="Invested"
+          value={invested === null ? "—" : money(invested)}
+          hint={
+            account ? `${account.positions_count ?? 0} open positions` : "Positions unavailable"
+          }
+        />
+        <Stat label="Cash" value={money(account?.cash)} />
+      </StatGrid>
 
-        {/* Latest Qoder Run */}
-        <SectionCard
-          title="Latest agent run"
-          description="Most recent recorded Qoder evidence."
-        >
+      <div className="grid gap-5 lg:grid-cols-3">
+        <Section className="lg:col-span-2" title="Latest AI decision">
           {run ? (
-            <>
-              <div className="flex items-baseline justify-between border-b pb-2">
-                <span className="text-[13px] font-semibold">
-                  {run.outcome === "NO_TRADE" ? "No trade" : run.outcome}
-                </span>
-                <span className="text-[11px] text-muted-foreground">
-                  {strategyLabel(run.strategy_version)}
-                </span>
-              </div>
-              <KeyValue label="Regime" value={run.regime_ok ? "Positive" : "Negative"} />
-              <KeyValue
-                label="Candidates"
-                value={`${run.candidates.filter((c) => c.selected).length} selected / ${run.candidates.length}`}
-              />
-              <KeyValue label="Sessions" value={`${run.session_count} cloud sessions`} />
-              <KeyValue label="Completed" value={utcTimestamp(run.completed_at_utc)} mono />
-              <p className="mt-2 line-clamp-2 text-[11px] leading-relaxed text-muted-foreground">
-                {run.no_trade_reason ?? run.regime_reason ?? "Historical dry run evidence."}
+            <div className="space-y-2.5">
+              <p className="text-2xl font-semibold tracking-tight">{headline}</p>
+              <p className="max-w-2xl text-[13px] leading-relaxed text-muted-foreground">
+                {run.decision_reason ?? run.no_trade_reason ?? "No decision reason recorded."}
               </p>
-              <Button
-                render={<Link href="/agents" />}
-                nativeButton={false}
-                variant="ghost"
-                size="sm"
-                className="mt-2 -ml-2 h-7 px-2 text-[11px] text-muted-foreground hover:text-foreground"
-              >
-                Inspect agent activity
-                <ArrowRightIcon className="size-3" />
-              </Button>
-            </>
-          ) : (
-            <StatePanel
-              title="No agent run recorded"
-              description="No completed Qoder run artifact found."
-            />
-          )}
-        </SectionCard>
-
-        {/* Recent Ledger Activity */}
-        <SectionCard
-          title="Audit ledger"
-          description="Append-only immutable event log."
-        >
-          {audit.data?.events.length ? (
-            <div className="divide-y">
-              {audit.data.events.slice(0, 4).map((event) => (
-                <div key={event.event_id} className="py-1.5 first:pt-0 last:pb-0">
-                  <p className="line-clamp-1 text-[11px] font-medium leading-tight">
-                    {event.summary}
-                  </p>
-                  <p className="mt-0.5 font-mono text-[10px] text-muted-foreground">
-                    {event.event_type} · {utcTimestamp(event.occurred_at_utc)}
-                  </p>
-                </div>
-              ))}
+              {outcome ? (
+                <p
+                  className={cn(
+                    "text-[13px] font-medium",
+                    rejected
+                      ? "text-rose-700 dark:text-rose-300"
+                      : "text-foreground"
+                  )}
+                >
+                  {outcome}
+                </p>
+              ) : null}
+              <InlineLink href="/agents">Open decision evidence</InlineLink>
             </div>
           ) : (
-            <StatePanel
-              title="No events"
-              description="The ledger has no recorded events yet."
-            />
+            <p className="py-4 text-[13px] text-muted-foreground">
+              No completed agent run is recorded. The dashboard never substitutes
+              synthetic agent output.
+            </p>
           )}
-          <Button
-            render={<Link href="/audit" />}
-            nativeButton={false}
-            variant="ghost"
-            size="sm"
-            className="mt-2 -ml-2 h-7 px-2 text-[11px] text-muted-foreground hover:text-foreground"
-          >
-            Open Audit Log
-            <ArrowRightIcon className="size-3" />
-          </Button>
-        </SectionCard>
+        </Section>
+
+        <Section title="Trading eligibility">
+          {blockers.length > 0 ? (
+            <ul className="space-y-2">
+              {blockers.slice(0, 3).map((blocker) => (
+                <li
+                  key={blocker}
+                  className="flex gap-2 text-xs leading-relaxed text-muted-foreground"
+                >
+                  <span className="mt-1.5 size-1 shrink-0 rounded-full bg-muted-foreground/50" />
+                  <span>{blocker}</span>
+                </li>
+              ))}
+              {blockers.length > 3 ? (
+                <li className="pl-3 text-xs text-muted-foreground">
+                  +{blockers.length - 3} more checks
+                </li>
+              ) : null}
+            </ul>
+          ) : (
+            <p className="text-xs text-muted-foreground">
+              All deterministic checks pass.
+            </p>
+          )}
+          <div className="mt-3 border-t pt-2">
+            <InlineLink href="/risk">Risk Centre</InlineLink>
+          </div>
+        </Section>
       </div>
-    </div>
+
+      <div className="grid gap-5 lg:grid-cols-2">
+        <Section title="Positions" action={<InlineLink href="/portfolio">Portfolio</InlineLink>}>
+          <KeyValue
+            label="Open positions"
+            value={
+              !account
+                ? "Unavailable"
+                : (account.positions_count ?? 0) > 0
+                  ? `${account.positions_count} · ${money(invested)}`
+                  : "None"
+            }
+          />
+          <KeyValue
+            label="Open orders"
+            value={account ? String(account.open_orders_count ?? 0) : "—"}
+            mono
+          />
+          {account && !account.reconciled ? (
+            <p className="mt-2 flex gap-2 text-xs leading-relaxed text-amber-700 dark:text-amber-300">
+              <span className="mt-1.5 size-1 shrink-0 rounded-full bg-amber-600 dark:bg-amber-400" />
+              Reconciliation mismatch — review broker state.
+            </p>
+          ) : null}
+          {account && (account.unknown_orders ?? 0) > 0 ? (
+            <p className="mt-2 flex gap-2 text-xs leading-relaxed text-rose-700 dark:text-rose-300">
+              <span className="mt-1.5 size-1 shrink-0 rounded-full bg-rose-600 dark:bg-rose-400" />
+              Unknown order outcomes detected.
+            </p>
+          ) : null}
+          <p className="mt-2 text-xs leading-relaxed text-muted-foreground">
+            {!account
+              ? "Positions and orders are unknown while the broker read is unavailable."
+              : (account.positions_count ?? 0) > 0
+                ? "Holdings are read from the broker."
+                : "No open positions — all equity is held in cash."}
+          </p>
+        </Section>
+
+        <Section title="Market" action={<InlineLink href="/risk">Gate inputs</InlineLink>}>
+          <KeyValue label="Session" value={session.label} />
+          <KeyValue
+            label="SPY last"
+            value={spy?.price ? money(spy.price) : "—"}
+            mono
+          />
+          <KeyValue
+            label="Quote freshness"
+            value={
+              spy ? (
+                <Freshness seconds={spy.age_seconds} stale={spy.stale} />
+              ) : (
+                "Unavailable"
+              )
+            }
+          />
+        </Section>
+      </div>
+    </PageContainer>
   )
 }

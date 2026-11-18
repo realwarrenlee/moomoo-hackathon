@@ -1,28 +1,92 @@
 # Strategy and risk specification
 
-**Version:** `momentum-v1` draft. The rules below are a testable baseline, not a proven profitable strategy. Freeze parameters before evaluating competition-period returns; record every change and its reason.
+**Active strategy:** `spy-directional` — deterministic daily S&P 500 directional exposure through SPY, UPRO, SH, SPXU or CASH.
 
-## Thesis and instrument universe
+**Status (18 November 2026):** research and read-only dry-run only. The production allowlist is unchanged (`SPY`, `QQQ`, `IWM`), leveraged execution is disabled by default, and `ORDER_WRITES_ENABLED=false`. SH/UPRO/SPXU proposals are rejected at `R002`. No order has been authorised by this pivot. The separately approved first diagnostic paper BUY/SELL verification remains a pending execution milestone and is unaffected.
 
-Long-only regime-aware ETF momentum, initially limited to `SPY`, `QQQ`, `IWM` **if** the competition's allowed instruments and available market data confirm eligibility.
+## One-page strategy specification
 
-Thesis: stronger recent momentum during a favourable broad-market trend may persist, but sitting in cash during a weak regime can reduce risk. This hypothesis may fail; evidence must include losses, abstentions and a benchmark.
+**Hypothesis:** A persistent 10-session S&P 500 move, confirmed by price relative to its 50-session trend, can be followed with one directional ETF until the signal changes, subject to volatility and portfolio controls.
 
-## Initial deterministic signal specification (to ratify before first trade)
+| Question | Deterministic answer in `spy-directional` |
+|---|---|
+| What is measured? | SPY's 10-session `close/close` return, its 50-session simple moving average and its 20-session annualised realised volatility, all from completed daily bars. |
+| Bullish? | 10-session return `>= +1.5%` **and** latest close above the SMA50. |
+| Bearish? | 10-session return `<= -1.5%` **and** latest close below the SMA50. |
+| Neutral? | Every other completed-session case, including conflicting return/trend evidence. Target CASH. |
+| Volatility ceiling? | 20-session annualised volatility above `40%` forces CASH regardless of direction. |
+| Strong label? | Absolute 10-session return `>= 3.0%` and volatility `<= 30%`. |
+| Which ETF? | Bullish → SPY; bearish → SH. A strong label selects UPRO/SPXU only when leverage is separately enabled; otherwise it stays at 1x. |
+| BUY / SELL / HOLD / CASH? | BUY when flat and a target is selected; HOLD when the target equals the held ETF; SELL when the held ETF is no longer the target; CASH when neutral and flat. |
+| Reversal? | A SELL or CASH decision comes first. The opposite entry is considered only by a later run that observes a confirmed flat broker position. |
+| Size? | `5%` effective exposure, whole shares, cash-only, floored. A 3x fund uses one third of the cash notional of a 1x fund for the same effective exposure. |
+| Who decides? | Deterministic code computes the signal, selection, sizing and state transition. Three Qoder agents reason and challenge. The RiskGate is final. |
 
-- Source: timestamped, broker-approved adjusted daily close prices, as available without look-ahead; if adjustment semantics differ, document them and avoid mixing.
-- Decision cadence: at most one scheduled daily evaluation after sufficient price data is available, in a supported exchange session; validate the actual schedule and market hours.
-- Broad-market regime: `SPY last fully completed daily close > SPY trailing 20-session simple moving average` computed from completed sessions only.
-- Candidate momentum: 5-session price return of each whitelisted ETF; only consider candidates with return > 0 and price above their own trailing 20-session SMA.
-- Selection: choose highest eligible 5-session return, deterministic ticker alphabetical tie-break.
-- Position action: if no candidate or regime negative => `NO_TRADE` for new entries. Evaluate already-held position against the exit rules; never assume no-trade equals liquidate.
-- Exit: sell a held instrument when its completed-day close falls below its own 20-session SMA, or as needed by explicitly authorised risk de-risking policy. Document any other exits as a new version.
-- Model's role: explain evidence and uncertainties, **not** replace mathematical rules or choose an unapproved ticker.
-- Warmup: minimum 21 fully completed trading sessions needed; without sufficient history, abstain.
-- Initial execution assumption for the local mock: whole-share `MARKET` orders with `DAY` time-in-force during the regular exchange session. Actual provider support remains unverified.
-- Initial freshness policy: quotes no older than 300 seconds and account snapshots no older than 60 seconds; future timestamps are rejected.
+### Signal and eligibility
 
-**Known limitation:** This baseline may generate very few signals over a 12-day period. If the team wants more trades, revise through a documented predeclared rule change, not by selectively overriding controls to improve reported returns.
+- Evaluate once after a session closes. The bar file must end on the latest completed US session, contain at least `51` sessions, and contain all four symbols.
+- No intraday signal, LLM confidence score, parameter search or unregistered strategy is used.
+- An agent may describe or challenge the signal but cannot change the computed direction, target, quantity or controls.
+- Missing, stale or incomplete data abstains; it never fabricates a bar, quote, fill or decision.
+
+### Instrument universe and verified mapping
+
+All four positions are opened with **BUY** orders. Inverse ETFs have negative economic direction but are still bought, never shorted. Effective exposure is `direction × daily leverage`.
+
+| Symbol | Benchmark | Direction | Daily leverage | Effective exposure | Status |
+|---|---|---:|---:|---:|---|
+| SPY | S&P 500 | +1 | 1x | +1x | Production allowlist; quote/history verified |
+| UPRO | S&P 500 (3x daily) | +1 | 3x | +3x | Quote/history verified; **not enabled for paper execution**; outside allowlist and requires `R015` plus separate owner approval |
+| SH | S&P 500 (inverse) | -1 | 1x | -1x | Quote/history verified; **not enabled for paper execution**; outside production allowlist and requires separate owner approval |
+| SPXU | S&P 500 (3x inverse daily) | -1 | 3x | -3x | Quote/history verified; **not enabled for paper execution**; outside allowlist and requires `R015` plus separate owner approval |
+
+Verified with 370 read-only Moomoo daily bars per symbol through 17 November 2026, plus current quote reads for all four. Metadata lives in [`backend/app/research/instruments.py`](../backend/app/research/instruments.py). Quote support is not the same as competition-account execution eligibility: only SPY is currently inside the production execution allowlist. Enabling SH requires a deliberate allowlist decision; enabling UPRO/SPXU additionally requires `allow_leveraged=True` and product-specific execution checks. CASH is always permitted.
+
+### State machine, sizing and costs
+
+- Target size is `5%` of equity in **effective exposure**: `quantity = floor(equity × 0.05 / (price × leverage))`, whole shares, cash-only.
+- A 3x fund therefore uses about `1.67%` of equity as cash notional for the same `5%` effective exposure.
+- **Flat + target:** BUY the selected ETF.
+- **Held ETF equals target:** HOLD, with no order generated.
+- **Held ETF differs from target, or target is CASH:** SELL the held ETF. The opposite entry is not submitted in the same run.
+- **Reversal:** a later run may BUY the opposite ETF only after read-only reconciliation confirms the prior position is flat.
+- **Multiple holdings, working orders or unreconciled state:** fail closed with no new order.
+- Only one directional S&P 500 position may exist at a time; bullish and bearish ETFs are never held simultaneously.
+- Evaluation charges 2 bps per side. Spread, slippage and daily-reset decay are not modelled; this is a limitation, not an estimate of profitability.
+
+### Deterministic authority and agent roles
+
+- **Market Researcher:** reviews the runner-pinned SPY return, trend, volatility, four-candidate eligibility, current holding and action; produces a timestamped assessment.
+- **Independent Risk Auditor:** challenges the thesis, contradictory evidence, stale data, concentration, leverage, drawdown, invalidation and downside; calls `evaluate_proposal` when a proposal exists.
+- **Coordinator:** combines the research, counterarguments and deterministic output into `BUY`, `SELL`, `HOLD` or `NO_TRADE` with traceable reasoning. It has no tools.
+- **Deterministic code:** signal arithmetic, ETF selection, sizing, HOLD/SELL/CASH/reversal state, RiskGate enforcement and order permissions. The RiskGate is final and cannot be overridden by an agent, UI text or research content.
+- **Adaptation:** agents reason only. They cannot write bars, alter the computed signal or access broker order tools.
+
+### RiskGate changes for leveraged products
+
+- Existing `R001`–`R014` limits are unchanged.
+- `R015`: an instrument with leverage greater than 1 is rejected unless the gate is constructed with `allow_leveraged=True`. The default is `False`.
+- Per-symbol leverage metadata is validated; invalid or non-positive metadata rejects with `R007`.
+- `R004` and `R005` measure **effective** post-order exposure; `R008` still requires unlevered cash for the actual notional.
+- No exposure limit was raised to accommodate leverage. The production allowlist was not expanded.
+
+### Research evidence and limitations
+
+- **Real inputs:** SPY, UPRO, SH and SPXU, 370 completed daily bars each, read-only Moomoo `history-kline`, last session 17 November 2026. Runner data: `evidence/current-market/2026-11-17/daily-bars.json`; fixture: [`backend/tests/fixtures/moomoo_directional_etf_bars_2026-11-17.json`](../backend/tests/fixtures/moomoo_directional_etf_bars_2026-11-17.json). The prior IWM/QQQ/SPY snapshot is preserved beside it as `daily-bars-iwm-qqq-spy-prior.json`.
+- **Latest real decision:** 17 November 2026 close `732.44`, 10-session return `-2.90%`, SMA50 `762.89`, 20-session annualised volatility `23.06%` → BEARISH, target SH, 147 shares at 5% effective exposure. The real gate rejected the proposal (`R002`, stale post-close quote, non-regular session, `R010`, `R014`).
+- **Historical sanity check:** 12 August 2025 to 17 November 2026 at the fixed rules and 5% sizing produced `-0.40%` total return, `0.42%` annualised volatility, `-0.75` Sharpe, `0.59%` maximum drawdown, `41.07%` of sessions exposed, 35 trades and a `41.18%` win rate. SPY buy-and-hold over the same data returned `+15.47%` with `8.88%` maximum drawdown. The strategy underperformed; this is not evidence of alpha and was not optimised.
+- **Read-only agent demo:** genuine three-agent run `qoder-328aefff-7dde-4a98-ac76-99b3e0e33728` (18 November 2026) recorded the real BEARISH signal, SH proposal and full rejection. It placed no order. See [`evidence/qoder/`](../evidence/qoder/).
+- **Forward paper validation** is the required next evidence step. Until filled, reconciled paper results exist, the strategy has no demonstrated live edge.
+- **Acceptance:** mechanics/unit tests pass; only allowlisted instruments can reach an `APPROVE`; every decision is traceable; the first paper order is separately owner-approved.
+- **Rejection:** negative net return over a 20-trade forward sample, drawdown beyond policy, repeated inability to produce traceable decisions, or failure to beat cash/exposure-matched benchmarks. Thresholds must not be tuned on backtest outcomes.
+
+### Retired strategies and simplification audit
+
+- **Retired from the active product:** `momentum-v1`, `news-catalyst-v1`, `directional-event-v2`, `volume-confirmed-relative-strength-v1`, `moomoo-oversold-reversal-v1`, and the research-only `etf-trend-baseline-v1` comparator.
+- **Removed:** the event archive, event module, synthetic event fixture, old demo/report generators, momentum deployable-limit study, catalyst study, Moomoo-signal observation script, obsolete archive types and their strategy-specific tests.
+- **Retained as historical evidence:** prior research artifacts and Qoder runs under `evidence/`, the ETF baseline study/comparator, buy-and-hold and cash baselines, risk/execution history and supervised diagnostic records.
+- **Reused:** `MarketHistory`, read-only Moomoo feeds, the dry-run harness, Qoder tool boundary, deterministic `RiskGate`, paper executor, ledger, reconciliation and the existing dashboard.
+- **Not changed:** OAuth scopes, broker adapter, order transport, supervised execution workflow, kill switch, dashboard structure or agent count.
 
 ## Preliminary hard constraints
 
@@ -30,9 +94,9 @@ Thesis: stronger recent momentum during a favourable broad-market trend may pers
 |---|---|---|
 | R001 | Account must be the exact verified competition paper account (masked id + fingerprint, simulated source) | Reject and disable order writes |
 | R002 | Symbols restricted to validated allowlist | Reject |
-| R003 | Long-only, cash-only; no options, short selling or leverage | Reject |
-| R004 | Per-instrument exposure <= 10% of equity (post-order) | Reduce/reject by deterministic sizing policy |
-| R005 | Total gross invested exposure <= 30% equity | Reduce/reject by deterministic sizing policy |
+| R003 | Long-only, cash-only; no options or short selling; leverage blocked unless R015 is explicitly enabled | Reject |
+| R004 | Per-instrument exposure <= 10% of equity (post-order, effective exposure) | Reduce/reject by deterministic sizing policy |
+| R005 | Total gross exposure <= 30% equity (effective exposure) | Reduce/reject by deterministic sizing policy |
 | R006 | Daily equity drawdown >= 2% from the trading day's starting equity | Pause new buying; leave liquidation to a separate documented policy |
 | R007 | Quote / account snapshot missing, stale, invalid or contradictory | Reject/abstain |
 | R008 | Insufficient unlevered cash after fees/buffer | Reject |
@@ -42,6 +106,8 @@ Thesis: stronger recent momentum during a favourable broad-market trend may pers
 | R012 | Exchange/session constraints or ineligible order type | Reject |
 | R013 | Post-order open positions > 3 distinct instruments | Reject new buying |
 | R014 | First paper order without explicit, durable owner approval | Reject before broker call |
+| R015 | Leveraged instrument without a separate, explicit leverage approval | Reject before broker call |
+
 
 Limits are conservative **initial choices**, not necessarily optimal. No LLM, agent administrator or dashboard button may silently bypass them. Changes must be versioned and audited; actual competition rules take precedence.
 
@@ -82,6 +148,10 @@ The order path remains a disabled prototype: `ORDER_WRITES_ENABLED=false`, the d
 - `HALTED`: persistent safety interlock; manual review and preflight required to resume. Display prominent warning.
 - `KILL`: operator-triggered persistent stop of new writes. If cancellation is supported, separately offer documented authorised cancellation of pending orders.
 - None of these states implicitly means existing holdings have been liquidated.
+
+## Appendix: historical evidence for retired strategies
+
+> The sections below document evaluations of strategies that are **retired from the active product**. They are retained as historical evidence and research conclusions, not as descriptions of current behaviour. `spy-directional` is the only registered active strategy.
 
 ## Evaluation metrics
 
@@ -204,7 +274,7 @@ Every strategy loses to simply holding SPY over its own deployment dates in both
 
 ### Decision
 
-No strategy in this study has defensible evidence of alpha. The deterministic momentum rules stay frozen and the system remains in `NO_TRADE` unless those rules say otherwise; the catalyst alternatives are not deployed. This is a deliberate choice, not a forced trade, and it respects the rubric's preference for demonstrable risk control over manufactured activity.
+No strategy in this study has defensible evidence of alpha. This conclusion is historical: on 18 November 2026 the retired momentum and catalyst rules were replaced by `spy-directional`, which is now the only registered active strategy. The catalyst alternatives remain undeployed. The system still takes no position unless the frozen `spy-directional` rules select one, which reflects the rubric's preference for demonstrable risk control over manufactured activity.
 
 Weaknesses that would need to be resolved before deployment: 7–13 holdout trades, overlapping regime windows, a single 17-month ETF history, adjusted-bar dividend treatment, one fixed dev/holdout split with no multiple-testing correction, and no cost-sensitivity grid. Any future attempt must use a pre-registered hypothesis on data not used here, not further tuning against this holdout.
 
@@ -242,11 +312,11 @@ Two independent AI reviews were run against the frozen protocol. The research re
 
 ### Recommendation
 
-Retain `momentum-v1` unchanged and keep `NO_TRADE` (SPY closed `732.44` against a 20-session SMA of `755.86` on 17 November 2026); do not deploy the Moomoo-signal candidate, do not widen the RiskGate allowlist and do not continue it as a capital-bearing paper strategy. The candidate has no historical validation, its defining entry condition produced zero signals on the only observed close, and the one historically auditable Moomoo signal (capital flow) did not add positive forward information. The observer may remain a read-only capability log if pattern availability is worth tracking, but it is not evidence of alpha.
+This recommendation was made before the 18 November 2026 pivot, when `momentum-v1` was still the active rule. Its successor, `spy-directional`, is the only registered strategy: it keeps the same 2% drawdown pause, 10%/30% exposure caps and cash-only constraints, but uses a 10-session return plus SMA50 direction rule. The Moomoo-signal candidate remains undeployed, the RiskGate allowlist remains `{SPY, QQQ, IWM}`, and it is not a capital-bearing paper strategy. The candidate has no historical validation, its defining entry condition produced zero signals on the only observed close, and the one historically auditable Moomoo signal (capital flow) did not add positive forward information. The observer script was removed during the 18 November 2026 cleanup; its recorded observations remain under `evidence/research/moomoo-signal-observation/` as a historical capability log, not evidence of alpha.
 
-Implementation effort if this were ever revisited: low for the read-only observer (already present), high for deployment because it requires an owner-approved universe change, an authorized write token and a separately verified broker lifecycle. The execution permission and broker-lifecycle blockers are unchanged.
+Implementation effort if this were ever revisited: low for a read-only observer, high for deployment because it requires an owner-approved universe change, an authorized write token and a separately verified broker lifecycle. The execution permission and broker-lifecycle blockers are unchanged.
 
-## Required unit/integration tests
+## Required unit/integration tests (current project)
 
 - [x] Wrong or unverified account cannot submit.
 - [x] Live account, other paper account and market-only selection are rejected.
@@ -280,6 +350,7 @@ Implementation effort if this were ever revisited: low for the read-only observe
 - [x] The disabled order adapter matches the documented payload and refuses both enabled and disabled submission attempts.
 - [x] Provider order statuses map strictly, including partial, filled, cancelled and rejected variants.
 - [x] Accepted-but-timed-out submissions persist `UNKNOWN`, block new submissions, reconcile from today/history/positions and are never retried automatically.
+- [x] Leveraged instruments are rejected by default (`R015`) and checked on effective exposure only when explicitly opted in.
 - [x] Unexpected broker response objects or mismatched keys become `UNKNOWN` instead of fills.
 
-Implemented in `backend/tests` (**284 tests on 18 November 2026**, including REST auth/read, execution-scope validation, quote/session execution preflight, disabled order-transport success/partial/rejection/timeout/duplicate/`UNKNOWN` mocks, order-correlation/reconciliation, Qoder runner/tool, ETF baseline, scheduler catch-up/lock/interruption recovery, clock-skew handling and read-only dashboard API tests). The REST adapter also completed real read-only provider calls to the competition account: exact identity, 100,000 USD cash/equity, zero positions and orders, `reconciled=true`. A genuine current-market read-only Qoder run during the US regular session and a genuine Task Scheduler-triggered catch-up each recorded `NO_TRADE` (negative broad-market regime) with no order submitted. Provider timestamps within 5 seconds of local time are accepted as clock skew; larger skew fails closed, and stale quotes separately report their age. MCP adapter results remain provider-shaped fixtures. No Python transport connects the MCP adapter to cloud data, and no order was placed. Use mock responses for negative/failure-injection tests; avoid deliberately compromising the competition paper account.
+Implemented in `backend/tests` (**310 tests on 18 November 2026**, including REST auth/read, execution-scope validation, quote/session execution preflight, disabled order-transport success/partial/rejection/timeout/duplicate/`UNKNOWN` mocks, order-correlation/reconciliation, Qoder runner/tool, four-ETF SPY signal/HOLD/CASH/reversal tests, leverage-aware RiskGate, ETF baseline, scheduler catch-up/lock/interruption recovery, clock-skew handling and read-only dashboard API tests). The REST adapter also completed real read-only provider calls to the competition account: exact identity, 100,000 USD cash/equity, zero positions and orders, `reconciled=true`. The genuine current-market `spy-directional` run `qoder-328aefff-7dde-4a98-ac76-99b3e0e33728` recorded BEARISH target SH and a full `R002`/`R007`/`R012`/`R010`/`R014` rejection; earlier runs are retained as historical execution evidence. Provider timestamps within 5 seconds of local time are accepted as clock skew; larger skew fails closed, and stale quotes separately report their age. MCP adapter results remain provider-shaped fixtures. No Python transport connects the MCP adapter to cloud data, and no order was placed. Use mock responses for negative/failure-injection tests; avoid deliberately compromising the competition paper account.

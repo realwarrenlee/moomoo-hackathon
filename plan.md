@@ -1,17 +1,17 @@
 # MooTrade — Moomoo × Qoder AI Trading Agent Challenge
 
 **Project plan and implementation specification**  
-**Version:** 1.0 · 16 November 2026  
+**Version:** 18 November 2026  
 **Development and paper-trading window:** 17–28 November 2026  
 **Submission deadline:** 30 November 2026, 23:59 SGT  
 **Finalist presentations:** 8 December 2026  
-**Status:** Proposed; official API access and platform details require verification at kickoff.
+**Status:** Implemented read-only research, agents and dashboard; supervised paper execution is built but disabled and the first paper order is still pending.
 
 ---
 
 ## 1. Executive summary
 
-**MooTrade is a Qoder-native autonomous paper-trading control centre.** It uses specialised AI agents to research the market, propose trades, review decisions and generate reports, while deterministic software enforces non-negotiable risk limits. Approved orders are sent to the competition's Moomoo paper account through the authorised MCP connection. A web dashboard makes every decision, rejection, order, fill and account state visible and auditable.
+**MooTrade is a Qoder-native autonomous paper-trading control centre.** It uses three Qoder Cloud Agents — coordinator, researcher and independent risk auditor — to research the market and review the deterministic decision, while deterministic Python enforces non-negotiable risk limits. Only a separately supervised, operator-only command can submit to the competition's Moomoo paper account through the local OAuth REST adapter; it is disabled by default. A six-page web dashboard makes decisions, rejections, account state and provenance visible and auditable.
 
 **Pitch:** *An AI trading team that doesn't just know when to trade. It knows when to stop.*
 
@@ -28,6 +28,12 @@ The objective is **not** to maximise raw trading profit over a short period. The
 
 **Guiding principle:** Build the smallest complete *end-to-end* product first. Add visual polish, research sophistication and optional features only after safe paper execution, state reconciliation and logging work.
 
+### Strategy decision — 18 November 2026
+
+The original momentum and news-catalyst hypotheses did not produce a defensible edge and are retired from the active product. The active strategy is **`spy-directional`**: one deterministic daily S&P 500 direction rule over completed SPY bars, with exactly four candidate ETFs (SPY `+1x`, UPRO `+3x`, SH `-1x`, SPXU `-3x`) or CASH. Bullish/bearish requires a `±1.5%` 10-session return with price on the matching side of the 50-session SMA; 20-session annualised volatility above `40%` forces CASH. Strong labels require `±3.0%` and volatility at or below `30%`, and select the 3x fund only when leverage is separately enabled. Target size is `5%` effective exposure, with HOLD, SELL/CASH, confirmed-fill reversal and one directional position at a time. The full specification, state transitions, leverage gate, evidence limitations and acceptance/rejection criteria are in [`docs/strategy-and-risk.md`](docs/strategy-and-risk.md). `momentum-v1`, `news-catalyst-v1`, `directional-event-v2`, the stock-selection pre-registration, the Moomoo oversold-reversal candidate and the research-only ETF trend comparator are retained only as historical evidence.
+
+The pivot does not change the execution boundary: production allowlist remains `SPY`/`QQQ`/`IWM`, so SH/UPRO/SPXU are rejected at `R002` until separately approved; `R015` blocks leveraged instruments, no agent receives order authority, and `ORDER_WRITES_ENABLED=false`. The first supervised diagnostic paper BUY/SELL test remains a separate pending milestone and is not affected by the strategy pivot.
+
 ---
 
 ## 2. End product: what the judges will see
@@ -36,17 +42,20 @@ A working **web-based trading operations dashboard** connected to the actual com
 
 ### Primary screens
 
-1. **Overview** — Account equity, cash, open positions, cumulative return, maximum drawdown, active agent runs, last successful sync, paper-mode indicator and current system state (RUNNING / PAUSED / HALTED).
-2. **Agent Activity** — Timestamped research runs, evidence used, trade proposals, risk approvals/rejections, execution attempts, outputs, agent/tool versions and errors.
-3. **Positions & Orders** — Current brokerage-reported holdings, submitted orders, pending orders, fills, cancelled/rejected orders and reconciliation status.
-4. **Risk Control** — Portfolio exposure, per-instrument limits, drawdown, configured policies, rejected proposals, kill-switch state, failure-injection test results.
-5. **Performance & Reports** — Equity curve, benchmark comparison, daily returns, drawdown history, number of trades, turnover, trading costs when available, and a downloadable decision/evidence report.
+1. **Overview** (`/dashboard`) — Account equity, cash, market tape, open positions, latest Qoder run, local controls, recent ledger events and paper-mode/writes-disabled status.
+2. **AI Agent Activity** (`/agents`) — Genuine Qoder sessions and role summaries, the SPY signal, four candidate ETFs, target/current position, risk verdict and evidence timestamps.
+3. **Portfolio & Orders** (`/portfolio`) — Broker-reported holdings, open orders, today's orders, order history and reconciliation status.
+4. **Risk Centre** (`/risk`) — Locked state, limits, current inputs, rule catalogue and the recorded real preflight.
+5. **Performance Analytics** (`/analytics`) — Historical normalised research curves, metrics and explicit limitations; never presented as paper-account performance.
+6. **Audit Log** (`/audit`) — Append-only ledger timeline with filters.
 
 ### Must-have demonstration
 
 The judges must be able to see a **real end-to-end agent decision** recorded with provenance:
 
-`Qoder market research → structured trade proposal → independent risk check → authorised Moomoo MCP order → verified broker response/fill → ledger reconciliation → dashboard and report`
+`Qoder market research → deterministic spy-directional proposal → independent agent review → deterministic RiskGate → supervised paper-broker submission → verified broker response/fill → ledger reconciliation → dashboard and report`
+
+The final two steps remain pending: no supervised paper order has been submitted, so there is no broker-confirmed order or fill yet.
 
 Additionally, demonstrate a deliberately **oversized order being rejected** without reaching the broker. This is a controlled test, not a fabricated trading record.
 
@@ -56,12 +65,14 @@ Additionally, demonstrate a deliberately **oversized order being rejected** with
 - Claiming that short paper-trading returns prove durable alpha.
 - Building proprietary predictive ML models from scratch.
 - Forking and deploying a huge existing hedge-fund application wholesale.
-- Options trading, leverage, short selling or high-frequency strategies unless the organisers' rules and integration make them necessary.
+- Options trading or short selling. Leveraged ETFs are in the candidate mapping but remain blocked by `R015` until separately approved; no leveraged execution is authorised.
 - Public multi-user SaaS, billing, mobile apps or production broker support.
 
 ---
 
-## 3. The trading strategy: simple, explicit and testable
+## 3. Historical strategy proposal (superseded 18 November 2026)
+
+> This section records the original `momentum-v1` / `news-catalyst-v1` plan. Those strategies are retired from the active product; see the strategy decision above and [`docs/strategy-and-risk.md`](docs/strategy-and-risk.md).
 
 **Proposed strategy:** Regime-aware, long-only ETF momentum using an initial universe of **SPY, QQQ and IWM**, subject to the competition's eligible-instrument list and market-data availability.
 
@@ -93,25 +104,25 @@ Short-term relative momentum may be useful when the broader market trend is favo
 ## 4. Architecture
 
 ```text
-     Qoder Cloud Agent schedules / controlled manual trigger
+     Local Task Scheduler / controlled manual trigger
                            |
-                   [1] Research Agent
-             Data + timestamp + evidence
+                [1] Coordinator agent (no tools)
+                   validates run boundary
                            |
-                   [2] Strategy Agent
-              Structured trade proposal
+                [2] Researcher agent
+          research_market → SPY bars + evidence
                            |
-                   [3] Risk Auditor
-            Explanation and challenge
+                [3] Risk Auditor agent
+        evaluate_proposal → independent challenge
                            |
-             DETERMINISTIC RISK GATE
-          (cannot be bypassed by LLMs)
+        DETERMINISTIC SIGNAL, SELECTION AND RISK GATE
+             (cannot be bypassed by LLMs)
                     /             \
                REJECT            APPROVE
                  |                  |
-             Audit log      [4] Execution Agent
+             Audit log      Operator-only supervised CLI
                                     |
-                         Broker adapter / Moomoo MCP
+                     Paper-only broker adapter (local OAuth REST)
                                     |
                          Broker order / fill response
                                     |
@@ -119,46 +130,46 @@ Short-term relative momentum may be useful when the broader market trend is favo
                                     |
                      SQLite ledger + report pipeline
                                     |
-                        FastAPI → React dashboard
+                        FastAPI → Next.js dashboard
 ```
 
-### Agent responsibilities
+### Agent and executor responsibilities
 
-| Agent | Responsibility | Permission boundary | Output |
+| Role | Responsibility | Permission boundary | Output |
 |---|---|---|---|
-| **Research Agent** | Collect market observations and current context; capture sources, timestamps and uncertainty | Read-only market data | Structured `research_snapshot` |
-| **Strategy Agent** | Apply the predeclared strategy, propose candidate and rationale, or abstain | No order-submission permission | Structured `trade_proposal` / `no_trade` |
-| **Risk Auditor** | Independently challenge thesis, sizing, regime and policy compliance | Read-only account/risk state; **not** the final risk authority | Structured `risk_review` |
-| **Execution & Reporting Agent** | Submit only machine-approved paper orders; capture status, fills, reconciliation and readable summary | Narrow paper-order permission through one validated broker adapter | Order events, run report |
+| **Coordinator agent** | Validate the run boundary and close the report from sanitized deterministic artifacts | No tools, no order permission | Run summary |
+| **Researcher agent** | Review the runner-pinned SPY signal, four candidates, holding and action; capture timestamps and limitations | One read-only custom tool (`research_market`) | Structured `research_snapshot` |
+| **Risk Auditor agent** | Independently challenge thesis, volatility, leverage, concentration and invalidation risk | One read-only custom tool (`evaluate_proposal`); **not** the final risk authority | Structured `risk_review` |
+| **Deterministic executor** | Apply the frozen rules, enforce `RiskGate`, submit at most one approved paper order through the supervised CLI | Separate execution OAuth, both CLI flags, durable approval and every preflight check | Order events, run report |
 
 ### Non-LLM core services
 
 - **Risk gate:** Pure deterministic code; final approval token issued only when all checks pass.
-- **Broker adapter:** One audited integration point for Moomoo MCP, with paper-account allowlist and a distinct read-only discovery mode.
+- **Broker adapter:** One audited paper-only integration point (local OAuth REST) with account lock, execution-time quote checks and a distinct read-only discovery mode.
 - **Order state machine:** `PROPOSED → APPROVED/REJECTED → SUBMITTING → ACKNOWLEDGED/REJECTED → PARTIALLY_FILLED/FILLED/CANCELLED/UNKNOWN`.
 - **Reconciler:** Query Moomoo account state after submissions, on scheduled sync and on restart. Treat the broker as the source of truth for fills and holdings.
 - **Event ledger:** Append-only audit events; do not overwrite historical decisions or claim an order filled before confirmation.
-- **Dashboard API:** Read-focused API; manual pause/resume/kill functions require deliberate operator interaction and authentication if deployed publicly.
+- **Dashboard API:** Read-focused GET-only API. It has no order, approval, pause or kill-switch mutation routes.
 
 ### Structured decision contract (minimum)
 
 ```json
 {
   "run_id": "unique-run-id",
-  "decision_time_utc": "2026-11-18T14:30:00Z",
-  "strategy_version": "momentum-v1",
-  "instrument": "QQQ",
+  "decision_time_utc": "2026-11-18T21:00:00Z",
+  "strategy_version": "spy-directional",
+  "instrument": "SH",
   "action": "BUY",
-  "quantity": 5,
-  "signal": {"regime": "positive", "momentum": "positive"},
-  "thesis": "Meets predefined momentum and regime rules",
-  "invalidation": "Trend filter fails or configured risk threshold triggers",
-  "data_as_of_utc": "2026-11-18T14:29:00Z",
-  "research_evidence_ids": ["evidence-001"]
+  "quantity": 147,
+  "signal": {"market_state": "BEARISH", "return_10d": -0.029, "sma50": 762.89, "volatility_20d": 0.2306},
+  "thesis": "SPY 10-session return and trend are bearish; target inverse exposure through SH",
+  "invalidation": "Exit at the next open after a neutral, opposite or volatility-ceiling signal",
+  "data_as_of_utc": "2026-11-17T21:00:00Z",
+  "research_evidence_ids": ["bar:SPY:2026-11-17"]
 }
 ```
 
-Values above are illustrative, not observed market signals. Validate all fields with a schema. The agent's proposal is **not** executable until account state is refreshed and the independent gate approves it. The risk engine must recalculate quantity limits rather than blindly accepting the proposal's requested quantity.
+Values above reflect the observed 17 November 2026 signal recorded in the genuine run and illustrate the contract shape. Validate all fields with a schema. The agent's proposal is **not** executable until account state is refreshed and the independent gate approves it. The risk engine must recalculate quantity limits rather than blindly accepting the proposal's requested quantity.
 
 ---
 
@@ -217,55 +228,40 @@ All exceptions and rejection reasons must appear in the ledger and dashboard.
 | Packaging | README, `.env.example`, reproducible setup scripts, optional Docker Compose |
 | Reporting | Machine-readable JSON/CSV exports + Qoder-generated slide deck |
 
-### Relevant repositories
+### Relevant repositories (references, not vendored)
 
-1. **Qoder official Cloud Agents resources:** https://github.com/QoderAI/cloud-agents — reference for documented orchestration and skills. **Verify repository contents and account access before treating any specific SDK/API as available.**
-2. **Moomoo agent plugin:** https://github.com/MoomooOpen/moomoo-agent-plugin — reference for MCP account, market-data and paper-order workflows. **Verify compatibility with the competition-issued MCP and dedicated account.**
-3. **AI Hedge Fund:** https://github.com/virattt/ai-hedge-fund — selectively study risk policy, ledger, state transitions and reconciliation. Do **not** substitute its internal simulated account for Moomoo's competition account.
-4. **Vibe-Trading (optional):** https://github.com/HKUDS/Vibe-Trading — reference for finance-tool organisation, risk analytics and dashboard concepts. Do not install wholesale unless it saves time and passes security/dependency review.
+1. **Qoder official Cloud Agents resources:** https://github.com/QoderAI/cloud-agents — local reference clone retained for documented orchestration and SDK details; not imported into the backend.
+2. **Moomoo agent plugin:** https://github.com/MoomooOpen/moomoo-agent-plugin (MIT, pinned `0b28d3c23f08702fd0afae9d3a639ff0fb21290b`) — reference for Moomoo MCP tool names and payloads. The application connects directly to `https://mcp.moomoo.com/mcp`; this clone is archived outside the repository.
+3. **AI Hedge Fund:** https://github.com/virattt/ai-hedge-fund (MIT, pinned `5c553b5222044f6a5527bd377b4104c50ee0ad28`) — studied for risk policy, ledger and reconciliation ideas; archived outside the repository, no code imported.
+4. **TradingAgents:** https://github.com/TauricResearch/TradingAgents (Apache-2.0, pinned `9fa1196fffbcfd9de5146d2dd2869df84ab99838`) — architecture reference only; archived outside the repository.
+5. **Vibe-Trading:** https://github.com/HKUDS/Vibe-Trading (MIT, pinned `a8d815d17ec054a34dbdfc7ce8d1d9972566b709`) — separate pinned research study; not a dependency and archived outside the repository.
 
 **Reuse policy:** Build a new small repository. Copy/adapt external code only after checking source licences, attribution requirements, dependency vulnerabilities and competition rules. Prefer ideas and narrow modules over deeply coupled forks. The Qoder integration is a core execution component, not a cosmetic wrapper.
 
-### Suggested repository structure
+### Current repository structure
 
 ```text
 mootrade/
-├── README.md
-├── plan.md
-├── AGENTS.md
-├── .env.example
-├── docs/
-│   ├── architecture.md
-│   ├── integrations.md
-│   ├── strategy-and-risk.md
-│   ├── dashboard.md
-│   ├── build-checklist.md
-│   ├── judge-demo.md
-│   ├── incidents-and-limitations.md  # build as incidents occur
-│   └── attribution.md               # build if code/assets reused
-├── agents/
-│   ├── research/
-│   ├── strategy/
-│   ├── risk-auditor/
-│   ├── execution-reporter/
-│   └── skills/
+├── README.md, plan.md, AGENTS.md, .env.example
+├── docs/                     # architecture, integrations, strategy/risk, dashboard, checklist, demo
 ├── backend/
 │   ├── app/
-│   │   ├── api/
-│   │   ├── broker/
-│   │   ├── risk/
-│   │   ├── strategy/
-│   │   ├── ledger/
-│   │   ├── reconciliation/
-│   │   └── models/
-│   └── tests/
-├── dashboard/
-├── evidence/
-│   ├── sanitized-agent-runs/
-│   ├── risk-test-results/
-│   └── sample-reports/
-└── scripts/
+│   │   ├── broker/           # account lock, read-only REST, quotes, orders, OAuth
+│   │   ├── research/         # spy-directional signal, dry run, evaluation, instruments
+│   │   ├── risk/             # deterministic RiskGate
+│   │   ├── ledger/           # append-only SQLite events, approvals, submissions
+│   │   ├── dashboard/        # GET-only read models and FastAPI app
+│   │   └── models/           # typed contracts
+│   ├── config/               # current-market and read-only schedule configuration
+│   ├── scripts/              # read-only runners, refresh, preflight, scheduler
+│   └── tests/                # 310 backend tests plus fixtures
+├── frontend/                 # six-page Next.js read-only dashboard
+├── evidence/                 # sanitised historical runs, research, preflight, UI captures
+├── data/                     # local ignored ledger and scheduler state
+└── cloud-agents/             # ignored local reference clone
 ```
+
+The three Qoder Cloud Agent definitions live in the Qoder platform, not in this repository; their IDs and the runner contract are in `backend/config/current_market.json` and `backend/scripts/qoder_readonly_run.py`.
 
 Credentials, private tokens and non-public account identifiers must **never** be committed. Include sanitised evidence only.
 
@@ -328,20 +324,20 @@ For each run, show: source/time of market data → research conclusion → propo
 
 ### 19–20 November — Strategy and non-bypassable risk
 
-- [x] Freeze `momentum-v1` entry/exit rules and instrument universe (documented; no parameter search).
+- [x] Freeze `spy-directional` entry/exit rules and the SPY/UPRO/SH/SPXU universe (documented; no parameter search).
 - [x] Implement independent risk gate and persistent kill-switch state (local/mock).
 - [x] Implement idempotency, order lifecycle and broker reconciliation (local/mock).
 - [x] Add tests for oversizing, stale inputs, buying power, retries, unknown outcomes and mismatch.
-- [x] Deterministic research pipeline (`momentum-v1`, `news-catalyst-v1`), historical evaluation and dry-run report (`evidence/sample-reports/decision-report-2026-11-17.md`); no order submitted.
+- [x] Deterministic `spy-directional` research pipeline, historical evaluation and read-only Qoder run artifact; no order submitted.
 - [ ] Deploy first full decision path from Qoder proposal through gate to paper execution.
 
 **Critical gate — 20 November:** A scheduled or controlled Qoder run produces a proposal, enforces deterministic checks and safely attempts an approved Moomoo paper order with complete logs. **Do not prioritise visual polish before this works.**
 
 ### 21–23 November — Agent autonomy and dashboard
 
-- [ ] Implement the four bounded agent responsibilities with structured handoffs.
-- [ ] Configure supported cloud scheduling and failure reporting.
-- [ ] Build five dashboard screens and all minimum backend endpoints.
+- [x] Implement the three bounded Qoder agent responsibilities (coordinator, researcher, auditor) with structured handoffs; execution remains deterministic Python.
+- [x] Configure supported scheduling and failure reporting (local Task Scheduler, read-only).
+- [x] Build six dashboard pages and all minimum read-only backend endpoints.
 - [ ] Show real agent runs, real order states, account sync and rejected-risk events.
 - [ ] Add audit-event exports and a first operational runbook.
 

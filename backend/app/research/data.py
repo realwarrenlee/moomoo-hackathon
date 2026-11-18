@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import json
 from dataclasses import dataclass
-from datetime import UTC, date, datetime, time, timedelta
+from datetime import UTC, date, datetime, time
 from decimal import Decimal
 from pathlib import Path
 
@@ -31,21 +31,6 @@ class DailyBar:
     @property
     def evidence_id(self) -> str:
         return f"bar:{self.symbol}:{self.session_date:%Y%m%d}"
-
-
-@dataclass(frozen=True)
-class NewsItem:
-    symbol: str
-    news_id: str
-    published_at_utc: datetime
-    title: str
-    abstract: str
-    source: str
-    url: str
-
-    @property
-    def evidence_id(self) -> str:
-        return f"news:{self.news_id}"
 
 
 class MarketHistory:
@@ -98,7 +83,10 @@ class MarketHistory:
         return tuple(bar.session_date for bar in self._bars["SPY"])
 
     def bar_on(self, symbol: str, session_date: date) -> DailyBar | None:
-        return next((bar for bar in self._bars[symbol] if bar.session_date == session_date), None)
+        bars = self._bars.get(symbol)
+        if bars is None:
+            return None
+        return next((bar for bar in bars if bar.session_date == session_date), None)
 
     def next_bar(self, symbol: str, session_date: date) -> DailyBar | None:
         for bar in self._bars[symbol]:
@@ -120,52 +108,3 @@ class MarketHistory:
 
     def last_completed_session(self) -> date:
         return self._bars["SPY"][-1].session_date
-
-
-class NewsArchive:
-    def __init__(self, items: tuple[NewsItem, ...], source: dict[str, object]) -> None:
-        self.items = items
-        self.source = source
-
-    @classmethod
-    def from_file(cls, path: str | Path) -> NewsArchive:
-        payload = json.loads(Path(path).read_text(encoding="utf-8"))
-        if payload.get("schema_version") != "1":
-            raise ValueError("unsupported news schema")
-        items = tuple(
-            NewsItem(
-                symbol=row["symbol"],
-                news_id=str(row["news_id"]),
-                published_at_utc=datetime.fromisoformat(
-                    row["published_at_utc"].replace("Z", "+00:00")
-                ),
-                title=row.get("title", ""),
-                abstract=row.get("abstract", ""),
-                source=row.get("source", ""),
-                url=row.get("url", ""),
-            )
-            for row in payload["items"]
-        )
-        if any(item.published_at_utc.tzinfo is None for item in items):
-            raise ValueError("news timestamps must be timezone-aware")
-        return cls(items, dict(payload.get("source", {})))
-
-    def items_for(
-        self,
-        symbol: str,
-        decision_time_utc: datetime,
-        lookback: timedelta = timedelta(hours=72),
-    ) -> tuple[NewsItem, ...]:
-        start = decision_time_utc - lookback
-        return tuple(
-            item
-            for item in self.items
-            if item.symbol == symbol
-            and start < item.published_at_utc <= decision_time_utc
-        )
-
-    def coverage(self, symbol: str) -> tuple[datetime, datetime] | None:
-        published = [item.published_at_utc for item in self.items if item.symbol == symbol]
-        if not published:
-            return None
-        return min(published), max(published)

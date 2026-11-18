@@ -15,7 +15,6 @@ import threading
 from collections.abc import Mapping
 from dataclasses import dataclass
 from datetime import UTC, datetime
-from decimal import Decimal
 from pathlib import Path
 from typing import Any, Protocol
 
@@ -40,7 +39,7 @@ from app.cli import ledger_path_from_env, load_local_env
 from app.ledger.store import SQLiteLedger
 from app.models.contracts import AccountSnapshot
 
-QUOTE_SYMBOLS = ("SPY", "QQQ", "IWM")
+QUOTE_SYMBOLS = ("SPY", "UPRO", "SH", "SPXU")
 POLICY_LIMITS = {
     "max_single_exposure_pct": 10.0,
     "max_total_exposure_pct": 30.0,
@@ -207,10 +206,6 @@ def _age(now: datetime, value: datetime) -> float:
     return max(0.0, (now - value).total_seconds())
 
 
-def _money(value: Decimal | None) -> str | None:
-    return None if value is None else str(value)
-
-
 class DashboardService:
     def __init__(
         self,
@@ -283,11 +278,10 @@ class DashboardService:
                 candidates.append(
                     {
                         "symbol": candidate.get("symbol"),
+                        "direction": candidate.get("direction"),
+                        "leverage": candidate.get("leverage"),
+                        "effective_exposure": candidate.get("effective_exposure"),
                         "close": candidate.get("close"),
-                        "sma20": candidate.get("sma20"),
-                        "return_5d": candidate.get("return_5d"),
-                        "news_count": candidate.get("news_count"),
-                        "positive_news_count": candidate.get("positive_news_count"),
                         "eligible": candidate.get("eligible"),
                         "selected": candidate.get("selected"),
                         "reasons": list(candidate.get("reasons", [])),
@@ -333,6 +327,34 @@ class DashboardService:
                 "account_age_seconds": account.get("age_seconds"),
                 "regular_session_required": validation.get("regular_session_required"),
             }
+        proposal = None
+        raw_proposal = research.get("proposal") if isinstance(research, Mapping) else None
+        if isinstance(raw_proposal, Mapping):
+            proposal = {
+                "proposal_id": raw_proposal.get("proposal_id"),
+                "symbol": raw_proposal.get("symbol"),
+                "action": raw_proposal.get("action"),
+                "requested_quantity": raw_proposal.get("requested_quantity"),
+                "thesis": raw_proposal.get("thesis"),
+                "invalidation": raw_proposal.get("invalidation"),
+            }
+        risk_decision = None
+        raw_risk = payload.get("risk")
+        raw_risk_decision = raw_risk.get("risk_decision") if isinstance(raw_risk, Mapping) else None
+        if isinstance(raw_risk_decision, Mapping):
+            risk_decision = {
+                "policy_version": raw_risk_decision.get("policy_version"),
+                "decision": raw_risk_decision.get("decision"),
+                "approved_quantity": raw_risk_decision.get("approved_quantity"),
+                "reasons": [
+                    {
+                        "rule_id": reason.get("rule_id"),
+                        "message": reason.get("message"),
+                    }
+                    for reason in raw_risk_decision.get("reasons", [])
+                    if isinstance(reason, Mapping)
+                ],
+            }
         return {
             "run_id": payload.get("run_id"),
             "mode": mode,
@@ -344,9 +366,24 @@ class DashboardService:
             "session_count": session_count,
             "decision_time_utc": snapshot.get("decision_time_utc") if isinstance(snapshot, Mapping) else None,
             "data_as_of_utc": snapshot.get("data_as_of_utc") if isinstance(snapshot, Mapping) else None,
-            "regime_ok": snapshot.get("regime_ok") if isinstance(snapshot, Mapping) else None,
-            "regime_reason": snapshot.get("regime_reason") if isinstance(snapshot, Mapping) else None,
-            "selected_symbol": snapshot.get("selected_symbol") if isinstance(snapshot, Mapping) else None,
+            "spy_session_date": snapshot.get("spy_session_date") if isinstance(snapshot, Mapping) else None,
+            "spy_close": snapshot.get("spy_close") if isinstance(snapshot, Mapping) else None,
+            "spy_return_10d": snapshot.get("spy_return_10d") if isinstance(snapshot, Mapping) else None,
+            "spy_sma50": snapshot.get("spy_sma50") if isinstance(snapshot, Mapping) else None,
+            "spy_trend_pct": snapshot.get("spy_trend_pct") if isinstance(snapshot, Mapping) else None,
+            "spy_volatility_20d": snapshot.get("spy_volatility_20d") if isinstance(snapshot, Mapping) else None,
+            "market_state": snapshot.get("market_state") if isinstance(snapshot, Mapping) else None,
+            "direction": snapshot.get("direction") if isinstance(snapshot, Mapping) else None,
+            "target_symbol": snapshot.get("target_symbol") if isinstance(snapshot, Mapping) else None,
+            "target_effective_exposure": snapshot.get("target_effective_exposure") if isinstance(snapshot, Mapping) else None,
+            "current_symbol": snapshot.get("current_symbol") if isinstance(snapshot, Mapping) else None,
+            "current_quantity": snapshot.get("current_quantity") if isinstance(snapshot, Mapping) else None,
+            "action": snapshot.get("action") if isinstance(snapshot, Mapping) else None,
+            "reentry_symbol": snapshot.get("reentry_symbol") if isinstance(snapshot, Mapping) else None,
+            "decision_reason": snapshot.get("decision_reason") if isinstance(snapshot, Mapping) else None,
+            "selected_symbol": snapshot.get("target_symbol") if isinstance(snapshot, Mapping) else None,
+            "proposal": proposal,
+            "risk_decision": risk_decision,
             "no_trade_reason": snapshot.get("no_trade_reason") if isinstance(snapshot, Mapping) else None,
             "candidates": candidates,
             "summaries": safe_summaries,
@@ -563,7 +600,7 @@ class DashboardService:
             "read_only": True,
             "notice": (
                 "Current read-only Moomoo evidence from the competition paper account, "
-                "regular-session quotes and completed daily bars. No order was submitted or approved."
+                "current quote snapshots and completed daily bars. No order was submitted or approved."
                 if current
                 else "Historical Qoder dry-run evidence only. Not current market data, "
                 "owner approval or an order."
@@ -652,7 +689,7 @@ class DashboardService:
         development = results.get("development") if isinstance(results, Mapping) else None
         curves = []
         labels = {
-            "momentum-v1": "Momentum v1",
+            "momentum-v1": "Momentum v1 (retired)",
             "SPY": "SPY",
             "QQQ": "QQQ",
             "cash": "Cash",
@@ -686,6 +723,7 @@ class DashboardService:
                 "Historical signal study, not a broker or paper-account result.",
                 "Short samples; descriptive Sharpe is not statistically meaningful.",
                 "SEC filing coverage and adjusted-price fixtures constrain the sample.",
+                "Momentum v1 is retired from the active product; its results are retained as historical evidence.",
                 "Not registered as an executable strategy or linked to RiskGate order flow.",
             ],
             "provenance": "HISTORICAL_BACKTEST",

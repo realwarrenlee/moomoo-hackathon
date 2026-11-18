@@ -1,389 +1,343 @@
 "use client"
 
 import { useState } from "react"
-import { CheckCircle2Icon } from "lucide-react"
 
 import {
+  DetailSheet,
   EmptyRow,
+  Freshness,
+  InfoNote,
   KeyValue,
   LoadingPage,
-  Metric,
-  MetricStrip,
-  NoticeBanner,
+  PageContainer,
   PageHeader,
-  RefreshButton,
-  SectionCard,
-  StatePanel,
+  PageState,
+  Section,
+  Segmented,
+  Stat,
+  StatGrid,
+  StatusPill,
+  Td,
+  Th,
   TableShell,
 } from "@/components/mootrade/primitives"
 import { useDashboard } from "@/components/mootrade/use-dashboard"
 import {
-  ageLabel,
-  compactId,
+  investedValue,
   money,
+  shortDateTime,
   utcTimestamp,
   type OrderView,
   type PortfolioResponse,
+  type Tone,
 } from "@/lib/mootrade"
-import { cn } from "@/lib/utils"
 
-function statusTone(status: string) {
+function statusTone(status: string): Tone {
   const normalized = status.toUpperCase()
-  if (["FILLED", "SUCCESS", "COMPLETE"].includes(normalized))
-    return "text-emerald-600 dark:text-emerald-400"
+  if (["FILLED", "SUCCESS", "COMPLETE"].includes(normalized)) return "positive"
   if (["CANCELLED", "CANCELED", "FAILED", "REJECTED"].includes(normalized))
-    return "text-rose-600 dark:text-rose-400"
+    return "danger"
   if (["UNKNOWN", "PENDING", "SUBMITTED", "PARTIAL"].includes(normalized))
-    return "text-amber-600 dark:text-amber-400"
+    return "warning"
+  return "neutral"
+}
+
+function statusTextClass(status: string) {
+  const tone = statusTone(status)
+  if (tone === "positive") return "text-emerald-700 dark:text-emerald-300"
+  if (tone === "danger") return "text-rose-700 dark:text-rose-300"
+  if (tone === "warning") return "text-amber-700 dark:text-amber-300"
   return "text-muted-foreground"
 }
 
 function OrdersTable({
   orders,
   emptyLabel,
+  onSelect,
 }: {
   orders: OrderView[]
   emptyLabel: string
+  onSelect: (order: OrderView) => void
 }) {
   return (
     <TableShell>
-      <table className="w-full text-left text-[11px]">
-        <thead>
-          <tr className="border-b text-[10px] text-muted-foreground">
-            <th className="hidden px-3 py-2 font-medium sm:table-cell">Order ID</th>
-            <th className="px-3 py-2 font-medium">Symbol</th>
-            <th className="px-3 py-2 font-medium">Side</th>
-            <th className="px-3 py-2 text-right font-medium">Qty / filled</th>
-            <th className="hidden px-3 py-2 text-right font-medium md:table-cell">Price</th>
-            <th className="hidden px-3 py-2 text-right font-medium md:table-cell">Avg fill</th>
-            <th className="px-3 py-2 font-medium">Status</th>
-            <th className="hidden px-3 py-2 font-medium lg:table-cell">Updated</th>
-          </tr>
-        </thead>
-        <tbody>
-          {orders.length === 0 ? (
-            <EmptyRow colSpan={8} label={emptyLabel} />
-          ) : (
-            orders.map((order) => (
-              <tr key={order.broker_order_id} className="border-b last:border-0">
-                <td className="hidden px-3 py-2 font-mono text-[10px] text-muted-foreground sm:table-cell">
-                  {compactId(order.broker_order_id, 8, 5)}
-                </td>
-                <td className="px-3 py-2 font-mono font-semibold">{order.symbol}</td>
-                <td
-                  className={cn(
-                    "px-3 py-2 font-mono text-[10px] font-semibold",
-                    order.side.toUpperCase() === "BUY"
-                      ? "text-emerald-600 dark:text-emerald-400"
-                      : "text-rose-600 dark:text-rose-400"
-                  )}
-                >
+      <thead>
+        <tr>
+          <Th className="hidden sm:table-cell">Time</Th>
+          <Th>Symbol</Th>
+          <Th>Side</Th>
+          <Th align="right">Qty / filled</Th>
+          <Th align="right" className="hidden sm:table-cell">
+            Avg fill
+          </Th>
+          <Th align="right">Status</Th>
+        </tr>
+      </thead>
+      <tbody>
+        {orders.length === 0 ? (
+          <EmptyRow colSpan={6}>{emptyLabel}</EmptyRow>
+        ) : (
+          orders.map((order) => (
+            <tr
+              key={order.broker_order_id}
+              onClick={() => onSelect(order)}
+              onKeyDown={(event) => {
+                if (event.key === "Enter" || event.key === " ") {
+                  event.preventDefault()
+                  onSelect(order)
+                }
+              }}
+              tabIndex={0}
+              aria-label={`Open order ${order.symbol} ${order.side} ${order.status}`}
+              className="cursor-pointer transition-colors hover:bg-muted/40 focus-visible:bg-muted/40 focus-visible:outline-none"
+            >
+              <Td className="hidden whitespace-nowrap text-xs text-muted-foreground sm:table-cell">
+                {shortDateTime(order.updated_at_utc ?? order.created_at_utc)}
+              </Td>
+              <Td className="font-mono font-semibold">
+                {order.symbol}
+                <span className="block text-[10px] font-normal text-muted-foreground sm:hidden">
+                  {shortDateTime(order.updated_at_utc ?? order.created_at_utc)}
+                </span>
+              </Td>
+              <Td>
+                <span className="font-mono text-xs font-semibold">
                   {order.side.toUpperCase()}
-                </td>
-                <td className="px-3 py-2 text-right font-mono tabular-nums">
-                  {order.quantity} / {order.filled_quantity}
-                </td>
-                <td className="hidden px-3 py-2 text-right font-mono tabular-nums md:table-cell">
-                  {money(order.price)}
-                </td>
-                <td className="hidden px-3 py-2 text-right font-mono tabular-nums md:table-cell">
-                  {money(order.average_fill_price)}
-                </td>
-                <td className={cn("px-3 py-2 font-medium", statusTone(order.status))}>
+                </span>
+              </Td>
+              <Td align="right" className="tabular-nums">
+                {order.quantity} / {order.filled_quantity}
+              </Td>
+              <Td align="right" className="hidden tabular-nums sm:table-cell">
+                {money(order.average_fill_price)}
+              </Td>
+              <Td align="right">
+                <span className={`text-xs font-medium ${statusTextClass(order.status)}`}>
                   {order.status}
-                </td>
-                <td className="hidden whitespace-nowrap px-3 py-2 text-[10px] text-muted-foreground lg:table-cell">
-                  {utcTimestamp(order.updated_at_utc ?? order.created_at_utc)}
-                </td>
-              </tr>
-            ))
-          )}
-        </tbody>
-      </table>
+                </span>
+              </Td>
+            </tr>
+          ))
+        )}
+      </tbody>
     </TableShell>
   )
 }
 
 export default function PortfolioPage() {
-  const { data, error, loading, refreshing, refreshedAt, refresh } =
+  const { data, error, loading, refresh } =
     useDashboard<PortfolioResponse>("portfolio", 60_000)
   const [orderTab, setOrderTab] = useState<"today" | "history">("today")
+  const [selectedOrder, setSelectedOrder] = useState<OrderView | null>(null)
 
   if (loading && !data) return <LoadingPage />
 
-  if (error && !data) {
+  if (!data) {
     return (
-      <div className="space-y-5 p-4 md:p-6">
-        <PageHeader
-          title="Portfolio & Orders"
-          description="Read-only positions and order book retrieved from the competition paper account."
-        />
-        <StatePanel
-          kind="error"
+      <PageContainer>
+        <PageHeader title="Portfolio & Orders" />
+        <PageState
           title="Portfolio unavailable"
-          description={error}
-          action={
-            <RefreshButton
-              onClick={refresh}
-              refreshing={refreshing}
-              refreshedAt={refreshedAt}
-            />
-          }
+          description={error ?? "The read-only broker API returned no data."}
+          onRetry={refresh}
         />
-      </div>
+      </PageContainer>
     )
   }
 
-  if (!data) return null
-
   const account = data.account
+  const invested = investedValue(account?.equity, account?.cash)
+  const orders = orderTab === "today" ? data.today_orders : data.history_orders
+  const brokerUnavailable = Boolean(data.reason) || !account
 
   return (
-    <div className="space-y-5 p-4 md:p-6">
-      <PageHeader
-        title="Portfolio & Orders"
-        description="Live positions and order book read directly from the Moomoo paper account."
-        actions={
-          <RefreshButton
-            onClick={refresh}
-            refreshing={refreshing}
-            refreshedAt={refreshedAt}
-          />
-        }
-      />
+    <PageContainer>
+      <PageHeader title="Portfolio & Orders" />
 
-      {/* Account Verification & Snapshot Context */}
-      <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 rounded-lg border bg-card px-3.5 py-2 text-xs">
-        <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-          <span className="font-mono font-semibold text-foreground">
-            {account?.masked_id ?? "—"}
-          </span>
-          <span className="text-muted-foreground">·</span>
-          <span className="text-muted-foreground">
-            Broker source: Moomoo REST · competition PAPER account
-          </span>
-          <span className="hidden text-muted-foreground sm:inline">·</span>
-          <span className="hidden text-muted-foreground sm:inline">
-            Fills backed by broker confirmation only
-          </span>
-        </div>
-
-        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px]">
-          <span className="flex items-center gap-1.5 font-medium text-emerald-600 dark:text-emerald-400">
-            <CheckCircle2Icon className="size-3" />
-            {account?.reconciled ? "State reconciled" : "Reconciliation attention"}
-          </span>
-          <span className="text-muted-foreground">·</span>
-          <span className="font-mono text-muted-foreground">
-            Snapshot {utcTimestamp(account?.as_of_utc)}
-          </span>
-        </div>
-      </div>
-
+      {data.reason ? (
+        <InfoNote tone="danger">
+          <p className="font-medium">Broker connection unavailable</p>
+          <p>{data.reason}</p>
+        </InfoNote>
+      ) : null}
       {data.warnings.length > 0 ? (
-        <NoticeBanner tone="warning" title="Broker snapshot warnings">
+        <InfoNote tone="warning">
           <ul className="list-disc space-y-0.5 pl-4">
             {data.warnings.map((warning) => (
               <li key={warning}>{warning}</li>
             ))}
           </ul>
-        </NoticeBanner>
+        </InfoNote>
       ) : null}
 
-      {data.reason ? (
-        <NoticeBanner tone="danger" title="Broker connection note">
-          {data.reason}
-        </NoticeBanner>
-      ) : null}
+      <StatGrid>
+        <Stat
+          label="Equity"
+          value={money(account?.equity)}
+          hint={account ? <Freshness seconds={account.age_seconds} /> : "Unavailable"}
+        />
+        <Stat
+          label="Invested"
+          value={invested === null ? "—" : money(invested)}
+          hint={brokerUnavailable ? "Unavailable" : undefined}
+        />
+        <Stat label="Cash" value={money(account?.cash)} />
+        <Stat
+          label="Open orders"
+          value={brokerUnavailable ? "—" : String(data.open_orders.length)}
+          hint={
+            brokerUnavailable
+              ? "Unavailable"
+              : account?.reconciled === false
+                ? "Reconciliation mismatch"
+                : undefined
+          }
+          tone={account?.reconciled === false ? "warning" : "neutral"}
+        />
+      </StatGrid>
 
-      {/* Financial Metrics Strip */}
-      {account ? (
-        <MetricStrip>
-          <Metric
-            label="Equity"
-            value={money(account.equity)}
-            detail={`Snapshot ${ageLabel(account.age_seconds)}`}
-          />
-          <Metric
-            label="Cash balance"
-            value={money(account.cash)}
-            detail="Broker cash"
-          />
-          <Metric
-            label="Buying power"
-            value={money(account.buying_power)}
-            detail="Cash-only (unlevered)"
-          />
-          <Metric
-            label="Open orders / positions"
-            value={`${account.open_orders_count} / ${account.positions_count}`}
-            detail={`${account.unknown_orders} unknown orders`}
-            tone={account.unknown_orders > 0 ? "warning" : "neutral"}
-          />
-        </MetricStrip>
-      ) : null}
-
-      {/* Positions & Working Orders Grid */}
-      <div className="grid gap-4 lg:grid-cols-2">
-        <SectionCard
-          title="Positions"
-          description="Current portfolio holdings reported by the broker."
-        >
-          <TableShell>
-            <table className="w-full text-left text-[11px]">
-              <thead>
-                <tr className="border-b text-[10px] text-muted-foreground">
-                  <th className="px-3 py-2 font-medium">Symbol</th>
-                  <th className="px-3 py-2 text-right font-medium">Quantity</th>
-                  <th className="px-3 py-2 text-right font-medium">Market value</th>
+      <Section title="Positions" flush>
+        <TableShell>
+          <thead>
+            <tr>
+              <Th>Symbol</Th>
+              <Th align="right">Quantity</Th>
+              <Th align="right">Market value</Th>
+            </tr>
+          </thead>
+          <tbody>
+            {data.positions.length === 0 ? (
+              <EmptyRow colSpan={3}>
+                {brokerUnavailable
+                  ? "Positions unavailable — the broker read failed."
+                  : "No open positions reported by the broker."}
+              </EmptyRow>
+            ) : (
+              data.positions.map((position) => (
+                <tr key={position.symbol}>
+                  <Td className="font-mono font-semibold">{position.symbol}</Td>
+                  <Td align="right" className="tabular-nums">
+                    {position.quantity}
+                  </Td>
+                  <Td align="right" className="tabular-nums">
+                    {money(position.market_value)}
+                  </Td>
                 </tr>
-              </thead>
-              <tbody>
-                {data.positions.length === 0 ? (
-                  <EmptyRow
-                    colSpan={3}
-                    label="No open positions reported in broker snapshot."
-                  />
-                ) : (
-                  data.positions.map((position) => (
-                    <tr key={position.symbol} className="border-b last:border-0">
-                      <td className="px-3 py-2 font-mono font-semibold">
-                        {position.symbol}
-                      </td>
-                      <td className="px-3 py-2 text-right font-mono tabular-nums">
-                        {position.quantity}
-                      </td>
-                      <td className="px-3 py-2 text-right font-mono tabular-nums">
-                        {money(position.market_value)}
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </TableShell>
-        </SectionCard>
+              ))
+            )}
+          </tbody>
+        </TableShell>
+      </Section>
 
-        <SectionCard
-          title="Open orders"
-          description="Active working orders in the broker order book."
-        >
-          <TableShell>
-            <table className="w-full text-left text-[11px]">
-              <thead>
-                <tr className="border-b text-[10px] text-muted-foreground">
-                  <th className="px-3 py-2 font-medium">Symbol</th>
-                  <th className="px-3 py-2 font-medium">Side</th>
-                  <th className="px-3 py-2 text-right font-medium">Remaining</th>
-                  <th className="px-3 py-2 text-right font-medium">Reference</th>
+      <Section title="Open orders" flush>
+        <TableShell>
+          <thead>
+            <tr>
+              <Th>Symbol</Th>
+              <Th>Side</Th>
+              <Th align="right">Remaining</Th>
+              <Th align="right">Reference</Th>
+            </tr>
+          </thead>
+          <tbody>
+            {data.open_orders.length === 0 ? (
+              <EmptyRow colSpan={4}>
+                {brokerUnavailable
+                  ? "Open orders unavailable — the broker read failed."
+                  : "No working orders reported by the broker."}
+              </EmptyRow>
+            ) : (
+              data.open_orders.map((order, index) => (
+                <tr key={`${order.symbol}-${index}`}>
+                  <Td className="font-mono font-semibold">{order.symbol}</Td>
+                  <Td>
+                    <span className="font-mono text-xs">{order.side}</span>
+                  </Td>
+                  <Td align="right" className="tabular-nums">
+                    {order.remaining_quantity}
+                  </Td>
+                  <Td align="right" className="tabular-nums">
+                    {money(order.reference_price)}
+                  </Td>
                 </tr>
-              </thead>
-              <tbody>
-                {data.open_orders.length === 0 ? (
-                  <EmptyRow
-                    colSpan={4}
-                    label="No working orders reported by broker."
-                  />
-                ) : (
-                  data.open_orders.map((order, index) => (
-                    <tr
-                      key={`${order.symbol}-${index}`}
-                      className="border-b last:border-0"
-                    >
-                      <td className="px-3 py-2 font-mono font-semibold">
-                        {order.symbol}
-                      </td>
-                      <td className="px-3 py-2 font-mono text-[10px]">
-                        {order.side}
-                      </td>
-                      <td className="px-3 py-2 text-right font-mono tabular-nums">
-                        {order.remaining_quantity}
-                      </td>
-                      <td className="px-3 py-2 text-right font-mono tabular-nums">
-                        {money(order.reference_price)}
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </TableShell>
-        </SectionCard>
-      </div>
+              ))
+            )}
+          </tbody>
+        </TableShell>
+      </Section>
 
-      {/* Tabbed Order Activity (Today / History) */}
-      <SectionCard
+      <Section
         title="Order activity"
-        description="Broker order records for the current session and historical activity."
+        flush
         action={
-          <div className="flex gap-1 rounded-lg border bg-muted/40 p-0.5">
-            <button
-              type="button"
-              onClick={() => setOrderTab("today")}
-              className={cn(
-                "rounded px-2.5 py-1 text-xs font-medium transition-colors",
-                orderTab === "today"
-                  ? "bg-background text-foreground shadow-xs"
-                  : "text-muted-foreground hover:text-foreground"
-              )}
-            >
-              Today ({data.today_orders.length})
-            </button>
-            <button
-              type="button"
-              onClick={() => setOrderTab("history")}
-              className={cn(
-                "rounded px-2.5 py-1 text-xs font-medium transition-colors",
-                orderTab === "history"
-                  ? "bg-background text-foreground shadow-xs"
-                  : "text-muted-foreground hover:text-foreground"
-              )}
-            >
-              History ({data.history_orders.length})
-            </button>
-          </div>
+          <Segmented
+            value={orderTab}
+            onChange={setOrderTab}
+            options={[
+              { value: "today", label: `Today (${data.today_orders.length})` },
+              { value: "history", label: `History (${data.history_orders.length})` },
+            ]}
+          />
         }
       >
-        {orderTab === "today" ? (
-          <OrdersTable
-            orders={data.today_orders}
-            emptyLabel="No orders submitted or returned for today's regular session."
-          />
-        ) : (
-          <OrdersTable
-            orders={data.history_orders}
-            emptyLabel="No historical orders recorded for this competition paper account."
-          />
-        )}
-      </SectionCard>
+        <OrdersTable
+          orders={orders}
+          emptyLabel={
+            orderTab === "today"
+              ? "No orders recorded today."
+              : "No historical orders recorded for this account."
+          }
+          onSelect={setSelectedOrder}
+        />
+      </Section>
 
-      {/* Safe Account Snapshot & State Handling Details */}
-      <div className="grid gap-4 lg:grid-cols-2">
-        <SectionCard
-          title="Account snapshot details"
-          description="Sanitized metadata from the latest broker read."
-        >
-          <div className="grid gap-x-6 sm:grid-cols-2">
-            <KeyValue label="Masked ID" value={account?.masked_id ?? "—"} mono />
-            <KeyValue label="Positions" value={String(account?.positions_count ?? "0")} mono />
-            <KeyValue label="Open orders" value={String(account?.open_orders_count ?? "0")} mono />
-            <KeyValue label="Unknown orders" value={String(account?.unknown_orders ?? "0")} mono />
-            <KeyValue label="Snapshot age" value={ageLabel(account?.age_seconds)} />
-            <KeyValue label="Snapshot time" value={utcTimestamp(account?.as_of_utc)} mono />
+      <DetailSheet
+        open={Boolean(selectedOrder)}
+        onOpenChange={(open) => {
+          if (!open) setSelectedOrder(null)
+        }}
+        title={
+          selectedOrder
+            ? `${selectedOrder.side.toUpperCase()} ${selectedOrder.symbol}`
+            : "Order"
+        }
+        description="Broker order record. An acknowledgement is not a fill."
+      >
+        {selectedOrder ? (
+          <div className="space-y-2">
+            <KeyValue
+              label="Status"
+              value={
+                <StatusPill tone={statusTone(selectedOrder.status)}>
+                  {selectedOrder.status}
+                </StatusPill>
+              }
+            />
+            <KeyValue label="Order ID" value={selectedOrder.broker_order_id} mono />
+            <KeyValue
+              label="Quantity"
+              value={`${selectedOrder.quantity} · filled ${selectedOrder.filled_quantity}`}
+              mono
+            />
+            <KeyValue label="Limit price" value={money(selectedOrder.price)} mono />
+            <KeyValue
+              label="Average fill"
+              value={money(selectedOrder.average_fill_price)}
+              mono
+            />
+            <KeyValue
+              label="Created"
+              value={utcTimestamp(selectedOrder.created_at_utc)}
+            />
+            <KeyValue
+              label="Updated"
+              value={utcTimestamp(selectedOrder.updated_at_utc)}
+            />
+            <KeyValue label="Remark" value={selectedOrder.remark || "—"} mono />
+            <KeyValue label="Source" value={selectedOrder.provenance} mono />
           </div>
-        </SectionCard>
-
-        <SectionCard
-          title="Reconciliation & safety policy"
-          description="Broker state invariants enforced before execution."
-        >
-          <ul className="space-y-1.5 text-[11px] leading-relaxed text-muted-foreground">
-            <li>Any ambiguous response or submission timeout transitions the order to <span className="font-mono text-foreground">UNKNOWN</span> without blind retries.</li>
-            <li>Positions and fills are reconciled on restart and after every order event.</li>
-            <li>Order writes are persistently disabled (<span className="font-mono text-foreground">ORDER_WRITES_ENABLED=false</span>).</li>
-          </ul>
-        </SectionCard>
-      </div>
-    </div>
+        ) : null}
+      </DetailSheet>
+    </PageContainer>
   )
 }

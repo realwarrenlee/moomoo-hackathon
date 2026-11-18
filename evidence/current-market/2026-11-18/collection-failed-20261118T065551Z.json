@@ -1,0 +1,8 @@
+{
+  "mode": "post-close",
+  "provenance": "CURRENT_MARKET_READ_ONLY",
+  "status": "ABSTAINED",
+  "reason": "bar file is missing symbols: SH, SPXU, UPRO",
+  "recorded_at_utc": "2026-11-18T06:55:51.850463+00:00",
+  "order_writes_enabled": false
+}

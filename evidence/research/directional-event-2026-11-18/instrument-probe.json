@@ -1,0 +1,103 @@
+{
+  "probed_at_utc": "2026-11-18T04:11:40.028598+00:00",
+  "source": "Moomoo REST history-kline read-only",
+  "end": "2026-11-17",
+  "symbols": {
+    "QQQ": {
+      "ok": true,
+      "rows": 370,
+      "first": "20250530",
+      "last": "20261117",
+      "last_close": 656.95,
+      "avg_dollar_volume_20": 34790773150.79
+    },
+    "SPY": {
+      "ok": true,
+      "rows": 370,
+      "first": "20250530",
+      "last": "20261117",
+      "last_close": 732.44,
+      "avg_dollar_volume_20": 37821652435.82
+    },
+    "PSQ": {
+      "ok": true,
+      "rows": 370,
+      "first": "20250530",
+      "last": "20261117",
+      "last_close": 27.88,
+      "avg_dollar_volume_20": 658298028.6
+    },
+    "SH": {
+      "ok": true,
+      "rows": 370,
+      "first": "20250530",
+      "last": "20261117",
+      "last_close": 33.9,
+      "avg_dollar_volume_20": 369048377.47
+    },
+    "TQQQ": {
+      "ok": true,
+      "rows": 370,
+      "first": "20250530",
+      "last": "20261117",
+      "last_close": 51.81,
+      "avg_dollar_volume_20": 5141576302.72
+    },
+    "SQQQ": {
+      "ok": true,
+      "rows": 370,
+      "first": "20250530",
+      "last": "20261117",
+      "last_close": 46.95,
+      "avg_dollar_volume_20": 2502032867.49
+    },
+    "UPRO": {
+      "ok": true,
+      "rows": 370,
+      "first": "20250530",
+      "last": "20261117",
+      "last_close": 126.54,
+      "avg_dollar_volume_20": 393169316.77
+    },
+    "SPXU": {
+      "ok": true,
+      "rows": 370,
+      "first": "20250530",
+      "last": "20261117",
+      "last_close": 39.03,
+      "avg_dollar_volume_20": 414841698.59
+    },
+    "SOXX": {
+      "ok": true,
+      "rows": 370,
+      "first": "20250530",
+      "last": "20261117",
+      "last_close": 141.46,
+      "avg_dollar_volume_20": 6126121455.11
+    },
+    "SOXL": {
+      "ok": true,
+      "rows": 370,
+      "first": "20250530",
+      "last": "20261117",
+      "last_close": 49.07,
+      "avg_dollar_volume_20": 12367755842.91
+    },
+    "SOXS": {
+      "ok": true,
+      "rows": 370,
+      "first": "20250530",
+      "last": "20261117",
+      "last_close": 58.77,
+      "avg_dollar_volume_20": 5186887349.17
+    },
+    "SSG": {
+      "ok": true,
+      "rows": 370,
+      "first": "20250530",
+      "last": "20261117",
+      "last_close": 17.42,
+      "avg_dollar_volume_20": 15366179.6
+    }
+  }
+}

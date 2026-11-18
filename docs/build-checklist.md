@@ -28,16 +28,25 @@
 
 ## Stage 2 — 19–20 November: safe order pipeline
 
-- [x] Freeze `momentum-v1` signals/exit rules (documented in `docs/strategy-and-risk.md`; no parameter search).
-- [x] Deterministic research pipeline for `momentum-v1` and `news-catalyst-v1` with evidence IDs, signal strength and explicit buy/skip reasons.
-- [x] Historical evaluation against matched SPY/QQQ/IWM and cash baselines with no look-ahead; results and limitations in `evidence/sample-reports/decision-report-2026-11-17.md`.
-- [x] Dry-run proposal → `RiskGate.evaluate` demonstration covering approved hypothetical proposals and `R004`/`R007`/`R010`/`R014` rejections. No broker call and no order submitted.
+- [x] Audit legacy strategies and retire `momentum-v1`, `news-catalyst-v1`, `volume-confirmed-relative-strength-v1`, `moomoo-oversold-reversal-v1` and the research-only ETF trend comparator from the active product.
+- [x] Define one `spy-directional` specification covering the SPY signal, four-ETF mapping, HOLD/exit/reversal state, sizing, costs, benchmarks and acceptance/rejection criteria (`docs/strategy-and-risk.md`).
+- [x] Verify SPY/UPRO/SH/SPXU against real read-only Moomoo daily bars and current quotes; record benchmark, direction, leverage, effective exposure and execution eligibility. Only SPY is in the production execution allowlist.
+- [x] Implement the fixed SPY signal, HOLD/exit/CASH/reversal state machine, four-symbol selection and 5% effective-exposure sizing.
+- [x] Add opt-in `R015` leverage rejection and effective-exposure checks to `RiskGate` without raising limits or expanding the production allowlist.
+- [x] Rewire the Qoder tool schema, historical/current runners and daily bar refresh to `spy-directional`; update the researcher agent to v4.
+- [x] Extend the existing dashboard read model and agents page with the SPY signal, four candidates, thesis, target/current position and risk verdict; no new page or order control.
+- [x] Remove obsolete event archive/module/fixture, demo/report, momentum deployable-limit, catalyst-study and signal-observation code; preserve historical evidence artifacts.
+- [x] Backend suite, frontend typecheck, frontend tests and `next build` pass (310 backend tests on 18 November 2026).
+- [x] Repository cleanup: unused reference clones archived outside the project, generated caches removed, and documentation aligned to `spy-directional`, the four candidate ETFs and the three implemented Qoder agents (18 November 2026).
+- [ ] Enable SH for paper execution through a deliberate allowlist decision and owner approval, then run forward paper validation.
+- [ ] Separately review and approve leverage-aware paper execution before any UPRO/SPXU order is eligible.
+- [x] Historical: dry-run proposal → `RiskGate.evaluate` demonstration covering approved hypothetical proposals and `R004`/`R007`/`R010`/`R014` rejections. No broker call and no order submitted.
 - [x] Deterministic risk gate, account refresh, kill switch, idempotency, first-order approval and broker state machine (local/mock).
 - [x] Complete mandatory mock failure tests listed in strategy-and-risk document.
-- [x] Strategy review against a catalyst alternative and exposure-matched SPY (18 November 2026); no defensible alpha found, rules unchanged and `NO_TRADE` retained (`docs/strategy-and-risk.md`).
-- [x] Moomoo technical-signal capability audit and forward observation (18 November 2026): pattern/polarity are snapshot-only, unusual-technical POST is refused, capital flow adds no positive forward information, and the candidate is rejected (`docs/strategy-and-risk.md`).
-- [x] Deployable-limit `momentum-v1` re-evaluation (18 November 2026): 10% per position, 30% gross, whole shares, same 370-bar fixture. Return `+0.09%`, max drawdown `1.22%`, average exposure `6.62%`; it lost to same-schedule SPY (`+0.43%`). No rule or parameter change.
-- [x] Pre-registered one fixed stock-selection hypothesis using reconstructable OHLCV only (18 November 2026). Not evaluated, not deployed, no Moomoo snapshot labels as gates (`docs/strategy-and-risk.md`).
+- [x] Historical: strategy review against a catalyst alternative and exposure-matched SPY (18 November 2026); no defensible alpha found in the retired rules (`docs/strategy-and-risk.md`).
+- [x] Historical: Moomoo technical-signal capability audit and forward observation (18 November 2026); the candidate was rejected (`docs/strategy-and-risk.md`).
+- [x] Historical: deployable-limit `momentum-v1` re-evaluation; retained only as evidence, not an active strategy.
+- [x] Historical: pre-registered stock-selection hypothesis; not evaluated, not deployed.
 - [x] Execution-time quote freshness, symbol and regular-session preflight; strict parsing and fail-closed tests.
 - [x] Documented simulated-order payload, bounded `text` correlation tag, strict provider-status mapping and `UNKNOWN` reconciliation across today/history/positions; adapter refuses submission in both flag states and the operator preview never submits.
 - [x] Real read-only preflight against the competition paper account for SPY/QQQ/IWM: fresh quote/session/account checks, diagnostic QQQ BUY 1 preview, RiskGate evaluation and sanitized recorded evidence. Failed closed on stale premarket quotes and closed regular session; `submission_performed=false`, `order_endpoint_contacted=false`.
@@ -48,8 +57,9 @@
 
 ## Stage 3 — 21–23 November: agents and interface
 
-- [ ] Four bounded Qoder agent roles with structured output validation.
-- [ ] Real Qoder run IDs, tool calls and handoffs in ledger.
+- [x] Reuse three bounded Qoder roles (coordinator, researcher, auditor) with strict tool schemas; the researcher agent was updated to version 4 for `spy-directional`.
+- [x] Genuine current-market read-only demo: SPY BEARISH signal → SH 147-share proposal → real `RiskGate` `POLICY_REJECTED` (run `qoder-328aefff-7dde-4a98-ac76-99b3e0e33728`); no order, approval or fill.
+- [ ] Record each tool call and handoff as an individual ledger event; run ID, sessions and outcome are currently recorded at start/completion.
 - [x] Scheduled read/research workflows with bounded retries. *(Task Scheduler repaired and verified 18 November 2026: wake/start-when-available, two UTC triggers for both ET DST offsets, catch-up, OS lock and durable idempotent state. A genuine timer-triggered catch-up run completed `NO_TRADE`; the one-time validation trigger was removed.)*
 - [x] Next.js dashboard: Overview, AI Agent Activity, Portfolio & Orders, Risk Centre, Performance Analytics and Audit Log. Adapted from the cloned Shadcn Fintech template with MIT attribution.
 - [x] Typed GET-only FastAPI dashboard API with bearer/loopback auth, 405 on writes, stale/empty/disconnected/error states and PAPER/HISTORICAL/LOCAL provenance labels; paper-account performance shown as unavailable rather than fabricated.

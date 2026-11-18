@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import json
 from collections.abc import Callable
-from dataclasses import asdict, dataclass, is_dataclass
+from dataclasses import asdict, dataclass, is_dataclass, replace
 from datetime import UTC, datetime
 from decimal import Decimal
 from enum import Enum
@@ -12,7 +12,7 @@ from uuid import uuid4
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
 
 from app.models.contracts import AccountSnapshot, ControlState, Quote, TradeProposal
-from app.research.data import UNIVERSE, MarketHistory, NewsArchive
+from app.research.data import UNIVERSE, MarketHistory
 from app.research.dryrun import (
     DryRunDecision,
     build_account,
@@ -20,10 +20,11 @@ from app.research.dryrun import (
     dry_run_control,
     latest_decision,
 )
-from app.research.strategy import build_proposal, screen
+from app.research.instruments import INSTRUMENTS
+from app.research.strategy import STRATEGY_VERSION, decide, screen
 from app.risk.policy import RiskGate
 
-StrategyVersion = Literal["momentum-v1", "news-catalyst-v1"]
+StrategyVersion = Literal["spy-directional"]
 MAX_INPUT_BYTES = 16_384
 MAX_PROPOSAL_QUANTITY = 10_000
 
@@ -49,7 +50,7 @@ RESEARCH_TOOL_SCHEMA = {
     "type": "object",
     "properties": {
         "run_id": {"type": "string", "minLength": 8, "maxLength": 80},
-        "strategy_version": {"type": "string", "enum": ["momentum-v1", "news-catalyst-v1"]},
+        "strategy_version": {"type": "string", "enum": [STRATEGY_VERSION]},
     },
     "required": ["run_id", "strategy_version"],
     "additionalProperties": False,
@@ -91,14 +92,12 @@ class QoderToolService:
     def __init__(
         self,
         history: MarketHistory,
-        news: NewsArchive,
         fingerprint: str = "historical-dry-run-paper",
         *,
         current: CurrentMarketContext | None = None,
         clock: Callable[[], datetime] | None = None,
     ) -> None:
         self.history = history
-        self.news = news
         self.fingerprint = fingerprint
         self.current = current
         self.mode = "CURRENT_MARKET_READ_ONLY" if current is not None else "HISTORICAL_DRY_RUN"
@@ -112,7 +111,7 @@ class QoderToolService:
         decision_time_utc: datetime | None = None,
         evaluation_now: datetime | None = None,
     ) -> str:
-        if strategy_version not in ("momentum-v1", "news-catalyst-v1"):
+        if strategy_version != STRATEGY_VERSION:
             raise ValueError("unsupported strategy")
         run_id = f"qoder-{uuid4()}"
         self._runs[run_id] = _RunState(
@@ -145,11 +144,10 @@ class QoderToolService:
                 state.decision = self._current_decision(state.strategy_version, decision_time)
             else:
                 state.decision = (
-                    latest_decision(self.history, self.news, validated.strategy_version, self.fingerprint)
+                    latest_decision(self.history, validated.strategy_version, self.fingerprint)
                     if decision_time is None
                     else decide_at(
                         self.history,
-                        self.news,
                         validated.strategy_version,
                         self.fingerprint,
                         decision_time,
@@ -157,6 +155,12 @@ class QoderToolService:
                     )
                 )
         decision = state.decision
+        if decision.proposal is not None and decision.proposal.run_id != validated.run_id:
+            decision = replace(
+                decision,
+                proposal=decision.proposal.model_copy(update={"run_id": validated.run_id}),
+            )
+            state.decision = decision
         return {
             "ok": True,
             "mode": self.mode,
@@ -175,10 +179,10 @@ class QoderToolService:
     ) -> DryRunDecision:
         assert self.current is not None
         decision_time = decision_time_utc or self.current.decision_time_utc
-        snapshot = screen(self.history, self.news, decision_time, strategy_version)
+        snapshot = screen(self.history, decision_time, strategy_version)
         account = self.current.account_provider()
-        proposal = build_proposal(snapshot, self.history, account.equity)
-        quote = self.current.quote_provider(snapshot.selected_symbol or "SPY")
+        snapshot, proposal = decide(snapshot, self.history, account)
+        quote = self.current.quote_provider(proposal.symbol) if proposal is not None else None
         return DryRunDecision(
             scenario="current market read-only",
             snapshot=snapshot,
@@ -198,7 +202,7 @@ class QoderToolService:
             return _error("unknown_run", "Run ID has no pinned research artifact")
         original = state.decision.proposal
         if original is None:
-            return _error("no_proposal", "The pinned research artifact is NO_TRADE")
+            return _error("no_proposal", "The pinned research artifact is not an order proposal")
         proposal = validated.proposal
         if proposal.requested_quantity > MAX_PROPOSAL_QUANTITY:
             return _error("invalid_input", "Proposal quantity exceeds the tool input bound")
@@ -226,6 +230,8 @@ class QoderToolService:
         gate = RiskGate(
             expected_account_fingerprint=self.fingerprint,
             allowed_symbols=frozenset(UNIVERSE),
+            leverage_by_symbol={symbol: item.leverage for symbol, item in INSTRUMENTS.items()},
+            allow_leveraged=False,
         )
         decision = gate.evaluate(
             proposal=proposal,

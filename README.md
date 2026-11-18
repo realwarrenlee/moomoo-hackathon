@@ -4,29 +4,34 @@
 
 > An AI trading team that doesn't just know when to trade. It knows when to stop.
 
-**Status:** local mock safety core, deterministic research/dry-run pipeline, a **verified local read-only Moomoo REST transport** and a **six-section read-only MooTrade dashboard** backed by typed FastAPI endpoints. A fresh read-only preflight against the competition account passed quote, session and account freshness checks and was rejected only by policy controls (`R010` writes disabled, `R014` first-order approval missing); no order endpoint was contacted. The dashboard has no order-capable action. **Verified 17 November 2026:** the competition paper account `****0101` (`account_type=2`, `market_id=100`, exact title, fingerprint match) reports 100,000 USD cash/equity with zero positions or orders through both the earlier vault-attached cloud MCP read and the new local OAuth 2.1 + PKCE REST client. A genuine current-market read-only run during the US regular session (`AFTERNOON`) produced `NO_TRADE` because the broad-market regime filter was negative, and one local scheduled execution completed read-only with `NO_TRADE`; no order was submitted or approved. The 17 November timer was missed because the host was in Modern Standby. A Task Scheduler task with wake/start-when-available, two UTC triggers for both ET DST offsets, catch-up and durable idempotent state now runs the schedule unattended. A genuine timer-triggered catch-up at `09:10:52 SGT` on 18 November completed `NO_TRADE` (Qoder run `qoder-83bc0a47-e238-4672-a5cc-42e8080180ce`), and the one-time validation trigger was then removed. A Moomoo technical-signal audit on 18 November found candlestick/polarity data are snapshot-only and provider backtest windows are undisclosed; a pre-registered oversold-reversal candidate was rejected, and `momentum-v1` remains unchanged with `NO_TRADE`. See [`docs/strategy-and-risk.md`](docs/strategy-and-risk.md). The local read token is DPAPI-encrypted outside the repository; the REST client allows GET account reads plus two documented POST-for-read quote/market-state endpoints and has no order path. The separate execution OAuth client is now authorized with `quote:read trade:read trade:write` plus an account binding, in a separate DPAPI token store; the read-only token still has no `trade:write`. A read-only `moomoo-execution-check` verified the exact competition account and reported `order_endpoint_contacted=false`; account-exclusive write scope remains unverified. A documented simulated-order transport and paper-broker facade are composed by an operator-only supervised CLI boundary, but writes require both explicit CLI flags, an exact durable approval and every preflight check; mock tests cover the complete path, and no order endpoint has been contacted. Qoder Cloud Agent v4 retains platform-level `always_deny` for all ten order-writing MCP tools, and the Qoder research workflow remains read-only. Raw Moomoo results contain full account ids, so cloud session logs must not be exported. `ORDER_WRITES_ENABLED=false`. See [`docs/integrations.md`](docs/integrations.md).
+**Status:** local mock safety core, a **verified local read-only Moomoo REST transport**, a **six-page read-only MooTrade dashboard**, and one active S&P 500 directional research strategy, **`spy-directional`**. It evaluates completed SPY daily bars once per session and selects SPY, UPRO, SH, SPXU or CASH through fixed rules. The implementation is **read-only**: the production allowlist is unchanged (`SPY`, `QQQ`, `IWM`), so SH/UPRO/SPXU proposals are rejected at `R002`; leveraged orders additionally require the opt-in `R015` gate, and `ORDER_WRITES_ENABLED=false`. The separately approved first diagnostic paper BUY/SELL verification remains pending and was not changed by this work.
+
+The competition paper account `****0101` (`account_type=2`, `market_id=100`, title and fingerprint match) was verified at 100,000 USD cash/equity with zero positions or orders through the local OAuth 2.1 + PKCE REST client. Read and execution tokens remain DPAPI-encrypted outside the repository; the read token has no `trade:write`. The documented simulated-order transport and supervised CLI remain disabled by default and require two explicit flags, a durable approval and every preflight check; **no order endpoint has been contacted and no order has been submitted**. Qoder Cloud Agent v4 keeps `always_deny` on all order-writing MCP tools. A genuine current-market three-agent run under `spy-directional` completed on 18 November 2026 and produced a policy-rejected SH proposal; earlier runs are retained as historical evidence. See [`docs/strategy-and-risk.md`](docs/strategy-and-risk.md) and [`docs/integrations.md`](docs/integrations.md).
 
 ## What judges will see
 
-A desktop-first web dashboard showing (1) paper account equity, cash and exposure; (2) Qoder Cloud Agent runs; (3) research evidence and trade proposals; (4) deterministic risk decisions; (5) broker-confirmed orders/fills; and (6) portfolio reconciliation, incidents and performance.
+A desktop-first web dashboard showing (1) paper account equity, cash and exposure; (2) Qoder Cloud Agent runs; (3) research evidence and trade proposals; (4) deterministic risk decisions; (5) broker order and fill state from reconciliation (currently empty); and (6) portfolio reconciliation, incidents and performance.
 
-The defining demo is **one traceable decision from market data through Qoder agents to a broker-confirmed paper outcome**, plus a safe test showing a rejected oversized order never reaches the broker.
+The target demo is **one traceable decision from market data through Qoder agents to a broker-confirmed paper outcome**, plus a safe test showing a rejected oversized order never reaches the broker. No broker-confirmed order or fill exists yet.
 
 ## Read these in order
 
 1. [`plan.md`](plan.md) — goals, rubric, scope and timeline.
 2. [`docs/architecture.md`](docs/architecture.md) — trust boundaries, data flow and services.
-3. [`docs/integrations.md`](docs/integrations.md) — what the owner must set up, what is verified, and what remains blocked.
-4. [`docs/strategy-and-risk.md`](docs/strategy-and-risk.md) — exact policies and required tests.
-5. [`docs/dashboard.md`](docs/dashboard.md) — six sections, read-only API, provenance and states.
-6. [`docs/build-checklist.md`](docs/build-checklist.md) — sequenced deliverables and acceptance gates.
-7. [`docs/judge-demo.md`](docs/judge-demo.md) — evidence and submission rehearsal.
-8. [`AGENTS.md`](AGENTS.md) — constraints for the coding agent.
+3. [`docs/strategy-and-risk.md`](docs/strategy-and-risk.md) — the active `spy-directional` rules, RiskGate policy and required tests.
+4. [`docs/operations.md`](docs/operations.md) — install, verify, run, supervise and recover.
+5. [`docs/evidence.md`](docs/evidence.md) — demonstrated achievements, evidence matrix, and what remains unverified.
+6. [`docs/reusability.md`](docs/reusability.md) — reusable modules, contracts and extension points.
+7. [`docs/integrations.md`](docs/integrations.md) — what the owner must set up, what is verified, and what remains blocked.
+8. [`docs/dashboard.md`](docs/dashboard.md) — six pages, read-only API, provenance and states.
+9. [`docs/build-checklist.md`](docs/build-checklist.md) — sequenced deliverables and acceptance gates.
+10. [`docs/judge-demo.md`](docs/judge-demo.md) — evidence and submission rehearsal.
+11. [`AGENTS.md`](AGENTS.md) — constraints for the coding agent.
 
-## Tentative stack
+## Stack
 
-- Qoder Cloud Agents: orchestrated researcher, strategy, risk-review and execution/reporting workflows.
-- Moomoo **competition-specific** MCP connection: quotes, account state and authorised paper orders only.
+- Qoder Cloud Agents: a coordinator, a researcher and an independent risk auditor, all read-only. Signal arithmetic, sizing, the `RiskGate` and the supervised order command are deterministic Python.
+- Moomoo competition paper account: local OAuth 2.1 + PKCE REST reads for quotes, account state and order history. The simulated-order transport is disabled by default and reachable only through the operator-only supervised CLI.
 - Python + FastAPI + Pydantic: API, broker adapter, deterministic risk policy and reconciler.
 - SQLite on durable storage: append-only audit events and state records; migrate if hosting requires it.
 - Next.js + TypeScript + Tailwind/shadcn/ui: dashboard, **conditionally adapted from the Shadcn Fintech template** after licensing and dependency checks.
@@ -62,63 +67,64 @@ Complete browser consent with read permissions only for `moomoo-login`; do not g
 
 Once the execution token exists, `moomoo-supervised-preview` evaluates an exact order through the execution client with writes hypothetically enabled but no submission. `moomoo-supervised-execute` is the only write-capable command: it additionally requires `--enable-order-writes`, the exact `--confirm-client-order-key`, a durable approval bound to that proposal, a fresh regular-session quote, a reconciled competition account, a clean kill switch and every `RiskGate` rule. It submits at most once, never retries an ambiguous outcome, and reconciles once read-only. `moomoo-supervised-reconcile` only reads. An execution token now exists; no order has been submitted.
 
-## Research pipeline and dry-run report
+## Research pipeline: `spy-directional`
 
-`backend/app/research/` implements two frozen strategies over daily bars and timestamped news, with no look-ahead:
+`backend/app/research/` implements one active strategy over completed daily bars, with no look-ahead:
 
-- `momentum-v1`: SPY must close above its 20-session SMA; candidates need a close above their own 20-session SMA and a positive 5-session return; the highest 5-session return is selected, with an alphabetical tie-break.
-- `news-catalyst-v1`: the same price rules plus at least one relevant headline in the prior 72 hours and a positive recency-weighted keyword sentiment score.
+1. Each completed session computes SPY's 10-session return, 50-session SMA and 20-session annualised realised volatility from provider bars.
+2. **BULLISH** requires a 10-session return of at least `+1.5%` and SPY above its SMA50. **BEARISH** requires at most `-1.5%` and SPY below its SMA50. Anything else is **NEUTRAL**. Annualised volatility above `40%` forces CASH.
+3. The fixed universe is SPY (`+1x`), UPRO (`+3x`), SH (`-1x`) and SPXU (`-3x`). Inverse exposure uses inverse ETFs bought with `BUY` orders, never short-selling.
+4. A `STRONG BULLISH`/`STRONG BEARISH` label requires an absolute 10-session return of at least `3.0%` and volatility at or below `30%`. It can select UPRO/SPXU only when leverage is separately enabled; otherwise it selects SPY/SH.
+5. Target size is `5%` effective exposure; 3x quantity is floored from `equity × 5% / (price × 3)`. A matching holding produces HOLD; a neutral signal or non-matching target produces CASH or a SELL. A reversal is entered only by a later run after the broker confirms the old position is flat.
+6. The existing `RiskGate` is final. `R015` blocks leveraged instruments unless explicitly opted in, and the production allowlist remains `SPY`/`QQQ`/`IWM`, so SH/UPRO/SPXU proposals fail closed with `R002` until separately approved.
 
-The pipeline screens candidates with explicit reasons to buy or skip, builds a `TradeProposal` with source evidence IDs, and calls the existing `RiskGate.evaluate` directly in dry-run. It never calls `TradingService.execute`, the mock broker or a Moomoo order tool.
+The exact policy, state transitions and limitations are in [`docs/strategy-and-risk.md`](docs/strategy-and-risk.md).
 
-**Sample report:** [`evidence/sample-reports/decision-report-2026-11-17.md`](evidence/sample-reports/decision-report-2026-11-17.md). The last completed session (2026-11-16) is `NO TRADE` for both strategies because SPY closed below its 20-session SMA. The report also contains hypothetical approved proposals (IWM 17 shares on 2026-10-28; QQQ 6 shares on 2026-10-08), fail-closed rejections for stale quotes (`R007`), oversized sizing (`R004`), disabled writes (`R010`) and missing first-order approval (`R014`), plus a historical signal-quality study.
+**Evidence status:** real read-only Moomoo bars cover 370 sessions through 17 November 2026 for all four ETFs. The latest completed-session decision was BEARISH at close `732.44` (10-session return `-2.90%`, SMA50 `762.89`, volatility `23.06%`), targeting SH with a 147-share, 5% BUY proposal. Real `RiskGate` rejected it for `R002`, stale post-close quote, non-regular session, disabled writes and missing first-order approval. The one historical sanity run from 12 August 2025 to 17 November 2026 returned `-0.40%`, `0.42%` annualised volatility, `0.59%` maximum drawdown, `41%` of sessions exposed, 35 trades and a `41.18%` win rate, versus SPY buy-and-hold at `+15.47%`. That is a fixed-rule sanity check, **not evidence of alpha, not an optimised result and not a paper-account result**.
 
-That historical study is **not** the return of the paper account and does not predict future returns. Over 2025-06-27 to 2026-11-16, `momentum-v1` returned -0.41% versus +19.83% for SPY buy-and-hold; over the shorter news window (2026-02-10 to 2026-11-16), `momentum-v1` returned -3.77%, `news-catalyst-v1` +1.56%, SPY +6.23% and QQQ +7.34%. Both strategies were first drafts; parameters were frozen before evaluation and no search was performed.
+Retired strategies (`momentum-v1`, `news-catalyst-v1`, `directional-event-v2`, the stock-selection pre-registration, the Moomoo oversold-reversal candidate and the ETF trend baseline) are no longer registered or active. Their prior reports and event evidence remain under `evidence/` as historical research. The event archive, event module and synthetic event fixture were removed.
 
-Applying the deployable limits to the same frozen rules changes the result to `+0.09%` total return, `1.22%` maximum drawdown and `6.62%` average exposure, versus `+2.07%` for a 10% SPY holding, `+1.37%` for a 6.62%-entry SPY holding and `+0.43%` for SPY on the strategy's exact entry/exit sessions. The improvement from the prior `-0.41%` is a sizing effect, not alpha; the strategy still loses to SPY on matched dates. Evidence: [`evidence/research/momentum-deployable-2026-11-18/report.md`](evidence/research/momentum-deployable-2026-11-18/report.md). A separate `volume-confirmed-relative-strength-v1` stock-selection hypothesis is pre-registered but **not evaluated or deployed**; it uses only reconstructable daily OHLCV and the RiskGate allowlist is unchanged. Protocol: [`evidence/research/stock-selection-prereg-2026-11-18/protocol.json`](evidence/research/stock-selection-prereg-2026-11-18/protocol.json). See [`docs/strategy-and-risk.md`](docs/strategy-and-risk.md).
-
-`etf-trend-baseline-v1` is a separate low-turnover comparator: hold SPY at the 10% policy cap only while its completed month-end close is above its 200-session SMA, execute at the next open. Over the post-warmup window (2026-04-01 to 2026-11-16), it returned +0.26% with one entry and 0.63% maximum drawdown, versus +1.31% for a matched 10% SPY holding and +13.14% for fully invested SPY. The short sample, monthly lag and entry-time-only cap are documented limitations; it is not registered as an executable strategy. Evidence: [`evidence/research/etf-trend-baseline-2026-11-17/report.md`](evidence/research/etf-trend-baseline-2026-11-17/report.md).
-
-Reproduce from the repository root (the account fingerprint is read from the local environment and never printed):
-
-```bash
-.venv/Scripts/python -m app.research.demo \
-  --bars backend/tests/fixtures/moomoo_daily_bars_2026-11-16.json \
-  --news backend/tests/fixtures/moomoo_news_2026-11-17.json \
-  --out evidence/sample-reports/decision-report-2026-11-17.md
-```
-
-Market bars are a committed normalized fixture from a real read-only Moomoo `quote_cur_kline` call (370 daily bars per ETF, 2025-05-29 to 2026-11-16, forward-adjusted; source timestamp 2026-11-17T06:30:00Z). News metadata comes from read-only `news_search` (152 headlines with provider publish times). Neither fixture contains credentials or account identifiers.
-
-Reproduce the ETF baseline study:
+Run the focused research and gate tests:
 
 ```bash
-.venv/Scripts/python backend/scripts/etf_baseline_study.py
+cd backend
+../.venv/Scripts/python -m pytest tests/test_research.py tests/test_qoder_tools.py tests/test_risk.py -q
 ```
 
-Reproduce the deployable-limit study:
+A genuine read-only three-agent run uses the same fixed tool boundary and prints its report path; it cannot submit an order. Add `--decision-time` to pin a historical session for a reproducible demo; omit it to evaluate the latest decision:
 
 ```bash
-cd backend && ../.venv/Scripts/python -m scripts.momentum_deployable_study
+cd backend
+../.venv/Scripts/python -m scripts.qoder_readonly_run \
+  --workspace-id "$QODER_WORKSPACE_ID" \
+  --environment-id "$QODER_ENVIRONMENT_ID" \
+  --coordinator-agent-id "$QODER_COORDINATOR_AGENT_ID" \
+  --researcher-agent-id "$QODER_RESEARCHER_AGENT_ID" \
+  --auditor-agent-id "$QODER_AUDITOR_AGENT_ID" \
+  --decision-time 2026-10-13T21:00:00Z
 ```
+
+The current-market runner uses the same strategy and live read-only Moomoo account/quote feeds; it also has no order path.
 
 ## Qoder read-only orchestration
 
-A genuine three-agent Cloud Agent run completed for run `qoder-5abed69d-8fbc-4342-a51f-e46814f3941c`:
+The workflow uses exactly three Qoder Cloud Agents: a **coordinator** that validates the run boundary and closes the report, a **researcher** that calls `research_market`, and an independent **risk auditor** that challenges the evidence and calls `evaluate_proposal` only when a proposal exists. The coordinator has no tools; none of the agents has an order path. On 18 November 2026 the deployed researcher agent was updated to version 4, replacing the retired `directional-event-v2` enum with `spy-directional`. A genuine current-market three-agent run then completed for run `qoder-328aefff-7dde-4a98-ac76-99b3e0e33728`:
 
-- coordinator `sess_00vrjkuvor0n5z2xowpc`
-- researcher `sess_00vrjkz4rxkaolrwifgl`
-- auditor `sess_00vrjl9k6r08wt8i5u0z`
+- coordinator `sess_00vuffkjlafwgresy62p`
+- researcher `sess_00vuffpgw47pdzx2s53d`
+- auditor `sess_00vufg56d34sgybrbybv`
 
-The researcher called the fixed `research_market` custom tool; the auditor independently confirmed `NO_TRADE`; the coordinator closed the report. Sessions used no Moomoo MCP servers, no Vault, no repository resources and no order tools. The deterministic snapshot was historical evidence only: SPY 739.95 was below its 20-session SMA 757.695, so no candidate was eligible. Sanitized artifacts are in [`evidence/qoder/`](evidence/qoder/); raw cloud session events are not exported. The local runner enforces strict tool inputs, pinned run state and one tool result per call, and does not retry ambiguous delivery.
+The researcher called `research_market` once on real Moomoo bars through 17 November 2026. Its sanitized artifact records a BEARISH signal at `732.44`, a 10-session return of `-2.90%`, SMA50 `762.89`, volatility `23.06%`, deterministic selection of SH at 1x and a 147-share BUY proposal. The auditor called `evaluate_proposal` once; the real `RiskGate` rejected it for `R002` (SH outside the production allowlist), stale post-close quote, non-regular session, disabled writes (`R010`) and missing first-order approval (`R014`). The coordinator closed the run with outcome `POLICY_REJECTED`; no order was created or filled. Evidence: [`evidence/qoder/qoder-328aefff-7dde-4a98-ac76-99b3e0e33728.md`](evidence/qoder/qoder-328aefff-7dde-4a98-ac76-99b3e0e33728.md).
 
-Qoder Cloud Agents remain the research and audit layer, not the broker transport. Authenticated competition-account reads now use the separate local REST client; no agent has an order path. The execution architecture, remaining blockers and acceptance tests are recorded in [`docs/integrations.md`](docs/integrations.md).
+The earlier event-strategy runs are retained under `evidence/qoder/` as historical execution evidence, not as current `spy-directional` results. The local runner enforces strict tool inputs, pinned run state and one tool result per call, and does not retry ambiguous delivery.
+
+Qoder Cloud Agents remain the research and audit layer, not the broker transport. Authenticated competition-account reads use the separate local REST client; no agent has an order path. The execution architecture, remaining blockers and acceptance tests are recorded in [`docs/integrations.md`](docs/integrations.md).
 
 ## Read-only dashboard and API
 
-The dashboard is an adapted copy of the Shadcn Fintech template (MIT, attribution in [`frontend/ATTRIBUTION.md`](frontend/ATTRIBUTION.md)) with six desktop-first sections: Overview, AI Agent Activity, Portfolio & Orders, Risk Centre, Performance Analytics and Audit Log. It shows only backend-computed values; the browser never receives OAuth credentials, account fingerprints or PATs. A PAPER banner and per-block provenance labels separate live broker reads, local ledger/controls, the recorded historical Qoder run and historical strategy curves. Paper-account performance is explicitly unavailable because there are no fills.
+The dashboard is an adapted copy of the Shadcn Fintech template (MIT, attribution in [`frontend/ATTRIBUTION.md`](frontend/ATTRIBUTION.md)) with six desktop-first pages: Overview (`/dashboard`), AI Agent Activity (`/agents`), Portfolio & Orders (`/portfolio`), Risk Centre (`/risk`), Performance Analytics (`/analytics`) and Audit Log (`/audit`). It shows only backend-computed values; the browser never receives OAuth credentials, account fingerprints or PATs. PAPER mode is displayed by the persistent sidebar `Writes DISABLED` indicator and per-block provenance labels that separate live broker reads, local ledger/controls, the recorded historical Qoder run and historical strategy curves. Paper-account performance is explicitly unavailable because there are no fills.
 
-The FastAPI app exposes seven GET-only routes (`/api/v1/health`, `/overview`, `/portfolio`, `/risk`, `/agents`, `/analytics`, `/audit`) plus OpenAPI docs. Non-GET requests return 405, the server refuses to start with writes enabled, and access requires either an optional `MOOTRADE_DASHBOARD_TOKEN` bearer token or a loopback client. The Next.js server proxy allowlists the same six dashboard paths. Details: [`docs/dashboard.md`](docs/dashboard.md).
+The FastAPI app exposes seven GET-only routes (`/api/v1/health`, `/overview`, `/portfolio`, `/risk`, `/agents`, `/analytics`, `/audit`) plus OpenAPI docs. Non-GET requests return 405, the server refuses to start with writes enabled, and access requires either an optional `MOOTRADE_DASHBOARD_TOKEN` bearer token or a loopback client. The Next.js server proxy allowlists the same seven paths (six pages plus health). Details: [`docs/dashboard.md`](docs/dashboard.md).
 
 ```bash
 # Terminal 1 — read-only API
@@ -137,7 +143,7 @@ python -m venv .venv
 .venv/Scripts/python -m pytest
 ```
 
-On macOS/Linux, use `.venv/bin/python` instead. **Verified on 18 November 2026 with Python 3.14.5: 299 tests passed**, including REST OAuth, execution-scope validation, registration-only status rejection, REST read transport, disabled order-transport success/partial/rejection/timeout/duplicate/`UNKNOWN` mocks, supervised CLI missing-approval/kill-switch/wrong-account/closed-market/ambiguous guards, execution preflight/correlation/reconciliation, CLI, Qoder runner/tool, research/dry-run, ETF baseline, scheduler catch-up/idempotency/interruption recovery, clock-skew handling and dashboard API tests. The dashboard also passed 10 formatting regression tests, TypeScript typecheck, ESLint and `next build`. The authenticated REST account reads are real provider evidence; the remaining tests are unit, fixture and mock results. No fill or order result has been observed.
+On macOS/Linux, use `.venv/bin/python` instead. **Verified on 18 November 2026 with Python 3.14.5: 310 backend tests passed**, including REST OAuth, execution-scope validation, registration-only status rejection, REST read transport, disabled order-transport success/partial/rejection/timeout/duplicate/`UNKNOWN` mocks, supervised CLI missing-approval/kill-switch/wrong-account/closed-market/ambiguous guards, execution preflight/correlation/reconciliation, CLI, Qoder runner/tool, four-ETF SPY selection/HOLD/CASH/reversal, leverage-aware RiskGate, ETF baseline, scheduler catch-up/idempotency/interruption recovery, clock-skew handling and dashboard API tests. The dashboard also passed 17 formatting regression tests, TypeScript typecheck, ESLint and `next build`. The authenticated REST account reads are real provider evidence; the remaining tests are unit, fixture and mock results. No fill or order result has been observed.
 
 ### First-order approval (operator action, never submits an order)
 
@@ -146,10 +152,19 @@ On macOS/Linux, use `.venv/bin/python` instead. **Verified on 18 November 2026 w
 # Enter the full Moomoo acc_id at the hidden prompt; only the SHA-256 fingerprint is printed.
 
 .venv/Scripts/python -m app.cli approve-first-order \
-  --proposal-id <proposal-id> --strategy-version momentum-v1
+  --proposal-id <proposal-id> --strategy-version spy-directional
 ```
 
 Set `COMPETITION_ACCOUNT_MASKED_ID`, `COMPETITION_ACCOUNT_FINGERPRINT` and `COMPETITION_ACCOUNT_MARKET_ID` locally. The account lock fails closed if they are missing.
+
+## Known limitations and pending milestones
+
+1. **No broker-confirmed order or fill.** The separately approved supervised diagnostic paper BUY/SELL has not been completed. Mock, fixture and preview results are not broker evidence, and paper-account performance is intentionally shown as unavailable.
+2. **SH/UPRO/SPXU are research-only.** The production allowlist remains `SPY`/`QQQ`/`IWM`; SH is rejected at `R002`, and UPRO/SPXU additionally require the opt-in `R015` leverage gate. No leverage is enabled.
+3. **Execution scope is not account-exclusive.** The separate execution token holds `quote:read trade:read trade:write`, but Moomoo documentation does not confirm that an `accid:` binding narrows `trade:write` to the competition account. It is treated as potentially account-wide.
+4. **No demonstrated forward edge.** The `spy-directional` rules are frozen and unoptimised. The historical sanity check underperformed SPY buy-and-hold; it is not alpha evidence.
+5. **Python cannot call the cloud Moomoo MCP.** Vault credentials are injection-only, so authenticated reads and previews use the local OAuth REST client. Cloud agents remain research/audit-only.
+6. **Scheduling is local.** Windows Task Scheduler runs the read-only workflow; Qoder Cloud cron cannot access the local DPAPI token, repository or ledger.
 
 ## Owner setup
 
@@ -157,4 +172,13 @@ See [`docs/integrations.md`](docs/integrations.md). The owner must personally re
 
 ## License and attribution
 
-This is a new project. External GitHub repositories are **references**, not automatically imported dependencies. Before reusing code or UI assets, inspect licence, provenance, current dependencies and competition restrictions; record citations and credits in an attribution file before submission.
+This project does not vendor external repositories. The research references below were inspected as separate, pinned clones and have been moved outside the repository (archive: `../mootrade-reference-archive/`). Their licences and revisions are recorded here for attribution:
+
+| Reference | Pinned revision | Licence | Use |
+|---|---|---|---|
+| [virattt/ai-hedge-fund](https://github.com/virattt/ai-hedge-fund) | `5c553b5222044f6a5527bd377b4104c50ee0ad28` | MIT | Studied risk-policy and ledger ideas; no code imported |
+| [TauricResearch/TradingAgents](https://github.com/TauricResearch/TradingAgents) | `9fa1196fffbcfd9de5146d2dd2869df84ab99838` | Apache-2.0 | Architecture reference only; no code imported |
+| [HKUDS/Vibe-Trading](https://github.com/HKUDS/Vibe-Trading) | `a8d815d17ec054a34dbdfc7ce8d1d9972566b709` | MIT | Separate pinned research study; not a dependency |
+| [MoomooOpen/moomoo-agent-plugin](https://github.com/MoomooOpen/moomoo-agent-plugin) | `0b28d3c23f08702fd0afae9d3a639ff0fb21290b` | MIT | Reference for Moomoo MCP tool names; the app connects to `https://mcp.moomoo.com/mcp` directly |
+
+The dashboard UI adapts the MIT-licensed Shadcn Fintech template; attribution is in [`frontend/ATTRIBUTION.md`](frontend/ATTRIBUTION.md).

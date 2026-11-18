@@ -22,7 +22,9 @@ from app.cli import load_local_env
 from app.ledger.store import SQLiteLedger
 from app.models.contracts import AccountSnapshot, ControlState, Quote
 from app.qoder_tools import CurrentMarketContext, QoderToolService
-from app.research.data import UNIVERSE, MarketHistory, NewsArchive
+from app.research.data import MarketHistory
+from app.research.instruments import CANDIDATE_SYMBOLS
+from app.research.strategy import STRATEGY_VERSION, MIN_COMPLETED_SESSIONS
 from scripts.qoder_readonly_run import (
     QoderReadonlyRunner,
     QoderRunError,
@@ -85,10 +87,10 @@ def _load_bars(
     if window not in {"session", "post-close"}:
         raise CollectionError("bar validation window is not supported")
     history = MarketHistory.from_file(path)
-    missing = sorted(set(UNIVERSE) - set(history.symbols))
+    missing = sorted(set(CANDIDATE_SYMBOLS) - set(history.symbols))
     if missing:
         raise CollectionError(f"bar file is missing symbols: {', '.join(missing)}")
-    last_dates = {symbol: history.bars(symbol)[-1].session_date for symbol in UNIVERSE}
+    last_dates = {symbol: history.bars(symbol)[-1].session_date for symbol in CANDIDATE_SYMBOLS}
     if len(set(last_dates.values())) != 1:
         raise CollectionError("bar file symbols do not share the same last session")
     last_session = next(iter(last_dates.values()))
@@ -111,10 +113,12 @@ def _load_bars(
             raise CollectionError(
                 f"bar history ends {last_session}; no recent completed session is available"
             )
-    for symbol in UNIVERSE:
+    for symbol in CANDIDATE_SYMBOLS:
         bars = history.bars(symbol)
-        if len(bars) < 21:
-            raise CollectionError(f"bar history for {symbol} has fewer than 21 sessions")
+        if len(bars) < MIN_COMPLETED_SESSIONS:
+            raise CollectionError(
+                f"bar history for {symbol} has fewer than {MIN_COMPLETED_SESSIONS} sessions"
+            )
         if window == "session" and any(bar.session_date >= today_et for bar in bars):
             raise CollectionError(f"bar history for {symbol} contains a current-session bar")
         if any(bar.session_date > today_et for bar in bars):
@@ -135,7 +139,7 @@ def _load_bars(
         "last_completed_session": last_session.isoformat(),
         "today_bar_available": last_session == today_et,
         "expected_previous_session": expected.isoformat(),
-        "bars_per_symbol": {symbol: len(history.bars(symbol)) for symbol in UNIVERSE},
+        "bars_per_symbol": {symbol: len(history.bars(symbol)) for symbol in CANDIDATE_SYMBOLS},
         "fetch_age_hours": round(fetch_age_hours, 2),
         "complete": True,
     }
@@ -168,7 +172,7 @@ def collect(mode: str, bars_path: Path) -> Collection:
     now = datetime.now(UTC)
     observations: list[QuoteObservation] = []
     quote_map: dict[str, Quote] = {}
-    for symbol in UNIVERSE:
+    for symbol in CANDIDATE_SYMBOLS:
         if mode == "session":
             quote = feed.get_quote(symbol, now)
             if not quote.regular_session_open:
@@ -314,7 +318,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--config", type=Path, default=DEFAULT_CONFIG)
     parser.add_argument("--bars", type=Path)
     parser.add_argument("--window", choices=["session", "post-close"], default="session")
-    parser.add_argument("--strategy", choices=["momentum-v1"], default=None)
+    parser.add_argument("--strategy", choices=[STRATEGY_VERSION], default=None)
     parser.add_argument("--output-dir", type=Path, default=ROOT / "evidence" / "qoder")
     parser.add_argument("--collection-dir", type=Path, default=None)
     args = parser.parse_args(argv)
@@ -348,7 +352,7 @@ def main(argv: list[str] | None = None) -> int:
         print(f"Failure evidence: {failure}")
         return 1
 
-    strategy = args.strategy or str(config.get("strategy", "momentum-v1"))
+    strategy = args.strategy or str(config.get("strategy", STRATEGY_VERSION))
     agent_ids = {
         "coordinator": str(config["coordinator_agent_id"]),
         "researcher": str(config["researcher_agent_id"]),
@@ -380,7 +384,6 @@ def main(argv: list[str] | None = None) -> int:
 
     tools = QoderToolService(
         collection.history,
-        NewsArchive((), {"provider": "not used", "note": "momentum-v1 requires no news"}),
         fingerprint,
         current=CurrentMarketContext(
             decision_time_utc=collection.collected_at_utc,

@@ -17,19 +17,21 @@
 
 **1:05–1:45 — Risk protection.** Replay a clearly labelled *mock-only* oversized proposal. Show exact policy ID, exposure calculation and proof that the broker adapter was never called.
 
-**1:45–2:25 — Actual paper execution.** Show a genuine Moomoo competition paper order from the ledger, broker status/fill and reconciled position. If the market is closed, replay recorded real events and show original timestamps; don't pretend it just executed.
+**1:45–2:25 — Execution boundary.** The first supervised paper BUY/SELL is still pending, so show the read-only preview and its exact payload, `submission_performed: false`, and the `R010`/`R014` fail-closed reasons. State plainly that no broker-confirmed order or fill exists yet. If a supervised order is completed before submission, show the genuine order/fill from the ledger instead; never present a mock as broker evidence.
 
 **2:25–3:00 — Results and reuse.** Compare equity to a benchmark with sample warnings. Show reusable skills, tests, clean installation, and one limitation or failure that was detected and handled.
 
-## Required evidence file types
+## Evidence that exists today
 
-- `evidence/agent-runs/` — sanitized Qoder run IDs, handoffs and tool names.
-- `evidence/paper-orders/` — redacted actual Moomoo order/fill/account-state evidence.
-- `evidence/risk-tests/` — test outputs demonstrating pre-broker rejection, unknown result handling and kill switch.
-- `evidence/metrics/` — timestamped paper-account and benchmark observations, calculation scripts/definitions.
-- `evidence/demo/` — screenshots or recorded replay, clearly marked `REAL PAPER`, `MOCK TEST` or `REPLAY`.
+- `evidence/qoder/` — sanitised Qoder run artifacts, session IDs, tool calls and deterministic outcomes (including the current `spy-directional` POLICY_REJECTED run).
+- `evidence/preflight/` — real read-only preflight snapshots that contacted no order endpoint.
+- `evidence/execution/` — supervised preview diagnostics; no fill exists.
+- `evidence/current-market/` — timestamped completed daily-bar snapshots.
+- `evidence/research/` — retired-strategy studies, the Moomoo capability audit and the Vibe-Trading POC, explicitly historical.
+- `evidence/scheduler/` — Task Scheduler registration and run evidence.
+- Dashboard captures were removed from the repository in the 18 November cleanup; regenerate them from the running dashboard when needed.
 
-These folders are to be created **only when genuine evidence exists**. Never manufacture logs or favourable results.
+There is **no** `evidence/paper-orders/` because no broker order or fill has occurred. Never manufacture logs or favourable results; add new evidence folders only when genuine evidence exists.
 
 ## Submission checklist
 

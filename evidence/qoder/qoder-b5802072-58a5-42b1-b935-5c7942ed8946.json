@@ -1,0 +1,16 @@
+{
+  "schema_version": "1",
+  "run_id": "qoder-b5802072-58a5-42b1-b935-5c7942ed8946",
+  "mode": "HISTORICAL_DRY_RUN",
+  "strategy_version": "directional-event-v2",
+  "status": "AGENT_ERROR",
+  "outcome": "NO_TRADE",
+  "session_ids": {
+    "coordinator": "sess_00vua4he24oow21qr8jx",
+    "researcher": "sess_00vua4mcecqo0kg5k1ah"
+  },
+  "notice": "Historical evidence only. No current broker snapshot, owner approval or order submission.",
+  "decision_time_utc": "2026-09-21T21:00:00+00:00",
+  "error": "research_market was not called; abstain",
+  "completed_at_utc": "2026-11-18T05:56:46.375065+00:00"
+}

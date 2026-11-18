@@ -63,7 +63,7 @@ def proposal(now):
     return TradeProposal(
         proposal_id="proposal-1",
         run_id="run-1",
-        strategy_version="momentum-v1",
+        strategy_version="spy-directional",
         decision_time_utc=now,
         data_as_of_utc=now,
         symbol="QQQ",

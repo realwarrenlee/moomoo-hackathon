@@ -77,14 +77,34 @@ class AgentSummary(ApiModel):
 
 class AgentCandidate(ApiModel):
     symbol: str | None = None
+    direction: int | None = None
+    leverage: str | None = None
+    effective_exposure: str | None = None
     close: str | None = None
-    sma20: str | None = None
-    return_5d: str | None = None
-    news_count: int | None = None
-    positive_news_count: int | None = None
     eligible: bool | None = None
     selected: bool | None = None
     reasons: list[str] = Field(default_factory=list)
+
+
+class AgentProposal(ApiModel):
+    proposal_id: str | None = None
+    symbol: str | None = None
+    action: str | None = None
+    requested_quantity: int | None = None
+    thesis: str | None = None
+    invalidation: str | None = None
+
+
+class AgentRiskReason(ApiModel):
+    rule_id: str | None = None
+    message: str | None = None
+
+
+class AgentRiskDecision(ApiModel):
+    policy_version: str | None = None
+    decision: str | None = None
+    approved_quantity: int | None = None
+    reasons: list[AgentRiskReason] = Field(default_factory=list)
 
 
 class AgentDataCollectionQuote(ApiModel):
@@ -114,9 +134,24 @@ class AgentRun(ApiModel):
     session_count: int
     decision_time_utc: str | None = None
     data_as_of_utc: str | None = None
-    regime_ok: bool | None = None
-    regime_reason: str | None = None
+    spy_session_date: str | None = None
+    spy_close: str | None = None
+    spy_return_10d: str | None = None
+    spy_sma50: str | None = None
+    spy_trend_pct: str | None = None
+    spy_volatility_20d: str | None = None
+    market_state: str | None = None
+    direction: str | None = None
+    target_symbol: str | None = None
+    target_effective_exposure: str | None = None
+    current_symbol: str | None = None
+    current_quantity: int | None = None
+    action: str | None = None
+    reentry_symbol: str | None = None
+    decision_reason: str | None = None
     selected_symbol: str | None = None
+    proposal: AgentProposal | None = None
+    risk_decision: AgentRiskDecision | None = None
     no_trade_reason: str | None = None
     candidates: list[AgentCandidate] = Field(default_factory=list)
     summaries: list[AgentSummary] = Field(default_factory=list)

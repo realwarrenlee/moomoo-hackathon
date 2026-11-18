@@ -66,11 +66,11 @@ For a multi-step task, give a short plan with an explicit verification step for 
 
 - **Paper account only:** target the competition-issued Moomoo paper account. Never implement live-broker mode, fallback broker/account, live-money order routing, or implicit account switching.
 - **Rubric:** Qoder engineering 30%; strategy/risk design 30%; documentation/reuse 15%; risk-adjusted return 25%. Optimise for demonstrable quality across all categories, **not raw profit**.
-- Four scoped logical agents: **research**, **strategy**, **risk review**, and **execution/reporting**. Confirm how Qoder supports these roles; document any necessary adaptation rather than faking cloud execution.
+- Three Qoder Cloud Agents, matching the implemented workflow: **coordinator**, **researcher**, and **independent risk auditor**. Signal arithmetic, selection, sizing, the risk gate and the supervised execution command are deterministic Python, not an LLM agent. Document any platform adaptation rather than faking cloud execution.
 - Agent/model outputs are **untrusted proposals**. They never directly authorise execution.
 - The **deterministic risk gate** is the final authority on order eligibility. Its decision cannot be overridden by an LLM, UI text, or research content.
 - Use a single paper-only broker adapter with a test double. Only that adapter may submit orders after all preflight checks pass.
-- Keep the planned **Next.js + TypeScript** dashboard and **Python 3.11+ / FastAPI / Pydantic** backend unless a verified requirement necessitates a change.
+- Keep the **Next.js + TypeScript** dashboard (six read-only pages) and **Python 3.11+ / FastAPI / Pydantic** backend unless a verified requirement necessitates a change.
 
 ## 8. Safe trading and data-handling requirements
 
@@ -84,7 +84,7 @@ For a multi-step task, give a short plan with an explicit verification step for 
 
 ### During and after submission
 
-- Keep order permissions limited to the executor and broker adapter. Research and strategy agents must be read-only.
+- Keep order permissions limited to the supervised executor and broker adapter. The coordinator, researcher and auditor agents must be read-only.
 - The broker is the source of truth for positions, fills, and order status. An acknowledgement is **not** a fill.
 - On timeout or ambiguous response, mark the submission **`UNKNOWN`**, stop further submissions as needed, query/reconcile broker state, and **never blindly retry**.
 - Record partial fills, rejects, cancellations, and state changes as append-only audit events. Reconcile after submissions and on restart.
@@ -137,7 +137,22 @@ Blockers: [specific issues, if any]
 Next: [one precise next action]
 ```
 
-## 11. Priority order
+## 11. Documentation maintenance
+
+Documentation is part of the deliverable, not an afterthought:
+
+1. When implementation changes meaningful behaviour, update the affected documentation in the same change set.
+2. When strategy logic changes, review `docs/strategy-and-risk.md`.
+3. When agent orchestration or integrations change, review `docs/architecture.md` and `docs/integrations.md`.
+4. When operating commands change, review `docs/operations.md` and the README quick-start.
+5. When new genuine evidence is produced (Qoder runs, broker reads, orders, fills, scheduler runs), record it in `docs/evidence.md` or regenerate the evidence summary script output.
+6. When public interfaces or reusable components change, review `docs/reusability.md`.
+7. Never silently edit documentation to make the system appear more complete than it is. Keep PAPER / HISTORICAL / MOCK provenance explicit.
+8. Preserve user instructions and safety boundaries in this file and in `docs/integrations.md`.
+
+Do not require documentation edits for trivial formatting or for every individual source file. Do not create changelogs or duplicate generated reports.
+
+## 12. Priority order
 
 - **P0 — mandatory:** authorised competition-paper trading loop, deterministic risk gate, persistent audit ledger, broker reconciliation, genuine Qoder runs, minimal working dashboard, and submission deck.
 - **P1 — after P0:** schedules, benchmark comparison, risk drills, better reporting and UI polish.

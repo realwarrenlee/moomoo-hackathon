@@ -22,8 +22,9 @@ made by Vibe. See `integration-verdict.md` for the module-level audit.
 
 ## Isolation rules
 
-- Keep Vibe-Trading at the pinned commit under `Vibe-Trading/`; do not install
-  its full dependency stack into the MooTrade backend environment.
+- Keep Vibe-Trading at the pinned commit in the external archive
+  (`../mootrade-reference-archive/Vibe-Trading`); do not install its full
+  dependency stack into the MooTrade backend environment.
 - Use a separate research virtual environment.
 - Keep `ORDER_WRITES_ENABLED=false`. None of the scripts import a broker order
   path, OAuth write scope, `TradingService` or `RiskGate`.
@@ -55,7 +56,7 @@ the variable is present.
 Verify the pin before running:
 
 ```bash
-git -C Vibe-Trading rev-parse HEAD
+git -C ../mootrade-reference-archive/Vibe-Trading rev-parse HEAD
 ```
 
 ## Phase 2 — engine comparison

@@ -12,7 +12,8 @@ from typing import Any, Callable, Iterable
 
 from app.ledger.store import SQLiteLedger
 from app.qoder_tools import QoderToolService, StrategyVersion
-from app.research.data import MarketHistory, NewsArchive
+from app.research.data import MarketHistory
+from app.research.strategy import STRATEGY_VERSION
 
 ROOT = Path(__file__).resolve().parents[2]
 FIXTURES = ROOT / "backend" / "tests" / "fixtures"
@@ -74,8 +75,12 @@ class QoderReadonlyRunner:
         self._cursors: dict[str, str | None] = {}
         self._seen_events: dict[str, set[str]] = {}
 
-    def run(self, strategy_version: StrategyVersion = "momentum-v1") -> RunResult:
-        run_id = self.tools.create_run(strategy_version)
+    def run(
+        self,
+        strategy_version: StrategyVersion = STRATEGY_VERSION,
+        decision_time_utc: datetime | None = None,
+    ) -> RunResult:
+        run_id = self.tools.create_run(strategy_version, decision_time_utc)
         sessions: dict[str, str] = {}
         artifact: dict[str, object] = {
             "schema_version": "1",
@@ -94,12 +99,14 @@ class QoderReadonlyRunner:
         }
         if self.data_collection is not None:
             artifact["data_collection"] = self.data_collection
+        if decision_time_utc is not None:
+            artifact["decision_time_utc"] = decision_time_utc.isoformat()
         self._record("QODER_RUN_STARTED", run_id, {"strategy_version": strategy_version, "mode": self.mode})
         try:
             sessions["coordinator"] = self._create_session("coordinator", run_id)
             ready = self._run_turn(
                 sessions["coordinator"],
-                f"Read-only {self.mode} run {run_id}. Strategy allowlist: momentum-v1, news-catalyst-v1. "
+                f"Read-only {self.mode} run {run_id}. Strategy allowlist: {STRATEGY_VERSION}. "
                 f"Selected strategy: {strategy_version}. Confirm the run boundary without tools. "
                 f"Reply READY {run_id} and state the mode {self.mode}; never discuss or place an order.",
                 run_id=run_id,
@@ -111,8 +118,9 @@ class QoderReadonlyRunner:
             research_turn = self._run_turn(
                 sessions["researcher"],
                 f"Call research_market exactly once with run_id {run_id} and strategy_version "
-                f"{strategy_version}. Use only the tool result, preserve NO_TRADE, and summarize "
-                "the evidence without inventing current account or market state.",
+                f"{strategy_version}. Then use only the tool result to summarize SPY trend, "
+                "momentum, volatility, the target ETF or CASH, the current holding and the "
+                "action. Preserve HOLD, CASH and NO_TRADE. Never invent market or account data.",
                 run_id=run_id,
                 expected_tool="research_market",
             )
@@ -126,10 +134,12 @@ class QoderReadonlyRunner:
             if proposal is None:
                 auditor_turn = self._run_turn(
                     sessions["auditor"],
-                    "Independently review this sanitized " + self.mode + " research artifact: "
+                    "Independently review this sanitized " + self.mode + " SPY research artifact: "
                     + json.dumps(research, separators=(",", ":"))
-                    + ". The researcher produced no proposal, so do not call evaluate_proposal. "
-                    "Confirm NO TRADE or identify a concrete evidence inconsistency. Never create a proposal.",
+                    + ". The deterministic action is not an order proposal, so do not call evaluate_proposal. "
+                    "Challenge the thesis with contradictory evidence, volatility, leverage, drawdown, "
+                    "concentration and invalidation risk. Confirm the action or identify a concrete evidence "
+                    "inconsistency. Never create a proposal.",
                     run_id=run_id,
                 )
                 outcome = "NO_TRADE"
@@ -139,7 +149,8 @@ class QoderReadonlyRunner:
                     f"Independently audit run {run_id}. Call evaluate_proposal exactly once with this "
                     "run_id and the unmodified proposal: "
                     + json.dumps(proposal, separators=(",", ":"))
-                    + ". Report the deterministic decision and rule IDs; prose cannot override them.",
+                    + ". Then state the strongest counterargument, downside and invalidation risk. "
+                    "Report the deterministic decision and rule IDs; prose cannot override them.",
                     run_id=run_id,
                     expected_tool="evaluate_proposal",
                 )
@@ -147,10 +158,20 @@ class QoderReadonlyRunner:
                 if not risk.get("ok"):
                     raise QoderRunError("Risk tool rejected the request; abstain")
                 decision = risk["risk_decision"]["decision"]  # type: ignore[index]
-                outcome = "HISTORICAL_POLICY_APPROVAL" if decision == "APPROVE" else "POLICY_REJECTED"
+                outcome = "POLICY_APPROVAL" if decision == "APPROVE" else "POLICY_REJECTED"
+            if proposal is None:
+                outcome = str(research["snapshot"].get("action", "NO_TRADE"))  # type: ignore[index]
 
             summary_input = {
-                "selected_symbol": research["snapshot"]["selected_symbol"],  # type: ignore[index]
+                "market_state": research["snapshot"].get("market_state"),  # type: ignore[index]
+                "direction": research["snapshot"].get("direction"),  # type: ignore[index]
+                "spy_close": research["snapshot"].get("spy_close"),  # type: ignore[index]
+                "spy_return_10d": research["snapshot"].get("spy_return_10d"),  # type: ignore[index]
+                "spy_sma50": research["snapshot"].get("spy_sma50"),  # type: ignore[index]
+                "spy_volatility_20d": research["snapshot"].get("spy_volatility_20d"),  # type: ignore[index]
+                "target_symbol": research["snapshot"].get("target_symbol"),  # type: ignore[index]
+                "current_symbol": research["snapshot"].get("current_symbol"),  # type: ignore[index]
+                "action": research["snapshot"].get("action"),  # type: ignore[index]
                 "no_trade_reason": research["snapshot"]["no_trade_reason"],  # type: ignore[index]
                 "proposal": proposal,
                 "risk_decision": risk.get("risk_decision") if risk else None,
@@ -420,7 +441,8 @@ def _markdown_report(artifact: dict[str, object]) -> str:
             (
                 "A current read-only policy evaluation is not owner authorization. It does not "
                 "submit, approve or fill an order. Supervised paper execution remains blocked by "
-                "disabled writes, missing first-order approval and the unimplemented order transport."
+                "disabled writes, outstanding first-order approval and unverified account-exclusive "
+                "trade:write scope."
                 if current
                 else "A historical policy approval is not owner authorization. Fresh trusted quote, "
                 "account, position and order data, exact competition-account verification, durable "
@@ -452,22 +474,30 @@ def main() -> int:
     parser.add_argument("--coordinator-agent-id", required=True)
     parser.add_argument("--researcher-agent-id", required=True)
     parser.add_argument("--auditor-agent-id", required=True)
-    parser.add_argument("--strategy", choices=["momentum-v1", "news-catalyst-v1"], default="momentum-v1")
+    parser.add_argument("--strategy", choices=[STRATEGY_VERSION], default=STRATEGY_VERSION)
+    parser.add_argument(
+        "--decision-time",
+        help="Optional ISO-8601 UTC decision cutoff for a pinned historical session (demo/evidence only)",
+    )
     parser.add_argument("--output-dir", type=Path, default=ROOT / "evidence" / "qoder")
     args = parser.parse_args()
+    decision_time = None
+    if args.decision_time:
+        decision_time = datetime.fromisoformat(args.decision_time.replace("Z", "+00:00"))
+        if decision_time.tzinfo is None:
+            parser.error("--decision-time must include a UTC offset")
 
     _load_local_qoder_credentials()
     import httpx
     from qca import Managed
 
-    history = MarketHistory.from_file(FIXTURES / "moomoo_daily_bars_2026-11-16.json")
-    news = NewsArchive.from_file(FIXTURES / "moomoo_news_2026-11-17.json")
+    history = MarketHistory.from_file(FIXTURES / "moomoo_directional_etf_bars_2026-11-17.json")
     runner = QoderReadonlyRunner(
         client=Managed(
             http_client=httpx.Client(follow_redirects=False, trust_env=False),
             max_retries=0,
         ),
-        tools=QoderToolService(history, news),
+        tools=QoderToolService(history),
         workspace_id=args.workspace_id,
         environment_id=args.environment_id,
         agent_ids={
@@ -478,7 +508,7 @@ def main() -> int:
         output_dir=args.output_dir,
         ledger=SQLiteLedger(ROOT / "data" / "mootrade.db"),
     )
-    result = runner.run(args.strategy)
+    result = runner.run(args.strategy, decision_time)
     print(f"Run ID: {result.run_id}")
     print(f"Status: {result.status}; outcome: {result.outcome}")
     print(f"Report: {result.report_path}")

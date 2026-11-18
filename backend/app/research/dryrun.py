@@ -4,13 +4,25 @@ from dataclasses import dataclass
 from datetime import datetime, timedelta
 from decimal import Decimal
 
-from app.models.contracts import AccountSnapshot, ControlState, PolicyDecision, Quote, RiskDecision, TradeProposal
-from app.research.data import UNIVERSE, MarketHistory, NewsArchive, session_close_utc
-from app.research.strategy import ResearchSnapshot, build_proposal, screen
+from app.models.contracts import (
+    AccountSnapshot,
+    ControlState,
+    PolicyDecision,
+    Quote,
+    RiskDecision,
+    TradeProposal,
+)
+from app.research.data import UNIVERSE, MarketHistory, session_close_utc
+from app.research.instruments import INSTRUMENTS
+from app.research.strategy import (
+    MIN_COMPLETED_SESSIONS,
+    ResearchSnapshot,
+    decide,
+    screen,
+)
 from app.risk.policy import RiskGate
 
 VERIFIED_EQUITY = Decimal("100000")
-STRATEGIES = ("momentum-v1", "news-catalyst-v1")
 
 
 @dataclass(frozen=True)
@@ -60,6 +72,15 @@ def dry_run_control(order_writes_enabled: bool = True, first_order_approved: boo
     )
 
 
+def _gate(fingerprint: str) -> RiskGate:
+    return RiskGate(
+        expected_account_fingerprint=fingerprint,
+        allowed_symbols=frozenset(UNIVERSE),
+        leverage_by_symbol={symbol: item.leverage for symbol, item in INSTRUMENTS.items()},
+        allow_leveraged=False,
+    )
+
+
 def judge(
     gate: RiskGate,
     proposal: TradeProposal,
@@ -81,7 +102,6 @@ def judge(
 
 def latest_decision(
     history: MarketHistory,
-    news: NewsArchive,
     strategy_version: str,
     fingerprint: str,
     now: datetime | None = None,
@@ -90,7 +110,6 @@ def latest_decision(
     decision_time = session_close_utc(session)
     return decide_at(
         history,
-        news,
         strategy_version,
         fingerprint,
         decision_time,
@@ -101,26 +120,27 @@ def latest_decision(
 
 def decide_at(
     history: MarketHistory,
-    news: NewsArchive,
     strategy_version: str,
     fingerprint: str,
     decision_time: datetime,
     scenario: str,
     now: datetime | None = None,
     control: ControlState | None = None,
+    account: AccountSnapshot | None = None,
 ) -> DryRunDecision:
-    gate = RiskGate(
-        expected_account_fingerprint=fingerprint,
-        allowed_symbols=frozenset(UNIVERSE),
+    gate = _gate(fingerprint)
+    snapshot = screen(history, decision_time, strategy_version)
+    effective_account = account or build_account(
+        decision_time, fingerprint, f"dryrun-{decision_time:%Y%m%dT%H%M%SZ}"
     )
-    snapshot = screen(history, news, decision_time, strategy_version)
-    proposal = build_proposal(snapshot, history, VERIFIED_EQUITY)
-    quote = history.quote(snapshot.selected_symbol or "SPY", decision_time) if proposal is not None else None
+    snapshot, proposal = decide(snapshot, history, effective_account)
+    quote = (
+        history.quote(proposal.symbol, decision_time) if proposal is not None else None
+    )
     effective_now = now or decision_time
-    account = build_account(decision_time, fingerprint, f"dryrun-{decision_time:%Y%m%dT%H%M%SZ}")
     effective_control = control or dry_run_control()
     decision = (
-        judge(gate, proposal, quote, account, effective_control, effective_now)
+        judge(gate, proposal, quote, effective_account, effective_control, effective_now)
         if proposal is not None
         else None
     )
@@ -129,7 +149,7 @@ def decide_at(
         snapshot=snapshot,
         proposal=proposal,
         quote=quote,
-        account=account,
+        account=effective_account,
         control=effective_control,
         risk_decision=decision,
     )
@@ -137,15 +157,13 @@ def decide_at(
 
 def find_accepted_example(
     history: MarketHistory,
-    news: NewsArchive,
     strategy_version: str,
     fingerprint: str,
 ) -> DryRunDecision | None:
     dates = history.session_dates()
-    for session in reversed(dates[21:-1]):
+    for session in reversed(dates[MIN_COMPLETED_SESSIONS:-1]):
         decision = decide_at(
             history,
-            news,
             strategy_version,
             fingerprint,
             session_close_utc(session),
@@ -165,7 +183,7 @@ def stale_quote_example(
     now = accepted.snapshot.decision_time_utc + timedelta(minutes=10)
     quote = accepted.quote
     account = build_account(now, fingerprint, f"dryrun-stale-{now:%Y%m%dT%H%M%SZ}")
-    gate = RiskGate(expected_account_fingerprint=fingerprint, allowed_symbols=frozenset(UNIVERSE))
+    gate = _gate(fingerprint)
     decision = judge(
         gate,
         accepted.proposal,
@@ -193,7 +211,7 @@ def oversized_example(
         return None
     quantity = int(VERIFIED_EQUITY * Decimal("0.20") / accepted.quote.price)
     proposal = accepted.proposal.model_copy(update={"requested_quantity": quantity})
-    gate = RiskGate(expected_account_fingerprint=fingerprint, allowed_symbols=frozenset(UNIVERSE))
+    gate = _gate(fingerprint)
     decision = judge(
         gate,
         proposal,
@@ -226,7 +244,7 @@ def control_rejection_example(
         order_writes_enabled=order_writes_enabled,
         first_order_approved=first_order_approved,
     )
-    gate = RiskGate(expected_account_fingerprint=fingerprint, allowed_symbols=frozenset(UNIVERSE))
+    gate = _gate(fingerprint)
     decision = judge(
         gate,
         accepted.proposal,

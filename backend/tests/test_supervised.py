@@ -21,7 +21,7 @@ from app.risk.policy import RiskGate
 from app.service import TradingService, build_client_order_key
 from app.supervised import build_supervised_execution
 
-STRATEGY = "momentum-v1"
+STRATEGY = "spy-directional"
 PROPOSAL_ID = "proposal-1"
 SYMBOL = "QQQ"
 

@@ -1,412 +1,504 @@
 "use client"
 
-import { useMemo, useState } from "react"
-import { ChevronDownIcon } from "lucide-react"
+import { useState } from "react"
 
+import { AgentWorkflow } from "@/components/mootrade/agent-workflow"
 import {
+  DetailSheet,
   EmptyRow,
+  InfoNote,
   KeyValue,
   LoadingPage,
-  Metric,
-  MetricStrip,
-  NoticeBanner,
+  PageContainer,
   PageHeader,
-  RefreshButton,
-  SectionCard,
-  StatePanel,
+  PageState,
+  Section,
+  StatusPill,
   TableShell,
+  Td,
+  Th,
 } from "@/components/mootrade/primitives"
+import { Button } from "@/components/ui/button"
 import { useDashboard } from "@/components/mootrade/use-dashboard"
 import {
   compactId,
   easternTimestamp,
   humanState,
   money,
+  outcomeLabel,
+  outcomeTone,
   ratioPercent,
-  shortDate,
+  riskDecisionLabel,
+  ruleLabel,
   strategyLabel,
   utcTimestamp,
+  type AgentCandidate,
   type AgentsResponse,
 } from "@/lib/mootrade"
 import { cn } from "@/lib/utils"
 
-const ROLE_LABELS: Record<string, string> = {
+const SUMMARY_LABELS: Record<string, string> = {
   coordinator_ready: "Coordinator · Initialize",
-  researcher: "Research Agent · Screening",
-  research: "Research Agent · Screening",
-  auditor: "Risk Review Agent · Independent Audit",
-  risk_review: "Risk Review Agent · Independent Audit",
-  coordinator_final: "Coordinator · Final Decision",
-  strategy: "Strategy Agent",
+  researcher: "Market Researcher · Analysis",
+  research: "Market Researcher · Analysis",
+  auditor: "Independent Risk Auditor · Review",
+  risk_review: "Independent Risk Auditor · Review",
+  coordinator_final: "Coordinator · Final decision",
+  strategy: "Strategy · Screening",
+}
+
+function summaryLabel(role: string) {
+  return SUMMARY_LABELS[role] ?? humanState(role)
 }
 
 function agentText(text: string) {
   return text.replace(/\*\*/g, "").replace(/`/g, "")
 }
 
-function roleLabel(role: string) {
-  return ROLE_LABELS[role] ?? humanState(role)
+function directionLabel(direction?: number | null) {
+  if (direction === 1) return "Bullish"
+  if (direction === -1) return "Bearish"
+  return "—"
+}
+
+function screeningLabel(candidate: AgentCandidate) {
+  if (candidate.selected) return "Selected"
+  if (candidate.eligible) return "Eligible"
+  return "Not eligible"
 }
 
 export default function AgentsPage() {
-  const { data, error, loading, refreshing, refreshedAt, refresh } =
-    useDashboard<AgentsResponse>("agents", 120_000)
-  const [selectedIndex, setSelectedIndex] = useState(0)
+  const { data, error, loading, refresh } = useDashboard<AgentsResponse>("agents", 120_000)
+  const [evidenceOpen, setEvidenceOpen] = useState(false)
 
   const runs = data?.runs ?? []
-  const run = runs[Math.min(selectedIndex, Math.max(runs.length - 1, 0))]
-
-  const candidateCount = useMemo(
-    () => (run ? run.candidates.filter((candidate) => candidate.eligible).length : 0),
-    [run]
-  )
+  const run = runs[0]
 
   if (loading && !data) return <LoadingPage />
 
-  return (
-    <div className="space-y-5 p-4 md:p-6">
-      <PageHeader
-        title="AI Agent Activity"
-        description="Qoder Cloud Agent orchestration for market research, candidate screening, and risk review."
-        actions={
-          <RefreshButton
-            onClick={refresh}
-            refreshing={refreshing}
-            refreshedAt={refreshedAt}
-          />
-        }
-      />
-
-      {/* Run Selector & Mode Context */}
-      <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 rounded-lg border bg-card px-3.5 py-2 text-xs">
-        <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-          <span className="font-medium text-foreground">
-            {run?.provenance === "CURRENT_MARKET_READ_ONLY"
-              ? "Current Market Dry Run"
-              : "Historical Qoder Dry Run"}
-          </span>
-          <span className="text-muted-foreground">·</span>
-          <span className="text-muted-foreground">Read-Only Strategy Evaluation</span>
-        </div>
-
-        {runs.length > 1 ? (
-          <div className="flex flex-wrap items-center gap-1.5">
-            <span className="text-[11px] text-muted-foreground">Runs:</span>
-            {runs.map((item, index) => (
-              <button
-                key={item.run_id ?? index}
-                type="button"
-                onClick={() => setSelectedIndex(index)}
-                className={cn(
-                  "rounded border px-2 py-0.5 font-mono text-[10px] transition-colors",
-                  index === selectedIndex
-                    ? "bg-foreground text-background"
-                    : "text-muted-foreground hover:bg-muted"
-                )}
-              >
-                {compactId(item.run_id, 8, 4)}
-              </button>
-            ))}
-          </div>
-        ) : run?.run_id ? (
-          <span className="font-mono text-[11px] text-muted-foreground">
-            Run {compactId(run.run_id, 8, 6)}
-          </span>
-        ) : null}
-      </div>
-
-      {data?.notice ? (
-        <NoticeBanner tone="info" title="Evidence boundary">
-          {data.notice}
-        </NoticeBanner>
-      ) : null}
-
-      {error && !data ? (
-        <StatePanel
-          kind="error"
+  if (error && !data) {
+    return (
+      <PageContainer>
+        <PageHeader title="Agent Activity" />
+        <PageState
           title="Agent evidence unavailable"
           description={error}
-          action={
-            <RefreshButton
-              onClick={refresh}
-              refreshing={refreshing}
-              refreshedAt={refreshedAt}
-            />
-          }
+          onRetry={() => void refresh()}
         />
-      ) : null}
+      </PageContainer>
+    )
+  }
 
-      {!run ? (
-        <StatePanel
+  if (!run) {
+    return (
+      <PageContainer>
+        <PageHeader title="Agent Activity" />
+        <PageState
+          kind="empty"
           title="No Qoder run evidence"
           description="No completed Qoder evidence artifact was found. This page never substitutes synthetic agent output."
         />
-      ) : (
-        <>
-          {/* Key Run Metrics */}
-          <MetricStrip>
-            <Metric
-              label="Decision outcome"
-              value={run.outcome === "NO_TRADE" ? "No trade" : run.outcome}
-              detail={run.no_trade_reason ?? "Strategy criteria not met"}
-              tone={run.outcome === "NO_TRADE" ? "warning" : "positive"}
-            />
-            <Metric
-              label="Regime state"
-              value={run.regime_ok ? "Positive" : "Negative"}
-              detail={run.regime_reason ?? "SPY below 20-session SMA"}
-            />
-            <Metric
-              label="Candidates"
-              value={`${run.candidates.filter((c) => c.selected).length} / ${run.candidates.length}`}
-              detail={`${candidateCount} passed initial filter`}
-            />
-            <Metric
-              label="Completed"
-              value={shortDate(run.completed_at_utc)}
-              detail={`${run.session_count} agent sessions`}
-            />
-          </MetricStrip>
+      </PageContainer>
+    )
+  }
 
-          {/* Structured Agent Workflow / Roles */}
-          <SectionCard
-            title="Agent workflow & transcripts"
-            description="Sequential cloud agent execution. Transcripts are expandable model evidence and cannot authorize trading."
+  const risk = run.risk_decision
+  const decision = risk?.decision?.toUpperCase()
+  const rejected = decision === "REJECT" || decision === "REJECTED"
+  const approved = decision === "APPROVE" || decision === "APPROVED"
+  const proposal = run.proposal
+  const proposalText = proposal
+    ? [proposal.action, proposal.requested_quantity, proposal.symbol]
+        .filter((value) => value !== null && value !== undefined && value !== "")
+        .join(" ")
+    : null
+  const headline = proposalText
+    ? proposalText
+    : run.target_symbol
+      ? `Target ${run.target_symbol}`
+      : "No order proposed"
+
+  const outcome = rejected
+    ? "Blocked by RiskGate — no order placed."
+    : approved
+      ? "Approved by RiskGate — no order submitted."
+      : run.outcome === "AGENT_ERROR"
+        ? "Run failed — no order placed."
+        : proposal
+          ? "Proposal only — execution not evaluated."
+          : "No order proposed."
+
+  const provenanceLabel =
+    run.provenance === "CURRENT_MARKET_READ_ONLY"
+      ? "Current market · read-only"
+      : run.provenance === "HISTORICAL_QODER_RUN"
+        ? "Historical run"
+        : humanState(run.provenance)
+
+  const marketMetrics = [
+    { label: "SPY close", value: money(run.spy_close) },
+    {
+      label: "10-session return",
+      value: ratioPercent(run.spy_return_10d ? Number(run.spy_return_10d) : null),
+    },
+    { label: "50-session SMA", value: money(run.spy_sma50) },
+    {
+      label: "20-session volatility",
+      value: ratioPercent(
+        run.spy_volatility_20d ? Number(run.spy_volatility_20d) : null
+      ),
+    },
+  ]
+
+  return (
+    <PageContainer>
+      <PageHeader title="Agent Activity" />
+
+      <Section title="Latest decision">
+        <div className="space-y-2">
+          <p className="text-2xl font-semibold tracking-tight">{headline}</p>
+          <p className="max-w-2xl text-[13px] leading-relaxed text-muted-foreground">
+            {run.decision_reason ?? run.no_trade_reason ?? "No decision reason recorded."}
+          </p>
+          <p
+            className={cn(
+              "text-[13px] font-medium",
+              rejected ? "text-rose-700 dark:text-rose-300" : "text-foreground"
+            )}
           >
-            {run.summaries.length > 0 ? (
-              <div className="divide-y">
-                {run.summaries.map((summary) => (
-                  <details
-                    key={`${summary.role}-${summary.text.slice(0, 24)}`}
-                    className="group py-2.5 first:pt-0 last:pb-0"
-                  >
-                    <summary className="flex cursor-pointer list-none items-center justify-between gap-3 text-xs font-medium text-foreground hover:text-foreground/80">
-                      <div className="flex items-center gap-2">
-                        <span className="font-semibold">{roleLabel(summary.role)}</span>
-                        <span className="rounded bg-muted px-1.5 py-0.5 font-mono text-[9px] text-muted-foreground">
-                          {summary.role}
+            {outcome}
+          </p>
+          <div className="flex flex-wrap items-baseline gap-x-5 gap-y-1 pt-1 text-xs text-muted-foreground">
+            <span>
+              Signal{" "}
+              <span className="font-medium text-foreground">
+                {run.market_state ? humanState(run.market_state) : "—"}
+              </span>
+            </span>
+            <span>
+              Target{" "}
+              <span className="font-medium text-foreground">
+                {run.target_symbol ?? "CASH"}
+              </span>
+            </span>
+            <span>
+              Exposure{" "}
+              <span className="font-medium text-foreground">
+                {run.target_effective_exposure
+                  ? `${run.target_effective_exposure}x`
+                  : "—"}
+              </span>
+            </span>
+          </div>
+        </div>
+      </Section>
+
+      <Section
+        title="Decision timeline"
+        action={
+          <Button
+            variant="ghost"
+            size="sm"
+            className="-mr-2 h-7 px-2 text-xs text-muted-foreground hover:text-foreground"
+            onClick={() => setEvidenceOpen(true)}
+          >
+            View full evidence
+          </Button>
+        }
+      >
+        <AgentWorkflow run={run} />
+      </Section>
+
+      <Section title="Market context">
+        <dl className="grid gap-x-6 gap-y-4 sm:grid-cols-2 lg:grid-cols-4">
+          {marketMetrics.map((metric) => (
+            <div key={metric.label}>
+              <dt className="text-xs text-muted-foreground">{metric.label}</dt>
+              <dd className="mt-1 font-mono text-sm font-semibold tabular-nums">
+                {metric.value}
+              </dd>
+            </div>
+          ))}
+        </dl>
+      </Section>
+
+      {risk ? (
+        <Section
+          title={rejected ? "Why execution was blocked" : "RiskGate review"}
+        >
+          {risk.reasons.length ? (
+            <ul className="space-y-2 text-[13px] leading-relaxed">
+              {risk.reasons.map((reason) => (
+                <li
+                  key={`${reason.rule_id}-${reason.message}`}
+                  className="flex gap-2"
+                >
+                  <span
+                    aria-hidden
+                    className="mt-[7px] size-1 shrink-0 rounded-full bg-muted-foreground/50"
+                  />
+                  <span>{reason.message ?? ruleLabel(reason.rule_id)}</span>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="text-[13px] text-muted-foreground">
+              {rejected
+                ? "The RiskGate returned no detailed reasons."
+                : "No blocking rules were returned."}
+            </p>
+          )}
+        </Section>
+      ) : null}
+
+      <DetailSheet
+        open={evidenceOpen}
+        onOpenChange={setEvidenceOpen}
+        title="Full run evidence"
+        description={
+          run.run_id ? compactId(run.run_id, 10, 6) : "Qoder run evidence"
+        }
+      >
+        <div className="space-y-5">
+          <div className="space-y-2">
+            <p className="text-xs font-medium">Run metadata</p>
+            <div className="grid gap-x-6 rounded-lg border px-3 py-1 sm:grid-cols-2">
+              <KeyValue
+                label="Run ID"
+                value={run.run_id ? compactId(run.run_id, 10, 6) : "—"}
+                mono
+              />
+              <KeyValue label="Strategy" value={strategyLabel(run.strategy_version)} />
+              <KeyValue label="Mode" value={humanState(run.mode)} mono />
+              <KeyValue label="Sessions" value={String(run.session_count)} mono />
+              <KeyValue label="Status" value={humanState(run.status)} />
+              <KeyValue
+                label="Decision time"
+                value={utcTimestamp(run.decision_time_utc)}
+                mono
+              />
+              <KeyValue
+                label="Completed"
+                value={utcTimestamp(run.completed_at_utc)}
+                mono
+              />
+              <KeyValue
+                label="Data as of"
+                value={utcTimestamp(run.data_as_of_utc)}
+                mono
+              />
+              <KeyValue label="Provenance" value={provenanceLabel} />
+            </div>
+          </div>
+
+          {data?.notice || run.notice ? (
+            <InfoNote>{run.notice ?? data?.notice}</InfoNote>
+          ) : null}
+
+          <div className="space-y-2">
+            <p className="text-xs font-medium">Final decision</p>
+            <div className="rounded-lg border px-3">
+              <KeyValue label="Decision" value={headline} />
+              <KeyValue
+                label="Outcome"
+                value={
+                  <StatusPill tone={outcomeTone(run.outcome)}>
+                    {outcomeLabel(run.outcome)}
+                  </StatusPill>
+                }
+              />
+              <KeyValue
+                label="Reason"
+                value={run.decision_reason ?? run.no_trade_reason ?? "—"}
+              />
+              <KeyValue
+                label="RiskGate"
+                value={risk ? riskDecisionLabel(risk.decision) : "Not evaluated"}
+              />
+              <KeyValue
+                label="Approved quantity"
+                value={String(risk?.approved_quantity ?? 0)}
+                mono
+              />
+              <KeyValue label="Policy version" value={risk?.policy_version ?? "—"} mono />
+            </div>
+          </div>
+
+          {risk?.reasons.length ? (
+            <div className="space-y-2">
+              <p className="text-xs font-medium">Failed rules</p>
+              {risk.reasons.map((reason) => (
+                <div
+                  key={`${reason.rule_id}-${reason.message}`}
+                  className="rounded-lg border px-3 py-2"
+                >
+                  <p className="text-xs text-muted-foreground">
+                    <span className="font-mono">{reason.rule_id ?? "RULE"}</span> ·{" "}
+                    {ruleLabel(reason.rule_id)}
+                  </p>
+                  <p className="mt-0.5 text-[13px]">{reason.message ?? "Rule failed"}</p>
+                </div>
+              ))}
+            </div>
+          ) : null}
+
+          <div className="space-y-2">
+            <p className="text-xs font-medium">Candidate instruments</p>
+            <TableShell>
+              <thead>
+                <tr>
+                  <Th>Symbol</Th>
+                  <Th>Direction</Th>
+                  <Th align="right">Leverage</Th>
+                  <Th align="right">Exposure</Th>
+                  <Th align="right">Close</Th>
+                  <Th align="right">Screening</Th>
+                </tr>
+              </thead>
+              <tbody>
+                {run.candidates.length === 0 ? (
+                  <EmptyRow colSpan={6}>
+                    No candidate instruments recorded for this run.
+                  </EmptyRow>
+                ) : (
+                  run.candidates.map((candidate) => (
+                    <tr key={candidate.symbol ?? "none"}>
+                      <Td className="font-mono font-semibold">
+                        {candidate.symbol ?? "—"}
+                      </Td>
+                      <Td className="text-muted-foreground">
+                        {directionLabel(candidate.direction)}
+                      </Td>
+                      <Td
+                        align="right"
+                        className="font-mono tabular-nums text-muted-foreground"
+                      >
+                        {candidate.leverage ? `${candidate.leverage}x` : "—"}
+                      </Td>
+                      <Td
+                        align="right"
+                        className="font-mono tabular-nums text-muted-foreground"
+                      >
+                        {candidate.effective_exposure ?? "—"}
+                      </Td>
+                      <Td align="right" className="font-mono tabular-nums">
+                        {money(candidate.close)}
+                      </Td>
+                      <Td align="right">
+                        <span
+                          className={
+                            candidate.selected
+                              ? "font-medium text-foreground"
+                              : "text-muted-foreground"
+                          }
+                        >
+                          {screeningLabel(candidate)}
                         </span>
-                      </div>
-                      <span className="flex items-center gap-1 text-[11px] font-normal text-muted-foreground group-open:hidden">
-                        Expand <ChevronDownIcon className="size-3" />
-                      </span>
-                      <span className="hidden text-[11px] font-normal text-muted-foreground group-open:inline">
-                        Collapse
-                      </span>
-                    </summary>
-                    <div className="mt-2.5 rounded border bg-muted/30 p-3">
-                      <p className="max-h-96 overflow-y-auto whitespace-pre-wrap font-mono text-[11px] leading-relaxed text-muted-foreground">
-                        {agentText(summary.text)}
-                      </p>
-                    </div>
-                  </details>
+                      </Td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </TableShell>
+          </div>
+
+          <div className="space-y-2">
+            <p className="text-xs font-medium">Agent transcripts</p>
+            {run.summaries.length === 0 ? (
+              <p className="text-xs text-muted-foreground">
+                No transcript text was recorded for this run.
+              </p>
+            ) : (
+              <div className="space-y-3">
+                {run.summaries.map((summary) => (
+                  <div key={summary.role} className="overflow-hidden rounded-lg border">
+                    <p className="border-b px-3 py-2 text-[11px] font-medium text-muted-foreground">
+                      {summaryLabel(summary.role)}
+                    </p>
+                    <p className="px-3 py-2 font-mono text-[11px] leading-relaxed break-words whitespace-pre-wrap text-muted-foreground">
+                      {agentText(summary.text)}
+                    </p>
+                  </div>
                 ))}
               </div>
-            ) : (
-              <StatePanel
-                title="No agent summaries"
-                description="This run artifact contains no agent summary text."
-              />
             )}
-          </SectionCard>
+          </div>
 
-          {/* Strategy Candidates Table */}
-          <SectionCard
-            title="Strategy candidates"
-            description="Technical values and screening criteria captured at decision time."
-          >
-            <TableShell>
-              <table className="w-full text-left text-[11px]">
+          {run.data_collection ? (
+            <div className="space-y-2">
+              <p className="text-xs font-medium">Captured market data</p>
+              <TableShell>
                 <thead>
-                  <tr className="border-b text-[10px] text-muted-foreground">
-                    <th className="px-3 py-2 font-medium">Symbol</th>
-                    <th className="hidden px-3 py-2 text-right font-medium sm:table-cell">
-                      Close
-                    </th>
-                    <th className="hidden px-3 py-2 text-right font-medium md:table-cell">
-                      SMA 20
-                    </th>
-                    <th className="px-3 py-2 text-right font-medium">5d return</th>
-                    <th className="hidden px-3 py-2 text-right font-medium lg:table-cell">
-                      News (+/tot)
-                    </th>
-                    <th className="hidden px-3 py-2 font-medium xl:table-cell">
-                      Screening evidence
-                    </th>
-                    <th className="px-3 py-2 text-right font-medium">State</th>
+                  <tr>
+                    <Th>Symbol</Th>
+                    <Th>Quote time</Th>
+                    <Th align="right">Age</Th>
+                    <Th className="hidden sm:table-cell">Session</Th>
                   </tr>
                 </thead>
                 <tbody>
-                  {run.candidates.length === 0 ? (
-                    <EmptyRow
-                      colSpan={7}
-                      label="No candidates recorded for this run."
-                    />
+                  {run.data_collection.quotes.length === 0 ? (
+                    <EmptyRow colSpan={4}>No quote observations recorded.</EmptyRow>
                   ) : (
-                    run.candidates.map((candidate) => (
-                      <tr
-                        key={candidate.symbol ?? candidate.close ?? "candidate"}
-                        className={cn(
-                          "border-b last:border-0",
-                          candidate.selected && "bg-emerald-500/[0.04]"
-                        )}
-                      >
-                        <td className="px-3 py-2 font-mono font-semibold">
-                          {candidate.symbol ?? "—"}
-                        </td>
-                        <td className="hidden px-3 py-2 text-right font-mono tabular-nums sm:table-cell">
-                          {money(candidate.close)}
-                        </td>
-                        <td className="hidden px-3 py-2 text-right font-mono tabular-nums md:table-cell">
-                          {money(candidate.sma20)}
-                        </td>
-                        <td
-                          className={cn(
-                            "px-3 py-2 text-right font-mono tabular-nums",
-                            Number(candidate.return_5d) > 0
-                              ? "text-emerald-600 dark:text-emerald-400"
-                              : "text-rose-600 dark:text-rose-400"
-                          )}
-                        >
-                          {ratioPercent(
-                            candidate.return_5d === null
-                              ? null
-                              : Number(candidate.return_5d)
-                          )}
-                        </td>
-                        <td className="hidden px-3 py-2 text-right font-mono tabular-nums text-muted-foreground lg:table-cell">
-                          {candidate.positive_news_count ?? 0} /{" "}
-                          {candidate.news_count ?? 0}
-                        </td>
-                        <td className="hidden max-w-[280px] px-3 py-2 text-[10px] leading-snug text-muted-foreground xl:table-cell">
-                          {candidate.reasons.length
-                            ? candidate.reasons.join(" · ")
-                            : "No reasons recorded"}
-                        </td>
-                        <td
-                          className={cn(
-                            "px-3 py-2 text-right font-medium",
-                            candidate.selected
-                              ? "text-emerald-600 dark:text-emerald-400"
-                              : candidate.eligible
-                                ? "text-sky-600 dark:text-sky-400"
-                                : "text-muted-foreground"
-                          )}
-                        >
-                          {candidate.selected
-                            ? "Selected"
-                            : candidate.eligible
-                              ? "Eligible"
-                              : "Rejected"}
-                        </td>
+                    run.data_collection.quotes.map((quote) => (
+                      <tr key={quote.symbol ?? quote.data_time_utc ?? "quote"}>
+                        <Td className="font-mono font-semibold">{quote.symbol ?? "—"}</Td>
+                        <Td className="font-mono text-[11px] break-words text-muted-foreground">
+                          {utcTimestamp(quote.data_time_utc)}
+                        </Td>
+                        <Td align="right" className="text-muted-foreground">
+                          {quote.age_seconds === null || quote.age_seconds === undefined
+                            ? "—"
+                            : `${Math.round(quote.age_seconds)}s`}
+                        </Td>
+                        <Td className="hidden text-muted-foreground sm:table-cell">
+                          {quote.market_state ? humanState(quote.market_state) : "—"}
+                        </Td>
                       </tr>
                     ))
                   )}
                 </tbody>
-              </table>
-            </TableShell>
-          </SectionCard>
-
-          {/* Runtime Data Evidence (when present) */}
-          {run.data_collection ? (
-            <SectionCard
-              title="Execution evidence capture"
-              description="Broker quotes and timestamps recorded during agent execution."
-              contentClassName="space-y-2"
-            >
-              <div className="flex flex-wrap gap-x-4 gap-y-1 font-mono text-[10px] text-muted-foreground">
-                <span>
-                  Collected {utcTimestamp(run.data_collection.collected_at_utc)}
-                </span>
-                <span>·</span>
-                <span>
-                  Account as of {utcTimestamp(run.data_collection.account_as_of_utc)}
-                </span>
-                {run.data_collection.us_eastern_time ? (
-                  <>
-                    <span>·</span>
-                    <span>
-                      US Eastern{" "}
-                      {easternTimestamp(run.data_collection.us_eastern_time)}
-                    </span>
-                  </>
-                ) : null}
-              </div>
-              <TableShell>
-                <table className="w-full text-[11px]">
-                  <thead>
-                    <tr className="border-b text-left text-[10px] text-muted-foreground">
-                      <th className="px-3 py-2 font-medium">Symbol</th>
-                      <th className="px-3 py-2 font-medium">Quote time (UTC)</th>
-                      <th className="px-3 py-2 text-right font-medium">Age</th>
-                      <th className="px-3 py-2 font-medium">Session</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {run.data_collection.quotes.length === 0 ? (
-                      <EmptyRow colSpan={4} label="No quote observations recorded." />
-                    ) : (
-                      run.data_collection.quotes.map((quote) => (
-                        <tr
-                          key={quote.symbol ?? quote.data_time_utc ?? "quote"}
-                          className="border-b last:border-0"
-                        >
-                          <td className="px-3 py-2 font-mono font-semibold">
-                            {quote.symbol ?? "—"}
-                          </td>
-                          <td className="px-3 py-2 font-mono text-[10px] text-muted-foreground">
-                            {utcTimestamp(quote.data_time_utc)}
-                          </td>
-                          <td className="px-3 py-2 text-right text-muted-foreground">
-                            {quote.age_seconds === null || quote.age_seconds === undefined
-                              ? "—"
-                              : `${Math.round(quote.age_seconds)}s`}
-                          </td>
-                          <td className="px-3 py-2 text-muted-foreground">
-                            {quote.market_state ? humanState(quote.market_state) : "—"}
-                          </td>
-                        </tr>
-                      ))
-                    )}
-                  </tbody>
-                </table>
               </TableShell>
-            </SectionCard>
+              <p className="text-[11px] leading-relaxed text-muted-foreground">
+                Captured {utcTimestamp(run.data_collection.collected_at_utc)}
+                {run.data_collection.us_eastern_time
+                  ? ` · ${easternTimestamp(run.data_collection.us_eastern_time)}`
+                  : ""}
+                {run.data_collection.account_as_of_utc
+                  ? ` · Account snapshot ${utcTimestamp(
+                      run.data_collection.account_as_of_utc
+                    )}`
+                  : ""}
+                {run.data_collection.account_age_seconds !== null &&
+                run.data_collection.account_age_seconds !== undefined
+                  ? ` · ${Math.round(run.data_collection.account_age_seconds)}s old`
+                  : ""}
+              </p>
+            </div>
           ) : null}
 
-          {/* Safe Technical Metadata & Boundary Note */}
-          <div className="grid gap-4 lg:grid-cols-2">
-            <SectionCard
-              title="Run metadata"
-              description="Verified cloud session properties."
-            >
-              <div className="grid gap-x-6 sm:grid-cols-2">
-                <KeyValue label="Strategy" value={strategyLabel(run.strategy_version)} />
-                <KeyValue label="Mode" value={humanState(run.mode)} mono />
-                <KeyValue label="Status" value={humanState(run.status)} />
-                <KeyValue label="Sessions" value={String(run.session_count)} mono />
-                <KeyValue
-                  label="Decision time"
-                  value={utcTimestamp(run.decision_time_utc)}
-                  mono
-                />
-                <KeyValue label="Completed" value={shortDate(run.completed_at_utc)} mono />
-              </div>
-            </SectionCard>
-
-            <SectionCard
-              title="Execution isolation"
-              description="Safety invariants for agent activity."
-            >
-              <ul className="space-y-1.5 text-[11px] leading-relaxed text-muted-foreground">
-                <li>Agent decisions are stored as untrusted proposals; they never directly dispatch orders.</li>
-                <li>Research and strategy sessions operate in read-only sandbox mode with zero broker write access.</li>
-                <li>The deterministic risk gate independently re-evaluates all proposal sizing and quotes.</li>
-              </ul>
-            </SectionCard>
+          <div className="space-y-2">
+            <p className="text-xs font-medium">Execution boundary</p>
+            <div className="rounded-lg border px-3">
+              <KeyValue label="Order submitted" value="No submission recorded" />
+              <KeyValue label="Broker order ID" value="None in this artifact" mono />
+              <KeyValue label="Fill" value="None in this artifact" />
+            </div>
+            <p className="text-xs leading-relaxed text-muted-foreground">
+              {rejected
+                ? "The proposal was blocked at the RiskGate. No broker order or fill exists for this run."
+                : risk
+                  ? "Policy approval does not authorise a submission. Owner approval and execution-time checks remain."
+                  : "No order proposal reached execution."}
+            </p>
+            <ul className="space-y-1 text-xs leading-relaxed text-muted-foreground">
+              <li>Agent output is untrusted evidence; it never dispatches an order.</li>
+              <li>Research and strategy sessions hold zero broker write permissions.</li>
+              <li>The RiskGate re-evaluates sizing and quotes independently of agent text.</li>
+            </ul>
           </div>
-        </>
-      )}
-    </div>
+        </div>
+      </DetailSheet>
+    </PageContainer>
   )
 }

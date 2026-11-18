@@ -20,7 +20,7 @@ def make_proposal(**overrides):
     values = {
         "proposal_id": "proposal-1",
         "run_id": "run-1",
-        "strategy_version": "momentum-v1",
+        "strategy_version": "spy-directional",
         "decision_time_utc": NOW,
         "data_as_of_utc": NOW,
         "symbol": "QQQ",

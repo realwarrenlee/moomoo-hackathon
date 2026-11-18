@@ -1,4 +1,4 @@
-from datetime import UTC, datetime
+from datetime import UTC, date, datetime
 from decimal import Decimal
 from pathlib import Path
 
@@ -6,32 +6,29 @@ import pytest
 
 from app.models.contracts import Quote
 from app.qoder_tools import CurrentMarketContext, QoderToolService
-from app.research.data import MarketHistory, NewsArchive
-from app.research.dryrun import build_account, find_accepted_example, latest_decision
+from app.research.data import MarketHistory, session_close_utc
+from app.research.dryrun import build_account, find_accepted_example
+from app.research.strategy import STRATEGY_VERSION
 from scripts.current_market_run import CollectionError, _load_bars
 
 FIXTURES = Path(__file__).parent / "fixtures"
 FINGERPRINT = "current-market-test-fingerprint"
+STRATEGY = STRATEGY_VERSION
 
 
 @pytest.fixture(scope="module")
 def history():
-    return MarketHistory.from_file(FIXTURES / "moomoo_daily_bars_2026-11-16.json")
-
-
-@pytest.fixture(scope="module")
-def news():
-    return NewsArchive((), {"provider": "not used", "note": "momentum-v1 requires no news"})
+    return MarketHistory.from_file(FIXTURES / "moomoo_directional_etf_bars_2026-11-17.json")
 
 
 @pytest.fixture
-def accepted(history, news):
-    decision = find_accepted_example(history, news, "momentum-v1", FINGERPRINT)
+def accepted(history):
+    decision = find_accepted_example(history, STRATEGY, FINGERPRINT)
     assert decision is not None and decision.proposal is not None
     return decision
 
 
-def _service(history, news, accepted, quote_price=None, calls=None):
+def _service(history, accepted, quote_price=None, calls=None, fingerprint=FINGERPRINT):
     now = accepted.snapshot.decision_time_utc
     account = build_account(now, FINGERPRINT, "current-account")
     quote = Quote(
@@ -53,11 +50,10 @@ def _service(history, news, accepted, quote_price=None, calls=None):
 
     service = QoderToolService(
         history,
-        news,
-        FINGERPRINT,
+        fingerprint,
         current=CurrentMarketContext(
             decision_time_utc=now,
-            fingerprint=FINGERPRINT,
+            fingerprint=fingerprint,
             account_provider=account_provider,
             quote_provider=quote_provider,
             control=accepted.control.model_copy(
@@ -69,20 +65,24 @@ def _service(history, news, accepted, quote_price=None, calls=None):
     return service, calls
 
 
-def test_current_mode_research_uses_supplied_artifact_and_notice(history, news, accepted):
-    service, _ = _service(history, news, accepted)
-    run_id = service.create_run("momentum-v1")
-    result = service.research_market({"run_id": run_id, "strategy_version": "momentum-v1"})
+def test_current_mode_research_uses_supplied_artifact_and_notice(history, accepted):
+    service, _ = _service(history, accepted)
+    run_id = service.create_run(STRATEGY)
+    result = service.research_market({"run_id": run_id, "strategy_version": STRATEGY})
     assert result["ok"] is True
     assert result["mode"] == "CURRENT_MARKET_READ_ONLY"
     assert "Current read-only Moomoo evidence" in result["notice"]
-    assert result["proposal"] == accepted.proposal.model_dump(mode="json")
+    expected = accepted.proposal.model_copy(update={"run_id": run_id}).model_dump(mode="json")
+    assert result["proposal"] == expected
+    assert result["snapshot"]["target_symbol"] == "SPY"
 
 
-def test_current_mode_gate_reads_fresh_account_and_quote_and_keeps_writes_disabled(history, news, accepted):
-    service, calls = _service(history, news, accepted)
-    run_id = service.create_run("momentum-v1")
-    research = service.research_market({"run_id": run_id, "strategy_version": "momentum-v1"})
+def test_current_mode_gate_reads_fresh_account_and_quote_and_keeps_writes_disabled(
+    history, accepted
+):
+    service, calls = _service(history, accepted)
+    run_id = service.create_run(STRATEGY)
+    research = service.research_market({"run_id": run_id, "strategy_version": STRATEGY})
     result = service.evaluate_proposal({"run_id": run_id, "proposal": research["proposal"]})
     assert result["ok"] is True
     assert result["mode"] == "CURRENT_MARKET_READ_ONLY"
@@ -93,10 +93,19 @@ def test_current_mode_gate_reads_fresh_account_and_quote_and_keeps_writes_disabl
     assert "equity" not in result
 
 
-def test_current_mode_tampered_proposal_is_rejected_before_gate(history, news, accepted):
-    service, calls = _service(history, news, accepted)
-    run_id = service.create_run("momentum-v1")
-    research = service.research_market({"run_id": run_id, "strategy_version": "momentum-v1"})
+def test_current_mode_wrong_account_is_rejected(history, accepted):
+    service, _ = _service(history, accepted, fingerprint="different-account")
+    run_id = service.create_run(STRATEGY)
+    research = service.research_market({"run_id": run_id, "strategy_version": STRATEGY})
+    result = service.evaluate_proposal({"run_id": run_id, "proposal": research["proposal"]})
+    assert result["risk_decision"]["decision"] == "REJECT"
+    assert "R001" in {item["rule_id"] for item in result["risk_decision"]["reasons"]}
+
+
+def test_current_mode_tampered_proposal_is_rejected_before_gate(history, accepted):
+    service, calls = _service(history, accepted)
+    run_id = service.create_run(STRATEGY)
+    research = service.research_market({"run_id": run_id, "strategy_version": STRATEGY})
     proposal = dict(research["proposal"])
     proposal["thesis"] = "substituted prose"
     result = service.evaluate_proposal({"run_id": run_id, "proposal": proposal})
@@ -104,14 +113,11 @@ def test_current_mode_tampered_proposal_is_rejected_before_gate(history, news, a
     assert calls == {"account": 1, "quote": 1}
 
 
-def test_current_mode_no_trade_never_calls_the_gate(history, news, accepted):
-    no_trade = latest_decision(history, news, "momentum-v1", FINGERPRINT)
-    assert no_trade.proposal is None
-    now = no_trade.snapshot.decision_time_utc
+def test_current_mode_cash_decision_never_calls_the_gate(history, accepted):
+    now = session_close_utc(date(2026, 11, 13))
     account = build_account(now, FINGERPRINT, "current-account")
     service = QoderToolService(
         history,
-        news,
         FINGERPRINT,
         current=CurrentMarketContext(
             decision_time_utc=now,
@@ -127,23 +133,23 @@ def test_current_mode_no_trade_never_calls_the_gate(history, news, accepted):
         ),
         clock=lambda: now,
     )
-    run_id = service.create_run("momentum-v1")
-    research = service.research_market({"run_id": run_id, "strategy_version": "momentum-v1"})
+    run_id = service.create_run(STRATEGY)
+    research = service.research_market({"run_id": run_id, "strategy_version": STRATEGY})
     assert research["proposal"] is None
+    assert research["snapshot"]["action"] == "CASH"
     result = service.evaluate_proposal(
         {"run_id": run_id, "proposal": accepted.proposal.model_dump(mode="json")}
     )
     assert result["error"]["code"] == "no_proposal"
 
 
-def test_bar_validation_rejects_current_session_and_requires_prior_session(history, news):
-    path = FIXTURES / "moomoo_daily_bars_2026-11-16.json"
+def test_bar_validation_rejects_current_session_and_requires_prior_session(history):
+    path = FIXTURES / "moomoo_directional_etf_bars_2026-11-17.json"
     last = history.session_dates()[-1]
     same_day = datetime(last.year, last.month, last.day, 23, 0, tzinfo=UTC)
     with pytest.raises(CollectionError, match="incomplete current-session"):
         _load_bars(path, same_day)
 
-    tuesday = datetime(2026, 11, 18, 23, 0, tzinfo=UTC)
-    if history.session_dates()[-1].isoformat() == "2026-11-16":
-        with pytest.raises(CollectionError, match="expected the prior completed session"):
-            _load_bars(path, tuesday)
+    friday = datetime(2026, 11, 20, 23, 0, tzinfo=UTC)
+    with pytest.raises(CollectionError, match="expected the prior completed session"):
+        _load_bars(path, friday)

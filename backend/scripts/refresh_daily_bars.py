@@ -14,7 +14,7 @@ from app.broker.moomoo_auth import FileTokenStore, MoomooOAuth, default_token_pa
 from app.broker.moomoo_history import MoomooHistoryFeed
 from app.broker.moomoo_rest import MoomooRestClient
 from app.cli import load_local_env
-from app.research.data import UNIVERSE
+from app.research.instruments import CANDIDATE_SYMBOLS
 
 ROOT = Path(__file__).resolve().parents[2]
 NY = ZoneInfo("America/New_York")
@@ -62,7 +62,7 @@ def refresh(as_of: date | None, *, now: datetime | None = None) -> tuple[Path, d
     elif as_of == now_et.date() and now_et.time() < MARKET_CLOSE_ET:
         raise RefreshError("the current US session has not closed")
 
-    payload = feed.snapshot(UNIVERSE, as_of, now=clock, require_end_session=True)
+    payload = feed.snapshot(CANDIDATE_SYMBOLS, as_of, now=clock, require_end_session=True)
     out_dir = ROOT / "evidence" / "current-market" / as_of.isoformat()
     out_dir.mkdir(parents=True, exist_ok=True)
     path = out_dir / "daily-bars.json"

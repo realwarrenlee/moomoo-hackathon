@@ -30,7 +30,7 @@ const pages = [
   { label: "Overview", icon: GaugeIcon, href: "/dashboard" },
   { label: "Portfolio & Orders", icon: WalletCardsIcon, href: "/portfolio" },
   { label: "Risk Centre", icon: ShieldCheckIcon, href: "/risk" },
-  { label: "AI Agent Activity", icon: BotIcon, href: "/agents" },
+  { label: "Agent Activity", icon: BotIcon, href: "/agents" },
   { label: "Performance Analytics", icon: ChartNoAxesCombinedIcon, href: "/analytics" },
   { label: "Audit Log", icon: ScrollTextIcon, href: "/audit" },
 ]

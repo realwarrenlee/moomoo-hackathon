@@ -1,0 +1,109 @@
+{
+  "schema_version": "1",
+  "run_id": "qoder-62b08de4-d64f-43ab-b044-fe781eae393e",
+  "mode": "HISTORICAL_DRY_RUN",
+  "strategy_version": "directional-event-v2",
+  "status": "COMPLETED",
+  "outcome": "HISTORICAL_POLICY_APPROVAL",
+  "session_ids": {
+    "coordinator": "sess_00vuabejsh2ps1camch1",
+    "researcher": "sess_00vuabj8f629sgijb6c8",
+    "auditor": "sess_00vuabsfd6j9ct4ixyyp"
+  },
+  "notice": "Historical evidence only. No current broker snapshot, owner approval or order submission.",
+  "decision_time_utc": "2026-09-21T21:00:00+00:00",
+  "research": {
+    "ok": true,
+    "mode": "HISTORICAL_DRY_RUN",
+    "run_id": "qoder-62b08de4-d64f-43ab-b044-fe781eae393e",
+    "snapshot": {
+      "strategy_version": "directional-event-v2",
+      "decision_time_utc": "2026-09-21T21:00:00+00:00",
+      "data_as_of_utc": "2026-09-21T21:00:00+00:00",
+      "event": {
+        "event_id": "syn-nasdaq-bull-2026-09-18",
+        "category": "earnings",
+        "title": "Synthetic large-cap technology earnings beat",
+        "published_at_utc": "2026-09-18T20:30:00+00:00",
+        "source": "Synthetic fixture",
+        "url": "https://example.com/synthetic/nasdaq-bull-2026-09-18",
+        "direction": "BULLISH",
+        "direction_basis": "Synthetic reported results above the fixture expectation",
+        "materiality": "HIGH",
+        "theme": "nasdaq100",
+        "benchmark": "QQQ",
+        "reaction_session": "2026-09-21",
+        "reaction_return": "0.028821245744430794131500175",
+        "volume_ratio": "1.489043445248243047978201284",
+        "confirmed": true,
+        "reason": "Post-event price and volume confirmed the event direction"
+      },
+      "candidates": [
+        {
+          "event_id": "syn-nasdaq-bull-2026-09-18",
+          "theme": "nasdaq100",
+          "benchmark": "QQQ",
+          "symbol": "QQQ",
+          "direction": 1,
+          "leverage": "1",
+          "effective_exposure": "1",
+          "close": "741.47",
+          "reaction_return": "0.028821245744430794131500175",
+          "volume_ratio": "1.489043445248243047978201284",
+          "eligible": true,
+          "selected": true,
+          "reasons": [
+            "Selected: confirmed event reaction with the least leveraged liquid instrument"
+          ]
+        }
+      ],
+      "selected_theme": "nasdaq100",
+      "selected_symbol": "QQQ",
+      "direction": "BULLISH",
+      "no_trade_reason": null
+    },
+    "proposal": {
+      "schema_version": "1",
+      "proposal_id": "directional-event-v2-20260921-QQQ",
+      "run_id": "qoder-62b08de4-d64f-43ab-b044-fe781eae393e",
+      "strategy_version": "directional-event-v2",
+      "decision_time_utc": "2026-09-21T21:00:00Z",
+      "data_as_of_utc": "2026-09-21T21:00:00Z",
+      "symbol": "QQQ",
+      "action": "BUY",
+      "requested_quantity": 6,
+      "thesis": "Verified earnings event 'Synthetic large-cap technology earnings beat' was published at 2026-09-18T20:30:00+00:00 with bullish evidence (Synthetic reported results above the fixture expectation). The QQQ reaction session 2026-09-21 returned 2.8821% on a 1.49x volume ratio, confirming the direction. QQQ expresses +1x daily QQQ exposure at 1x leverage (effective exposure +1).",
+      "invalidation": "Exit at the open after 5 completed sessions; no discretionary agent override.",
+      "evidence_ids": [
+        "event:syn-nasdaq-bull-2026-09-18",
+        "bar:QQQ:2026-09-21",
+        "bar:QQQ:20260921"
+      ]
+    },
+    "notice": "Historical Moomoo evidence only; not a current broker snapshot or order authorization."
+  },
+  "risk": {
+    "ok": true,
+    "mode": "HISTORICAL_DRY_RUN",
+    "run_id": "qoder-62b08de4-d64f-43ab-b044-fe781eae393e",
+    "risk_decision": {
+      "proposal_id": "directional-event-v2-20260921-QQQ",
+      "policy_version": "risk-v1",
+      "decision": "APPROVE",
+      "reasons": [],
+      "approved_quantity": 6,
+      "account_snapshot_id": "qoder-dryrun-qoder-62b08de4-d64f-43ab-b044-fe781eae393e",
+      "expires_at_utc": "2026-09-21T21:00:30Z"
+    },
+    "evaluated_at_utc": "2026-09-21T21:00:00+00:00",
+    "control_context": "Hypothetical policy controls only; no owner approval, broker write or live account state.",
+    "notice": "An APPROVE result is a policy evaluation, never an order authorization."
+  },
+  "agent_summaries": {
+    "coordinator_ready": "READY qoder-62b08de4-d64f-43ab-b044-fe781eae393e\n\nMode: HISTORICAL_DRY_RUN\n\nBoundary confirmed for read-only run qoder-62b08de4-d64f-43ab-b044-fe781eae393e. Strategy allowlist and selected strategy both: directional-event-v2. No tools used; no order discussed, created, approved, rejected or executed. This run remains NO_TRADE and is not an order, fill, owner approval or live-account claim.",
+    "researcher": "**Mode: HISTORICAL_DRY_RUN** — run_id `qoder-62b08de4-d64f-43ab-b044-fe781eae393e`, strategy `directional-event-v2`.\n\nNote: the artifact did **not** return NO_TRADE — `no_trade_reason` is `null`. It returned a typed BUY *proposal* (research only, not an order authorization). I can't verify account/market state beyond this fixture snapshot.\n\n**Snapshot**\n- decision_time_utc / data_as_of_utc: `2026-09-21T21:00:00Z`\n- Event: `syn-nasdaq-bull-2026-09-18`, category `earnings`, direction BULLISH, materiality HIGH, published `2026-09-18T20:30:00Z` (source: Synthetic fixture)\n- Theme `nasdaq100`, benchmark QQQ, reaction session `2026-09-21`\n- Reaction return `2.8821%`, volume ratio `1.49x`, `confirmed: true`\n- Selected: QQQ, close `741.47`, leverage `1`, effective exposure `+1`; eligible & selected — \"confirmed event reaction with the least leveraged liquid instrument\"\n\n**Proposal (non-authorizing)**\n- proposal_id `directional-event-v2-20260921-QQQ`, action BUY, requested_quantity 6\n- Invalidation: exit at open after 5 completed sessions; no discretionary agent override\n- Evidence IDs: `event:syn-nasdaq-bull-2026-09-18`, `bar:QQQ:2026-09-21`, `bar:QQQ:20260921`\n\nTool notice: \"Historical Moomoo evidence only; not a current broker snapshot or order authorization.\" Risk evaluation, approval, and execution are outside my scope.",
+    "auditor": "**Deterministic decision: APPROVE** (policy `risk-v1`, mode `HISTORICAL_DRY_RUN`)\n\n- Run: `qoder-62b08de4-d64f-43ab-b044-fe781eae393e`\n- Proposal: `directional-event-v2-20260921-QQQ` (QQQ, BUY, requested 6)\n- Approved quantity: 6\n- Rule IDs / reasons: **none triggered** — `reasons: []` came back empty, so the gate returned no rule identifiers (no blocking or flagging rules fired).\n- Account snapshot: `qoder-dryrun-qoder-62b08de4-d64f-43ab-b044-fe781eae393e`\n- Expires: 2026-09-21T21:00:30Z\n- Evaluated at: 2026-09-21T21:00:00Z\n\nCaveats that prose cannot override: this was a hypothetical policy evaluation with no live account state or broker access. An APPROVE is **not** owner authorization and **not** an order instruction; nothing was submitted. I have no execution access and made no changes to the proposal.",
+    "coordinator_final": "Closing read-only run qoder-62b08de4-d64f-43ab-b044-fe781eae393e. No tools called.\n\n**Deterministic outcome:** HISTORICAL_POLICY_APPROVAL\n\n- Proposal: directional-event-v2-20260921-QQQ (QQQ, BUY, requested 6)\n- Strategy: directional-event-v2; theme nasdaq100; benchmark/symbol QQQ\n- Evidence basis: synthetic earnings event syn-nasdaq-bull-2026-09-18 (HIGH materiality, BULLISH); reaction session 2026-09-21 returned 2.8821% on 1.49x volume, confirmed\n- Invalidation: exit at open after 5 completed sessions; no discretionary override\n- Risk gate: risk-v1 → APPROVE (hypothetical), approved quantity 6, no rule IDs fired (reasons: [])\n- Account snapshot reference: qoder-dryrun-qoder-62b08de4-d64f-43ab-b044-fe781eae393e\n- Evaluated 2026-09-21T21:00:00Z; decision expired 2026-09-21T21:00:30Z\n\n**Limitations**\n\n- This is a historical, hypothetical policy evaluation using a synthetic fixture — not current market data.\n- The APPROVE is not owner authorization, not a current approval, and not an order instruction.\n- Nothing was created, routed, submitted, or filled; no broker fill exists.\n- No live account state or broker connectivity was consulted; the snapshot ID is a dry-run reference only.\n- No execution occurred, so the run produced no trade action — NO_TRADE is preserved at the execution level.\n\nNet: the supplied artifact shows only a deterministic historical policy approval of a hypothetical QQQ proposal; it is not a trade, fill, or live approval."
+  },
+  "completed_at_utc": "2026-11-18T05:59:09.287125+00:00"
+}

@@ -1,318 +1,335 @@
 "use client"
 
+import Link from "next/link"
 import {
-  AlertTriangleIcon,
   ArchiveIcon,
+  ArrowRightIcon,
   CircleAlertIcon,
-  CircleCheckIcon,
+  InfoIcon,
   Loader2Icon,
-  RefreshCwIcon,
 } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card"
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet"
 import { Skeleton } from "@/components/ui/skeleton"
 import { cn } from "@/lib/utils"
-import { clockTime, type Provenance } from "@/lib/mootrade"
+import type { Tone } from "@/lib/mootrade"
 
-const provenanceConfig: Record<Provenance, { label: string; tone: string; dot: string }> = {
-  LIVE_BROKER_READ: {
-    label: "Broker-verified PAPER",
-    tone: "text-emerald-700 dark:text-emerald-300",
-    dot: "bg-emerald-500",
+export const toneStyles: Record<
+  Tone,
+  { pill: string; dot: string; text: string; bar: string }
+> = {
+  neutral: {
+    pill: "border-border bg-muted/40 text-muted-foreground",
+    dot: "bg-muted-foreground/70",
+    text: "text-muted-foreground",
+    bar: "bg-muted-foreground/60",
   },
-  HISTORICAL_BACKTEST: {
-    label: "Historical simulation",
-    tone: "text-amber-700 dark:text-amber-300",
-    dot: "bg-amber-500",
+  positive: {
+    pill: "border-border bg-transparent text-emerald-700 dark:text-emerald-300",
+    dot: "bg-emerald-600 dark:bg-emerald-400",
+    text: "text-emerald-700 dark:text-emerald-300",
+    bar: "bg-emerald-600 dark:bg-emerald-400",
   },
-  HISTORICAL_QODER_RUN: {
-    label: "Historical Qoder run",
-    tone: "text-amber-700 dark:text-amber-300",
-    dot: "bg-amber-500",
+  warning: {
+    pill: "border-border bg-transparent text-amber-700 dark:text-amber-300",
+    dot: "bg-amber-600 dark:bg-amber-400",
+    text: "text-amber-700 dark:text-amber-300",
+    bar: "bg-amber-600 dark:bg-amber-400",
   },
-  CURRENT_MARKET_READ_ONLY: {
-    label: "Current market · read only",
-    tone: "text-emerald-700 dark:text-emerald-300",
-    dot: "bg-emerald-500",
+  danger: {
+    pill: "border-border bg-transparent text-rose-700 dark:text-rose-300",
+    dot: "bg-rose-600 dark:bg-rose-400",
+    text: "text-rose-700 dark:text-rose-300",
+    bar: "bg-rose-600 dark:bg-rose-400",
   },
-  RECORDED_REAL_PREFLIGHT: {
-    label: "Recorded real preflight",
-    tone: "text-muted-foreground",
-    dot: "bg-sky-500",
-  },
-  LOCAL_LEDGER: {
-    label: "Local ledger",
-    tone: "text-muted-foreground",
+  info: {
+    pill: "border-border bg-muted/20 text-muted-foreground",
     dot: "bg-muted-foreground/60",
-  },
-  LOCAL_CONTROLS: {
-    label: "Local controls",
-    tone: "text-muted-foreground",
-    dot: "bg-muted-foreground/60",
+    text: "text-muted-foreground",
+    bar: "bg-muted-foreground/60",
   },
 }
 
-export function ProvenanceBadge({
-  value,
+export function StatusPill({
+  tone = "neutral",
+  dot = false,
   className,
+  children,
 }: {
-  value: Provenance
+  tone?: Tone
+  dot?: boolean
   className?: string
+  children: React.ReactNode
 }) {
-  const config = provenanceConfig[value]
+  const styles = toneStyles[tone]
   return (
     <span
       className={cn(
-        "inline-flex items-center gap-1.5 text-[11px] font-medium",
-        config.tone,
+        "inline-flex shrink-0 items-center gap-1.5 rounded-md border px-1.5 py-0.5 text-[11px] font-medium whitespace-nowrap",
+        styles.pill,
         className
       )}
     >
-      <span className={cn("size-1.5 rounded-full", config.dot)} />
-      {config.label}
+      {dot ? <span className={cn("size-1.5 rounded-full", styles.dot)} /> : null}
+      {children}
     </span>
+  )
+}
+
+export function PageContainer({
+  children,
+  className,
+}: {
+  children: React.ReactNode
+  className?: string
+}) {
+  return (
+    <div
+      className={cn(
+        "mx-auto w-full max-w-[1440px] space-y-5 px-4 py-5 md:px-6 md:py-6",
+        className
+      )}
+    >
+      {children}
+    </div>
   )
 }
 
 export function PageHeader({
   title,
   description,
+  meta,
   actions,
 }: {
   title: string
-  description?: string
+  description?: React.ReactNode
+  meta?: React.ReactNode
   actions?: React.ReactNode
 }) {
   return (
-    <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-      <div className="space-y-1">
-        <h1 className="text-[22px] font-semibold tracking-tight md:text-2xl">
-          {title}
-        </h1>
+    <header className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+      <div className="min-w-0 space-y-1">
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5">
+          <h1 className="text-xl font-semibold tracking-tight">{title}</h1>
+          {meta}
+        </div>
         {description ? (
-          <p className="max-w-2xl text-[13px] leading-relaxed text-muted-foreground">
+          <p className="max-w-3xl text-[13px] leading-relaxed text-muted-foreground">
             {description}
           </p>
         ) : null}
       </div>
-      {actions ? <div className="flex shrink-0 items-center gap-2">{actions}</div> : null}
-    </div>
-  )
-}
-
-export function RefreshButton({
-  onClick,
-  refreshing,
-  refreshedAt,
-}: {
-  onClick: () => void
-  refreshing?: boolean
-  refreshedAt?: Date | null
-}) {
-  return (
-    <div className="flex items-center gap-2">
-      {refreshedAt ? (
-        <span
-          className="hidden text-[11px] text-muted-foreground sm:inline"
-          title="When this dashboard page fetched the API. This is not the broker data timestamp."
-        >
-          Page fetched {clockTime(refreshedAt)}
-        </span>
+      {actions ? (
+        <div className="flex shrink-0 items-center gap-2">{actions}</div>
       ) : null}
-      <Button
-        variant="ghost"
-        size="sm"
-        onClick={onClick}
-        disabled={refreshing}
-        className="h-8 gap-1.5 px-2 text-xs"
-      >
-        <RefreshCwIcon className={cn("size-3.5", refreshing && "animate-spin")} />
-        Refresh
-      </Button>
-    </div>
+    </header>
   )
 }
 
-export function Metric({
-  label,
-  value,
-  detail,
-  tone = "neutral",
-}: {
-  label: string
-  value: React.ReactNode
-  detail?: React.ReactNode
-  tone?: "neutral" | "positive" | "warning" | "danger"
-}) {
-  const toneClass = {
-    neutral: "",
-    positive: "text-emerald-600 dark:text-emerald-400",
-    warning: "text-amber-600 dark:text-amber-400",
-    danger: "text-rose-600 dark:text-rose-400",
-  }[tone]
-  return (
-    <div className="bg-card px-4 py-3">
-      <p className="text-[11px] text-muted-foreground">{label}</p>
-      <p className={cn("mt-1 text-xl font-semibold tabular-nums tracking-tight", toneClass)}>
-        {value}
-      </p>
-      {detail ? (
-        <div className="mt-0.5 text-[11px] leading-snug text-muted-foreground">{detail}</div>
-      ) : null}
-    </div>
-  )
-}
-
-export function MetricStrip({ children }: { children: React.ReactNode }) {
-  return (
-    <div className="grid grid-cols-2 gap-px overflow-hidden rounded-lg border bg-border sm:grid-cols-4">
-      {children}
-    </div>
-  )
-}
-
-export function SectionCard({
+export function Section({
   title,
   description,
   action,
   children,
   className,
-  contentClassName,
+  bodyClassName,
+  flush = false,
 }: {
-  title: string
-  description?: string
+  title?: string
+  description?: React.ReactNode
   action?: React.ReactNode
   children: React.ReactNode
   className?: string
-  contentClassName?: string
+  bodyClassName?: string
+  flush?: boolean
 }) {
   return (
-    <Card className={cn("gap-3 rounded-lg py-4", className)}>
-      <CardHeader className="grid-cols-[1fr_auto] items-start gap-3 px-4">
-        <div className="space-y-0.5">
-          <CardTitle className="text-[13px] font-semibold">{title}</CardTitle>
-          {description ? (
-            <CardDescription className="text-[11px] leading-relaxed">
-              {description}
-            </CardDescription>
-          ) : null}
+    <section className={cn("overflow-hidden rounded-xl border bg-card", className)}>
+      {title || action ? (
+        <div className="flex items-start justify-between gap-3 border-b px-4 py-3">
+          <div className="min-w-0 space-y-0.5">
+            {title ? (
+              <h2 className="text-sm font-semibold tracking-tight">{title}</h2>
+            ) : null}
+            {description ? (
+              <p className="text-xs leading-relaxed text-muted-foreground">
+                {description}
+              </p>
+            ) : null}
+          </div>
+          {action ? <div className="shrink-0">{action}</div> : null}
         </div>
-        {action}
-      </CardHeader>
-      <CardContent className={cn("px-4", contentClassName)}>{children}</CardContent>
-    </Card>
+      ) : null}
+      <div className={cn(flush ? "p-0" : "p-4", bodyClassName)}>{children}</div>
+    </section>
   )
 }
 
-export function NoticeBanner({
-  tone = "warning",
-  title,
+export function TableShell({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="overflow-x-auto">
+      <table className="w-full text-left text-[13px] [&_tbody_tr:last-child_td]:border-b-0">
+        {children}
+      </table>
+    </div>
+  )
+}
+
+export function Th({
+  children,
+  align = "left",
+  className,
+}: {
+  children?: React.ReactNode
+  align?: "left" | "right" | "center"
+  className?: string
+}) {
+  return (
+    <th
+      scope="col"
+      className={cn(
+        "border-b px-4 py-2.5 text-xs font-medium whitespace-nowrap text-muted-foreground",
+        align === "right" && "text-right",
+        align === "center" && "text-center",
+        className
+      )}
+    >
+      {children}
+    </th>
+  )
+}
+
+export function Td({
+  children,
+  align = "left",
+  className,
+}: {
+  children?: React.ReactNode
+  align?: "left" | "right" | "center"
+  className?: string
+}) {
+  return (
+    <td
+      className={cn(
+        "border-b px-4 py-2.5 align-middle",
+        align === "right" && "text-right",
+        align === "center" && "text-center",
+        className
+      )}
+    >
+      {children}
+    </td>
+  )
+}
+
+export function EmptyRow({
+  colSpan,
   children,
 }: {
-  tone?: "warning" | "info" | "danger" | "success"
-  title: string
-  children?: React.ReactNode
+  colSpan: number
+  children: React.ReactNode
 }) {
-  const config = {
-    warning: {
-      className: "border-amber-500/25 bg-amber-500/[0.05] text-amber-900 dark:text-amber-100",
-      icon: AlertTriangleIcon,
-    },
-    info: {
-      className: "border-border bg-muted/40 text-foreground",
-      icon: CircleAlertIcon,
-    },
-    danger: {
-      className: "border-rose-500/25 bg-rose-500/[0.05] text-rose-900 dark:text-rose-100",
-      icon: CircleAlertIcon,
-    },
-    success: {
-      className: "border-emerald-500/25 bg-emerald-500/[0.05] text-emerald-900 dark:text-emerald-100",
-      icon: CircleCheckIcon,
-    },
-  }[tone]
-  const Icon = config.icon
   return (
-    <div className={cn("flex gap-2.5 rounded-lg border px-3 py-2.5", config.className)}>
-      <Icon className="mt-0.5 size-3.5 shrink-0" />
-      <div className="space-y-0.5">
-        <p className="text-xs font-semibold">{title}</p>
-        {children ? (
-          <div className="text-[11px] leading-relaxed opacity-85">{children}</div>
-        ) : null}
-      </div>
-    </div>
+    <tr>
+      <td
+        colSpan={colSpan}
+        className="px-4 py-5 text-[13px] text-muted-foreground"
+      >
+        {children}
+      </td>
+    </tr>
   )
 }
 
-export function StatePanel({
-  kind = "empty",
-  title,
-  description,
-  action,
+export function Stat({
+  label,
+  value,
+  hint,
+  tone = "neutral",
+  className,
 }: {
-  kind?: "empty" | "error" | "unavailable"
-  title: string
-  description: string
-  action?: React.ReactNode
+  label: string
+  value: React.ReactNode
+  hint?: React.ReactNode
+  tone?: Tone
+  className?: string
 }) {
-  const Icon =
-    kind === "error" ? CircleAlertIcon : kind === "unavailable" ? CircleAlertIcon : ArchiveIcon
   return (
-    <div className="flex flex-col items-center justify-center gap-2 px-4 py-10 text-center">
-      <Icon className="size-4 text-muted-foreground/70" />
-      <div className="max-w-md space-y-1">
-        <p className="text-[13px] font-medium">{title}</p>
-        <p className="text-[11px] leading-relaxed text-muted-foreground">{description}</p>
-      </div>
-      {action}
+    <div className={cn("bg-card px-4 py-3.5", className)}>
+      <p className="text-xs text-muted-foreground">{label}</p>
+      <p
+        className={cn(
+          "mt-1 text-[22px] leading-tight font-semibold tracking-tight tabular-nums",
+          tone !== "neutral" ? toneStyles[tone].text : "text-foreground"
+        )}
+      >
+        {value}
+      </p>
+      {hint ? (
+        <p className="mt-0.5 text-xs leading-snug text-muted-foreground">{hint}</p>
+      ) : null}
     </div>
   )
 }
 
-export function LoadingBlock({ rows = 3 }: { rows?: number }) {
+export function StatGrid({
+  children,
+  className,
+  columns = 4,
+}: {
+  children: React.ReactNode
+  className?: string
+  columns?: 3 | 4
+}) {
   return (
-    <div className="space-y-2">
-      {Array.from({ length: rows }).map((_, index) => (
-        <Skeleton key={index} className="h-10 w-full" />
-      ))}
+    <div
+      className={cn(
+        "grid grid-cols-2 gap-px overflow-hidden rounded-xl border bg-border",
+        columns === 3 ? "sm:grid-cols-3" : "sm:grid-cols-4",
+        className
+      )}
+    >
+      {children}
     </div>
   )
 }
 
-export function LoadingPage() {
+export function Meter({
+  label,
+  value,
+  display,
+  tone = "neutral",
+  hint,
+}: {
+  label: string
+  value: number | null
+  display: React.ReactNode
+  tone?: Tone
+  hint?: React.ReactNode
+}) {
+  const width = value === null ? 0 : Math.max(0, Math.min(100, value))
   return (
-    <div className="space-y-5 p-4 md:p-6">
-      <div className="space-y-2">
-        <Skeleton className="h-7 w-48" />
-        <Skeleton className="h-4 w-full max-w-lg" />
+    <div className="space-y-1.5">
+      <div className="flex items-baseline justify-between gap-3">
+        <p className="text-xs text-muted-foreground">{label}</p>
+        <p className="text-[13px] font-semibold tabular-nums">{display}</p>
       </div>
-      <div className="grid grid-cols-2 gap-px overflow-hidden rounded-lg border bg-border sm:grid-cols-4">
-        {Array.from({ length: 4 }).map((_, index) => (
-          <div key={index} className="bg-card px-4 py-3">
-            <Skeleton className="h-3 w-20" />
-            <Skeleton className="mt-2 h-6 w-28" />
-          </div>
-        ))}
+      <div className="h-1.5 overflow-hidden rounded-full bg-muted">
+        <div
+          className={cn("h-full rounded-full", toneStyles[tone].bar)}
+          style={{ width: `${width}%` }}
+        />
       </div>
-      <Skeleton className="h-64 w-full rounded-lg" />
-      <div className="grid gap-4 lg:grid-cols-2">
-        <Skeleton className="h-48 w-full rounded-lg" />
-        <Skeleton className="h-48 w-full rounded-lg" />
-      </div>
+      {hint ? <p className="text-[11px] text-muted-foreground">{hint}</p> : null}
     </div>
   )
-}
-
-export function Spinner() {
-  return <Loader2Icon className="size-4 animate-spin text-muted-foreground" />
 }
 
 export function KeyValue({
@@ -325,12 +342,12 @@ export function KeyValue({
   mono?: boolean
 }) {
   return (
-    <div className="flex items-start justify-between gap-4 border-b py-2 last:border-0">
-      <span className="text-[11px] text-muted-foreground">{label}</span>
+    <div className="flex items-start justify-between gap-4 border-b py-2 text-[13px] last:border-b-0">
+      <span className="shrink-0 text-muted-foreground">{label}</span>
       <span
         className={cn(
-          "max-w-[64%] text-right text-[11px] font-medium",
-          mono && "font-mono tabular-nums"
+          "min-w-0 text-right font-medium break-words",
+          mono && "font-mono text-xs tabular-nums"
         )}
       >
         {value}
@@ -339,30 +356,208 @@ export function KeyValue({
   )
 }
 
-export function EmptyRow({
-  colSpan,
-  label,
-  tone = "muted",
+export function InfoNote({
+  tone = "info",
+  icon,
+  children,
+  className,
 }: {
-  colSpan: number
-  label: string
-  tone?: "muted" | "warning"
+  tone?: Tone
+  icon?: React.ReactNode
+  children: React.ReactNode
+  className?: string
 }) {
+  const styles = toneStyles[tone]
+  const StatusIcon = tone === "danger" || tone === "warning" ? CircleAlertIcon : InfoIcon
   return (
-    <tr>
-      <td
-        colSpan={colSpan}
-        className={cn(
-          "px-3 py-4 text-[11px]",
-          tone === "warning" ? "text-amber-700 dark:text-amber-300" : "text-muted-foreground"
-        )}
-      >
-        {label}
-      </td>
-    </tr>
+    <div
+      className={cn(
+        "flex items-start gap-2 rounded-lg border bg-muted/20 px-3 py-2 text-xs leading-relaxed",
+        className
+      )}
+    >
+      <span className={cn("mt-0.5 shrink-0", styles.text)}>
+        {icon ?? <StatusIcon className="size-3.5" />}
+      </span>
+      <div className="min-w-0 space-y-1">{children}</div>
+    </div>
   )
 }
 
-export function TableShell({ children }: { children: React.ReactNode }) {
-  return <div className="overflow-x-auto rounded-lg border">{children}</div>
+export function Freshness({
+  seconds,
+  stale,
+  className,
+}: {
+  seconds?: number | null
+  stale?: boolean | null
+  className?: string
+}) {
+  if (seconds === null || seconds === undefined || !Number.isFinite(seconds)) {
+    return <span className={cn("text-xs text-muted-foreground", className)}>—</span>
+  }
+  const label =
+    seconds < 90
+      ? `${Math.round(seconds)}s old`
+      : seconds < 5400
+        ? `${Math.round(seconds / 60)}m old`
+        : seconds < 172800
+          ? `${(seconds / 3600).toFixed(1)}h old`
+          : `${(seconds / 86400).toFixed(1)}d old`
+  return (
+    <span
+      className={cn(
+        "inline-flex items-center gap-1 text-xs whitespace-nowrap",
+        stale
+          ? "text-amber-600 dark:text-amber-400"
+          : "text-muted-foreground",
+        className
+      )}
+    >
+      {stale ? <span className="size-1.5 rounded-full bg-amber-500" /> : null}
+      {label}
+    </span>
+  )
+}
+
+export function Segmented<T extends string>({
+  options,
+  value,
+  onChange,
+  className,
+}: {
+  options: { value: T; label: React.ReactNode }[]
+  value: T
+  onChange: (value: T) => void
+  className?: string
+}) {
+  return (
+    <div
+      className={cn(
+        "inline-flex items-center gap-0.5 rounded-lg border bg-muted/40 p-0.5",
+        className
+      )}
+    >
+      {options.map((option) => (
+        <button
+          key={option.value}
+          type="button"
+          onClick={() => onChange(option.value)}
+          aria-pressed={option.value === value}
+          className={cn(
+            "rounded-md px-2.5 py-1 text-xs font-medium whitespace-nowrap transition-colors",
+            option.value === value
+              ? "bg-background text-foreground shadow-xs"
+              : "text-muted-foreground hover:text-foreground"
+          )}
+        >
+          {option.label}
+        </button>
+      ))}
+    </div>
+  )
+}
+
+export function InlineLink({
+  href,
+  children,
+}: {
+  href: string
+  children: React.ReactNode
+}) {
+  return (
+    <Button
+      variant="ghost"
+      size="sm"
+      className="-ml-2 h-7 gap-1 px-2 text-xs text-muted-foreground hover:text-foreground"
+      render={<Link href={href} />}
+      nativeButton={false}
+    >
+      {children}
+      <ArrowRightIcon className="size-3" />
+    </Button>
+  )
+}
+
+export function DetailSheet({
+  open,
+  onOpenChange,
+  title,
+  description,
+  children,
+}: {
+  open: boolean
+  onOpenChange: (open: boolean) => void
+  title: string
+  description?: React.ReactNode
+  children: React.ReactNode
+}) {
+  return (
+    <Sheet open={open} onOpenChange={onOpenChange}>
+      <SheetContent className="w-full gap-0 overflow-y-auto p-0 sm:max-w-lg">
+        <SheetHeader className="border-b p-5 pr-12">
+          <SheetTitle>{title}</SheetTitle>
+          {description ? (
+            <SheetDescription className="text-xs leading-relaxed">
+              {description}
+            </SheetDescription>
+          ) : null}
+        </SheetHeader>
+        <div className="space-y-5 p-5">{children}</div>
+      </SheetContent>
+    </Sheet>
+  )
+}
+
+export function PageState({
+  title,
+  description,
+  onRetry,
+  kind = "error",
+}: {
+  title: string
+  description: string
+  onRetry?: () => void
+  kind?: "error" | "empty"
+}) {
+  const Icon = kind === "error" ? CircleAlertIcon : ArchiveIcon
+  return (
+    <div className="flex items-start gap-3 rounded-xl border bg-card p-4">
+      <Icon className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
+      <div className="min-w-0 space-y-1">
+        <p className="text-sm font-medium">{title}</p>
+        <p className="text-xs leading-relaxed text-muted-foreground">{description}</p>
+        {onRetry ? (
+          <Button variant="outline" size="sm" className="mt-2" onClick={onRetry}>
+            Try again
+          </Button>
+        ) : null}
+      </div>
+    </div>
+  )
+}
+
+export function LoadingPage() {
+  return (
+    <PageContainer>
+      <div className="space-y-2">
+        <Skeleton className="h-6 w-40" />
+        <Skeleton className="h-3.5 w-72" />
+      </div>
+      <div className="grid grid-cols-2 gap-px overflow-hidden rounded-xl border bg-border sm:grid-cols-4">
+        {Array.from({ length: 4 }).map((_, index) => (
+          <div key={index} className="bg-card px-4 py-3.5">
+            <Skeleton className="h-3 w-16" />
+            <Skeleton className="mt-2 h-6 w-24" />
+          </div>
+        ))}
+      </div>
+      <Skeleton className="h-64 w-full rounded-xl" />
+      <Skeleton className="h-40 w-full rounded-xl" />
+    </PageContainer>
+  )
+}
+
+export function Spinner() {
+  return <Loader2Icon className="size-4 animate-spin text-muted-foreground" />
 }

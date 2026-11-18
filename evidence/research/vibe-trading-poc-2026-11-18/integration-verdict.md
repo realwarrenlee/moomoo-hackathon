@@ -5,6 +5,9 @@
 Assessment date: 2026-11-18. Vibe-Trading `0.1.19`, pinned commit
 `a8d815d17ec054a34dbdfc7ce8d1d9972566b709`, MIT licence with bundled Qlib
 factor notices. Research only; `ORDER_WRITES_ENABLED=false` throughout.
+The pinned clone is archived outside the project at
+`../mootrade-reference-archive/Vibe-Trading`; module paths below refer to that
+clone.
 
 ## Verdict
 

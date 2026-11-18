@@ -7,7 +7,7 @@ import pytest
 
 from app.ledger.store import SQLiteLedger
 from app.qoder_tools import QoderToolService
-from app.research.data import MarketHistory, NewsArchive
+from app.research.data import MarketHistory
 from scripts.qoder_readonly_run import QoderReadonlyRunner, _sanitize_text
 
 FIXTURES = Path(__file__).parent / "fixtures"
@@ -80,7 +80,7 @@ class FakeEvents:
                     ]
                 )
                 return SimpleNamespace(data=events)
-            payload = {"run_id": run_id, "strategy_version": "momentum-v1"}
+            payload = {"run_id": run_id, "strategy_version": "spy-directional"}
             if self.malformed:
                 payload["path"] = "../../.env"
             call = event(
@@ -91,13 +91,26 @@ class FakeEvents:
             )
             self.tool_calls[session_id] = call
             self.pages[session_id].append([call, idle("research-wait", "requires_action")])
+        elif "Call evaluate_proposal" in text:
+            marker = "unmodified proposal: "
+            start = text.index(marker) + len(marker)
+            end = text.index(". Then state", start)
+            proposal = json.loads(text[start:end])
+            call = event(
+                "evaluate-custom-call",
+                "agent.custom_tool_use",
+                name="evaluate_proposal",
+                input={"run_id": run_id, "proposal": proposal},
+            )
+            self.tool_calls[session_id] = call
+            self.pages[session_id].append([call, idle("evaluate-wait", "requires_action")])
         elif "Independently review" in text:
             self.pages[session_id].append(
                 [
                     event(
                         "auditor-no-trade",
                         "agent.message",
-                        content=[SimpleNamespace(type="text", text="NO TRADE is supported")],
+                        content=[SimpleNamespace(type="text", text="HOLD or CASH is supported")],
                     ),
                     idle("auditor-no-trade-idle", "end_turn"),
                 ]
@@ -148,9 +161,8 @@ class FakeClient:
 
 @pytest.fixture
 def tools():
-    history = MarketHistory.from_file(FIXTURES / "moomoo_daily_bars_2026-11-16.json")
-    news = NewsArchive.from_file(FIXTURES / "moomoo_news_2026-11-17.json")
-    return QoderToolService(history, news, "private-test-fingerprint")
+    history = MarketHistory.from_file(FIXTURES / "moomoo_directional_etf_bars_2026-11-17.json")
+    return QoderToolService(history, "private-test-fingerprint")
 
 
 def make_runner(tmp_path, tools, events, ledger=None):
@@ -184,7 +196,7 @@ def test_genuine_protocol_shape_no_trade_and_duplicate_event(tmp_path, tools):
     runner = make_runner(tmp_path, tools, events, ledger)
     result = runner.run()
     assert result.status == "COMPLETED"
-    assert result.outcome == "NO_TRADE"
+    assert result.outcome == "POLICY_REJECTED"
     assert result.report_path.exists() and result.json_path.exists()
 
     created = runner.client.sessions.created
@@ -198,13 +210,19 @@ def test_genuine_protocol_shape_no_trade_and_duplicate_event(tmp_path, tools):
         for item in sent_events
         if item["type"] == "user.custom_tool_result"
     ]
-    assert len(custom_results) == 1
-    assert custom_results[0]["custom_tool_use_id"] == "research-custom-call"
+    assert len(custom_results) == 2
+    assert [item["custom_tool_use_id"] for item in custom_results] == [
+        "research-custom-call",
+        "evaluate-custom-call",
+    ]
 
     artifact = json.loads(result.json_path.read_text(encoding="utf-8"))
     assert set(artifact["session_ids"]) == {"coordinator", "researcher", "auditor"}
-    assert artifact["research"]["proposal"] is None
-    assert artifact["risk"] is None
+    assert artifact["research"]["proposal"]["symbol"] == "SH"
+    assert artifact["risk"]["risk_decision"]["decision"] == "REJECT"
+    assert {
+        item["rule_id"] for item in artifact["risk"]["risk_decision"]["reasons"]
+    } == {"R002"}
     assert artifact["agent_summaries"]["coordinator_final"] == "NO TRADE; historical evidence only"
     report = result.report_path.read_text(encoding="utf-8")
     assert "NO ORDER SUBMITTED" in report
@@ -214,7 +232,7 @@ def test_genuine_protocol_shape_no_trade_and_duplicate_event(tmp_path, tools):
 
     ledger_events = ledger.list_events()
     tool_events = [row for row in ledger_events if row["event_type"] == "QODER_TOOL_RESULT"]
-    assert len(tool_events) == 1
+    assert len(tool_events) == 2
     assert ledger.submission_count() == 0
 
 

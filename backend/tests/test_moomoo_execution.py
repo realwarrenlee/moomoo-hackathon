@@ -221,7 +221,7 @@ def make_request(
     *, proposal_id: str = "proposal-1", side: OrderSide = OrderSide.BUY, quantity: int = 2
 ) -> OrderRequest:
     return OrderRequest(
-        client_order_key=build_client_order_key("momentum-v1", proposal_id),
+        client_order_key=build_client_order_key("spy-directional", proposal_id),
         proposal_id=proposal_id,
         account_snapshot_id="snapshot-1",
         symbol="QQQ",

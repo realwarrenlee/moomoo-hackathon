@@ -1,6 +1,6 @@
 # Dashboard — implemented read-only surface
 
-**Status:** implemented 17 November 2026. The UI is adapted from the MIT-licensed [Shadcn Fintech](https://github.com/abderrahimghazali/shadcn-fintech) template (commit `a905058`). Banking routes, components, mock data and decorative 3D assets were removed. Attribution is preserved in `frontend/LICENSE` and `frontend/ATTRIBUTION.md`.
+**Status:** implemented 17 November 2026 as six read-only pages. The UI is adapted from the MIT-licensed [Shadcn Fintech](https://github.com/abderrahimghazali/shadcn-fintech) template (commit `a905058`). Banking routes, components, mock data and decorative 3D assets were removed. Attribution is preserved in `frontend/LICENSE` and `frontend/ATTRIBUTION.md`.
 
 **Safety boundary:** the dashboard has no order-capable route. It cannot enable writes, approve an order, cancel an order, liquidate a position, change a risk limit or edit Qoder evidence. `ORDER_WRITES_ENABLED=true` causes the API to refuse startup. On 18 November 2026 the owner removed the header `PAPER` badge and “Competition account · read-only” caption; the persistent sidebar `Writes DISABLED` status remains the in-shell paper-mode indicator.
 
@@ -9,7 +9,7 @@
 | Route | Purpose | Sources |
 |---|---|---|
 | `/dashboard` | Overview: account, market tape, latest Qoder run, controls, recent ledger events | Broker read, Qoder artifact, local controls, ledger |
-| `/agents` | Qoder sessions, role summaries, decision record, current-market evidence timestamps and candidates | Sanitised Qoder evidence only |
+| `/agents` | Qoder sessions, role summaries, SPY signal, thesis, target/current position, four-ETF candidates, risk verdict and evidence timestamps | Sanitised Qoder evidence only |
 | `/portfolio` | Positions, open orders, today's orders, history and reconciliation | Broker read only |
 | `/risk` | Locked state, limits, current inputs, rule catalogue, recorded real preflight | Local controls, broker read, recorded preflight |
 | `/analytics` | Historical normalised curves, metrics and limitations | Historical research evidence only |
@@ -47,7 +47,7 @@ There is no `MOCK` data in the dashboard. The deliberate absence is visible as a
 
 ## Time and number formatting
 
-- Candidate 5-day returns arrive as fractions (`-0.0338749`) and render as percentage points (`-3.39%`). Values already scaled by the backend use a separate formatter so they are not multiplied twice.
+- Event reaction returns and volume ratios arrive as fractions (`0.0288`, `1.49`) and render as percentage points (`+2.88%`) or a multiplier (`1.49x`). Values already scaled by the backend use a separate formatter so they are not multiplied twice.
 - API timestamps are UTC and render with an explicit `UTC` suffix. US market times render in `America/New_York`; provider session states such as `AFTERNOON` display as “Regular session”.
 - “Page fetched” shows when the browser last called the API and is explicitly not the broker data time. Quote rows show the broker observation time and its age.
 - Quote age is computed from the broker timestamp; sub-5-second provider clock skew displays as `0s`, and stale quotes show their age separately from future-date errors.

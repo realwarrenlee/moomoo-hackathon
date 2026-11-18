@@ -136,7 +136,7 @@ def build_client(
     tmp_path: Path, *, stale: bool = False, evidence_dir: Path | None = None
 ) -> tuple[TestClient, SQLiteLedger]:
     ledger = SQLiteLedger(tmp_path / "ledger.db")
-    ledger.append_event("QODER_RUN_STARTED", NOW, "run-1", "qoder_readonly_runner", {"strategy_version": "momentum-v1"})
+    ledger.append_event("QODER_RUN_STARTED", NOW, "run-1", "qoder_readonly_runner", {"strategy_version": "spy-directional"})
     paths = DashboardPaths(
         project_root=PROJECT_ROOT,
         evidence_dir=evidence_dir or PROJECT_ROOT / "evidence",
@@ -261,7 +261,7 @@ def _write_current_agent_artifact(tmp_path: Path, *, account: object) -> None:
     payload = {
         "run_id": "current-run-1",
         "mode": "CURRENT_MARKET_READ_ONLY",
-        "strategy_version": "momentum-v1",
+        "strategy_version": "spy-directional",
         "status": "COMPLETED",
         "outcome": "REJECT",
         "completed_at_utc": NOW.isoformat(),
@@ -270,19 +270,54 @@ def _write_current_agent_artifact(tmp_path: Path, *, account: object) -> None:
         "research": {
             "snapshot": {
                 "decision_time_utc": NOW.isoformat(),
-                "data_as_of_utc": "2026-11-17",
-                "regime_ok": True,
-                "selected_symbol": "SPY",
-                "return_5d": "-0.0338749",
+                "data_as_of_utc": NOW.isoformat(),
+                "spy_session_date": "2026-11-17",
+                "spy_close": "732.44",
+                "spy_return_10d": "-0.0290",
+                "spy_sma50": "762.89",
+                "spy_trend_pct": "-0.0399",
+                "spy_volatility_20d": "0.2306",
+                "market_state": "BEARISH",
+                "direction": "BEARISH",
+                "target_symbol": "SH",
+                "target_effective_exposure": "-1",
+                "current_symbol": None,
+                "current_quantity": 0,
+                "action": "BUY",
+                "reentry_symbol": None,
+                "decision_reason": "SPY 10-session return and trend are bearish; target inverse exposure.",
+                "selected_symbol": "SH",
+                "no_trade_reason": None,
                 "candidates": [
                     {
-                        "symbol": "SPY",
-                        "close": "739.95",
-                        "return_5d": "-0.0338749",
+                        "symbol": "SH",
+                        "direction": -1,
+                        "leverage": "1",
+                        "effective_exposure": "-1",
+                        "close": "18.42",
                         "eligible": True,
                         "selected": True,
-                        "reasons": ["above sma20"],
+                        "reasons": [],
                     }
+                ],
+            },
+            "proposal": {
+                "proposal_id": "spy-directional-2026-11-17-SH-BUY",
+                "symbol": "SH",
+                "action": "BUY",
+                "requested_quantity": 6,
+                "thesis": "Bearish SPY signal targets inverse exposure.",
+                "invalidation": "Exit after a neutral or bullish signal.",
+            },
+        },
+        "risk": {
+            "risk_decision": {
+                "policy_version": "risk-v1",
+                "decision": "REJECT",
+                "approved_quantity": 0,
+                "reasons": [
+                    {"rule_id": "R010", "message": "Order writes are disabled by control state"},
+                    {"rule_id": "R014", "message": "First paper order requires explicit owner approval"},
                 ],
             }
         },
@@ -334,6 +369,21 @@ def test_current_agent_run_is_labelled_and_sanitized(tmp_path: Path) -> None:
     run = agents["runs"][0]
     assert agents["state"] == "LIVE"
     assert run["provenance"] == "CURRENT_MARKET_READ_ONLY"
+    assert run["strategy_version"] == "spy-directional"
+    assert run["spy_session_date"] == "2026-11-17"
+    assert run["market_state"] == "BEARISH"
+    assert run["direction"] == "BEARISH"
+    assert run["target_symbol"] == "SH"
+    assert run["selected_symbol"] == "SH"
+    assert run["action"] == "BUY"
+    assert run["proposal"]["symbol"] == "SH"
+    assert run["proposal"]["action"] == "BUY"
+    assert run["risk_decision"]["decision"] == "REJECT"
+    assert {reason["rule_id"] for reason in run["risk_decision"]["reasons"]} == {"R010", "R014"}
+    assert run["candidates"][0]["symbol"] == "SH"
+    assert run["candidates"][0]["direction"] == -1
+    assert run["candidates"][0]["leverage"] == "1"
+    assert run["candidates"][0]["effective_exposure"] == "-1"
     assert run["data_collection"]["collected_at_utc"] == NOW.isoformat()
     assert run["data_collection"]["account_as_of_utc"] == NOW.isoformat()
     assert run["data_collection"]["account_age_seconds"] == 8.0

@@ -1,3 +1,7 @@
+export const DASHBOARD_REFRESH_EVENT = "mootrade:refresh"
+
+export type Tone = "neutral" | "positive" | "warning" | "danger" | "info"
+
 export type Provenance =
   | "LIVE_BROKER_READ"
   | "HISTORICAL_BACKTEST"
@@ -67,14 +71,29 @@ export type AgentSummary = { role: string; text: string }
 
 export type AgentCandidate = {
   symbol?: string | null
+  direction?: number | null
+  leverage?: string | null
+  effective_exposure?: string | null
   close?: string | null
-  sma20?: string | null
-  return_5d?: string | null
-  news_count?: number | null
-  positive_news_count?: number | null
   eligible?: boolean | null
   selected?: boolean | null
   reasons: string[]
+}
+
+export type AgentProposal = {
+  proposal_id?: string | null
+  symbol?: string | null
+  action?: string | null
+  requested_quantity?: number | null
+  thesis?: string | null
+  invalidation?: string | null
+}
+
+export type AgentRiskDecision = {
+  policy_version?: string | null
+  decision?: string | null
+  approved_quantity?: number | null
+  reasons: { rule_id?: string | null; message?: string | null }[]
 }
 
 export type AgentRun = {
@@ -88,9 +107,24 @@ export type AgentRun = {
   session_count: number
   decision_time_utc?: string | null
   data_as_of_utc?: string | null
-  regime_ok?: boolean | null
-  regime_reason?: string | null
+  spy_session_date?: string | null
+  spy_close?: string | null
+  spy_return_10d?: string | null
+  spy_sma50?: string | null
+  spy_trend_pct?: string | null
+  spy_volatility_20d?: string | null
+  market_state?: string | null
+  direction?: string | null
+  target_symbol?: string | null
+  target_effective_exposure?: string | null
+  current_symbol?: string | null
+  current_quantity?: number | null
+  action?: string | null
+  reentry_symbol?: string | null
+  decision_reason?: string | null
   selected_symbol?: string | null
+  proposal?: AgentProposal | null
+  risk_decision?: AgentRiskDecision | null
   no_trade_reason?: string | null
   candidates: AgentCandidate[]
   summaries: AgentSummary[]
@@ -491,9 +525,153 @@ export function compactId(value?: string | null, head = 10, tail = 6): string {
 }
 
 export function strategyLabel(value?: string | null): string {
+  return value || "—"
+}
+
+export function shortDateTime(value?: string | null): string {
   if (!value) return "—"
-  return value
-    .split("-")
-    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
-    .join(" ")
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return "—"
+  return new Intl.DateTimeFormat("en-US", {
+    month: "short",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    timeZone: "UTC",
+    hour12: false,
+    timeZoneName: "short",
+  })
+    .format(date)
+    .replace(",", " ·")
+}
+
+export function accountName(maskedId?: string | null): string {
+  if (!maskedId) return "Competition account"
+  return maskedId.replace(/^\*+/, "····")
+}
+
+const OUTCOME_LABELS: Record<string, string> = {
+  POLICY_REJECTED: "Policy rejected",
+  POLICY_APPROVAL: "Policy approved",
+  HISTORICAL_POLICY_APPROVAL: "Policy approved",
+  NO_TRADE: "No trade",
+  AGENT_ERROR: "Agent error",
+  COMPLETED: "Completed",
+}
+
+export function outcomeLabel(value?: string | null): string {
+  if (!value) return "No decision"
+  return OUTCOME_LABELS[value] ?? humanState(value)
+}
+
+export function outcomeTone(value?: string | null): Tone {
+  switch (value) {
+    case "POLICY_APPROVAL":
+    case "HISTORICAL_POLICY_APPROVAL":
+      return "positive"
+    case "POLICY_REJECTED":
+      return "danger"
+    case "AGENT_ERROR":
+      return "danger"
+    default:
+      return "neutral"
+  }
+}
+
+export const RISK_RULES: Record<string, string> = {
+  R001: "Account verification",
+  R002: "Execution allowlist",
+  R003: "No short positions",
+  R004: "Single-position exposure",
+  R005: "Gross exposure",
+  R006: "Daily drawdown stop",
+  R007: "Quote freshness",
+  R008: "Cash-only buying power",
+  R009: "Reconciled broker state",
+  R010: "Order control state",
+  R011: "Duplicate submission",
+  R012: "Regular trading session",
+  R013: "Position count",
+  R014: "First-order approval",
+  R015: "Leveraged product approval",
+}
+
+export function ruleLabel(ruleId?: string | null): string {
+  if (!ruleId) return "Rule"
+  return RISK_RULES[ruleId] ?? ruleId
+}
+
+export function riskDecisionLabel(decision?: string | null): string {
+  if (!decision) return "Not evaluated"
+  const normalized = decision.toUpperCase()
+  if (normalized === "APPROVE" || normalized === "APPROVED") return "Approved"
+  if (normalized === "REJECT" || normalized === "REJECTED") return "Rejected"
+  return humanState(decision)
+}
+
+const EVENT_LABELS: Record<string, string> = {
+  QODER_RUN_STARTED: "Agent run started",
+  QODER_RUN_COMPLETED: "Agent run completed",
+  QODER_TOOL_RESULT: "Agent tool result",
+  RISK_APPROVED: "RiskGate approved",
+  RISK_REJECTED: "RiskGate rejected",
+  ORDER_SUBMITTED: "Order submitted",
+  ORDER_REJECTED: "Order rejected",
+  ORDER_FILLED: "Order filled",
+  ORDER_CANCELLED: "Order cancelled",
+  ORDER_UNKNOWN: "Order outcome unknown",
+  FILL_RECORDED: "Fill recorded",
+  RECONCILED: "Broker state reconciled",
+  RECONCILIATION_MISMATCH: "Reconciliation mismatch",
+  KILL_SWITCH_ENGAGED: "Kill switch engaged",
+  KILL_SWITCH_CLEARED: "Kill switch cleared",
+  FIRST_ORDER_APPROVED: "First order approved",
+}
+
+export function humanEventName(eventType?: string | null): string {
+  if (!eventType) return "Event"
+  return EVENT_LABELS[eventType] ?? humanState(eventType)
+}
+
+export function eventTone(eventType?: string | null): Tone {
+  if (!eventType) return "neutral"
+  if (eventType.includes("REJECT") || eventType.includes("BLOCKED") || eventType.includes("MISMATCH"))
+    return "danger"
+  if (eventType.includes("UNKNOWN")) return "warning"
+  if (eventType.startsWith("ORDER_") || eventType.startsWith("FILL_")) return "info"
+  if (eventType.startsWith("QODER_")) return "info"
+  if (eventType.includes("APPROVED") || eventType.includes("CONFIRMED") || eventType.includes("RECONCILED"))
+    return "positive"
+  return "neutral"
+}
+
+export function investedValue(
+  equity?: string | null,
+  cash?: string | null
+): number | null {
+  if (equity === null || equity === undefined || cash === null || cash === undefined)
+    return null
+  const equityNumber = Number(equity)
+  const cashNumber = Number(cash)
+  if (!Number.isFinite(equityNumber) || !Number.isFinite(cashNumber)) return null
+  return Math.max(0, equityNumber - cashNumber)
+}
+
+export function grossExposurePct(
+  equity?: string | null,
+  cash?: string | null
+): number | null {
+  const invested = investedValue(equity, cash)
+  const equityNumber = Number(equity)
+  if (invested === null || !Number.isFinite(equityNumber) || equityNumber <= 0)
+    return null
+  return (invested / equityNumber) * 100
+}
+
+export function marketSession(quotes: QuoteView[]): { open: boolean; label: string } {
+  if (quotes.some((quote) => quote.regular_session_open)) {
+    return { open: true, label: "Regular session open" }
+  }
+  const state = quotes.find((quote) => quote.market_state)?.market_state
+  return { open: false, label: state ? humanState(state) : "Market closed" }
 }
