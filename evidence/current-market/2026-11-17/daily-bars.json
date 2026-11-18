@@ -9,7 +9,7 @@
       "extended_time": 0,
       "num": 370
     },
-    "fetched_at_utc": "2026-11-18T06:55:57.400545+00:00",
+    "fetched_at_utc": "2026-11-18T15:50:25.534276+00:00",
     "last_completed_session": "20261117",
     "note": "Read-only completed daily bars fetched from the documented Moomoo REST history-kline endpoint. No account identifiers or credentials are included."
   },

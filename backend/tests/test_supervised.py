@@ -12,18 +12,24 @@ from app.cli import main
 from app.ledger.store import SQLiteLedger
 from app.models.contracts import (
     AccountSnapshot,
+    ControlState,
     Fill,
     OrderRecord,
     OrderStatus,
+    PolicyDecision,
+    ProposalAction,
     Quote,
+    TradeProposal,
 )
+from app.research.data import UNIVERSE
+from app.research.instruments import INSTRUMENTS
 from app.risk.policy import RiskGate
 from app.service import TradingService, build_client_order_key
 from app.supervised import build_supervised_execution
 
 STRATEGY = "spy-directional"
 PROPOSAL_ID = "proposal-1"
-SYMBOL = "QQQ"
+SYMBOL = "SPY"
 
 
 @dataclass(frozen=True)
@@ -122,7 +128,12 @@ class FakeStack:
         self.broker = broker
         self.order_writes_enabled = order_writes_enabled
         self.risk_gate = RiskGate(
-            expected_account_fingerprint=account.account_fingerprint
+            expected_account_fingerprint=account.account_fingerprint,
+            allowed_symbols=frozenset(UNIVERSE),
+            leverage_by_symbol={
+                symbol: item.leverage for symbol, item in INSTRUMENTS.items()
+            },
+            allow_leveraged=False,
         )
         self.service = TradingService(
             broker=broker,
@@ -156,8 +167,12 @@ def make_harness(
     quote: Quote | None = None,
     quote_error: Exception | None = None,
     order_writes_enabled: bool = False,
+    trading_mode: str | None = "SUPERVISED_PAPER",
 ) -> Harness:
     now = datetime.now(UTC)
+    monkeypatch.delenv("TRADING_MODE", raising=False)
+    if trading_mode is not None:
+        monkeypatch.setenv("TRADING_MODE", trading_mode)
     if quote is None:
         quote = Quote(
             symbol=SYMBOL,
@@ -241,6 +256,32 @@ def test_execute_refuses_without_the_write_flag(tmp_path, monkeypatch, capsys, a
     assert result == 2
     assert harness.broker.submissions == []
     assert "--enable-order-writes is required" in capsys.readouterr().out
+
+
+def test_execute_refuses_in_read_only_mode(tmp_path, monkeypatch, capsys, account_fingerprint):
+    harness = make_harness(
+        tmp_path,
+        monkeypatch,
+        account_fingerprint=account_fingerprint,
+        order_writes_enabled=True,
+        trading_mode=None,
+    )
+    harness.approve()
+
+    result = main(
+        base_args("moomoo-supervised-execute")
+        + [
+            "--enable-order-writes",
+            "--confirm-client-order-key",
+            harness.key,
+            "--env-file",
+            str(tmp_path / "missing.env"),
+        ]
+    )
+
+    assert result == 2
+    assert harness.broker.submissions == []
+    assert "TRADING_MODE=READ_ONLY" in capsys.readouterr().out
 
 
 def test_execute_refuses_a_mismatched_confirmation_key(tmp_path, monkeypatch, capsys, account_fingerprint):
@@ -506,6 +547,7 @@ def test_execute_without_execution_authorization_fails_before_any_broker_call(
     monkeypatch.setenv("COMPETITION_ACCOUNT_MASKED_ID", "****0101")
     monkeypatch.setenv("COMPETITION_ACCOUNT_FINGERPRINT", account_fingerprint)
     monkeypatch.setenv("COMPETITION_ACCOUNT_MARKET_ID", "100")
+    monkeypatch.setenv("TRADING_MODE", "SUPERVISED_PAPER")
     key = build_client_order_key(STRATEGY, PROPOSAL_ID)
 
     result = main(
@@ -557,3 +599,94 @@ def test_supervised_builder_defaults_to_disabled_writes(tmp_path, account_finger
     assert stack.order_writes_enabled is False
     assert stack.service.order_writes_enabled is False
     assert stack.broker._transport.order_writes_enabled is False
+
+
+def test_supervised_gate_enables_spy_and_sh_but_keeps_leveraged_disabled(
+    tmp_path, account_fingerprint
+):
+    import httpx
+
+    class FakeAuth:
+        def access_token(self) -> str:
+            return "token-1"
+
+        def refresh(self) -> None:
+            raise AssertionError("no HTTP call is expected")
+
+    lock = AccountLock("****0101", account_fingerprint, 100)
+    stack = build_supervised_execution(
+        FakeAuth(),
+        lock,
+        SQLiteLedger(tmp_path / "audit.db"),
+        http=httpx.Client(
+            transport=httpx.MockTransport(
+                lambda request: (_ for _ in ()).throw(
+                    AssertionError("no HTTP call is expected")
+                )
+            ),
+            trust_env=False,
+        ),
+    )
+    gate = stack.risk_gate
+    assert gate.allowed_symbols == frozenset({"SPY", "UPRO", "SH", "SPXU"})
+    assert gate.allow_leveraged is False
+    assert gate.leverage_by_symbol["SPY"] == Decimal("1")
+    assert gate.leverage_by_symbol["SH"] == Decimal("1")
+    assert gate.leverage_by_symbol["UPRO"] == Decimal("3")
+    assert gate.leverage_by_symbol["SPXU"] == Decimal("3")
+
+    now = datetime.now(UTC)
+    account = AccountSnapshot(
+        snapshot_id="snapshot-1",
+        account_fingerprint=account_fingerprint,
+        environment="paper",
+        equity=Decimal("100000"),
+        day_start_equity=Decimal("100000"),
+        peak_equity=Decimal("100000"),
+        cash=Decimal("100000"),
+        buying_power=Decimal("100000"),
+        as_of_utc=now,
+        reconciled=True,
+    )
+    control = ControlState(
+        order_writes_enabled=True,
+        kill_switch_engaged=False,
+        circuit_breaker_open=False,
+        first_order_approved=True,
+    )
+
+    def proposal_for(symbol: str) -> TradeProposal:
+        return TradeProposal(
+            proposal_id=f"test-{symbol}",
+            run_id="test-run",
+            strategy_version=STRATEGY,
+            decision_time_utc=now,
+            data_as_of_utc=now,
+            symbol=symbol,
+            action=ProposalAction.BUY,
+            requested_quantity=10,
+            thesis="t",
+            invalidation="i",
+        )
+
+    def quote_for(symbol: str) -> Quote:
+        return Quote(
+            symbol=symbol,
+            price=Decimal("100"),
+            as_of_utc=now,
+            regular_session_open=True,
+        )
+
+    for symbol in ("SPY", "SH"):
+        decision = gate.evaluate(
+            proposal_for(symbol), account, quote_for(symbol), control, now
+        )
+        assert decision.decision is PolicyDecision.APPROVE
+        assert decision.reasons == ()
+
+    for symbol in ("UPRO", "SPXU"):
+        decision = gate.evaluate(
+            proposal_for(symbol), account, quote_for(symbol), control, now
+        )
+        assert decision.decision is PolicyDecision.REJECT
+        assert {reason.rule_id for reason in decision.reasons} == {"R015"}

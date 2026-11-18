@@ -600,6 +600,102 @@ def test_snapshot_id_ignores_mark_drift_but_tracks_state_changes():
     assert state_changed.snapshot_id != baseline
 
 
+@pytest.mark.parametrize(
+    "changed_client",
+    [
+        pytest.param(
+            FakeRestClient(
+                cash=cash_payload(balance="100000", mv="10100", total_asset="110100"),
+                positions=[position_row(quantity="101", market_value="10100")],
+            ),
+            id="position-quantity-change",
+        ),
+        pytest.param(
+            FakeRestClient(
+                cash=cash_payload(balance="100000", mv="0", total_asset="100000"),
+                positions=[],
+            ),
+            id="position-removed",
+        ),
+        pytest.param(
+            FakeRestClient(
+                cash=cash_payload(balance="100000", mv="15000", total_asset="115000"),
+                positions=[
+                    position_row(market_value="10000"),
+                    position_row(symbol="SPY", quantity="10", market_value="5000"),
+                ],
+            ),
+            id="position-added",
+        ),
+        pytest.param(
+            FakeRestClient(
+                cash=cash_payload(balance="100000", mv="10000", total_asset="110000"),
+                positions=[position_row(market_value="10000")],
+                orders=[
+                    order_row(
+                        status=2, quantity="3", price="100", order_id="open-1"
+                    )
+                ],
+            ),
+            id="pending-order-quantity-change",
+        ),
+        pytest.param(
+            FakeRestClient(
+                cash=cash_payload(balance="100000", mv="10000", total_asset="110000"),
+                positions=[position_row(market_value="10000")],
+                orders=[],
+            ),
+            id="pending-order-removed",
+        ),
+        pytest.param(
+            FakeRestClient(
+                cash=cash_payload(balance="100000", mv="10000", total_asset="110000"),
+                positions=[position_row(market_value="10000")],
+                orders=[
+                    order_row(status=2, quantity="2", price="100", order_id="open-1"),
+                    order_row(
+                        status=2,
+                        quantity="1",
+                        price="90",
+                        order_id="open-2",
+                        symbol="SPY",
+                    ),
+                ],
+            ),
+            id="pending-order-added",
+        ),
+        pytest.param(
+            FakeRestClient(
+                cash=cash_payload(balance="100000", mv="10000", total_asset="110000"),
+                positions=[position_row(market_value="10000")],
+                orders=[
+                    order_row(
+                        status=2,
+                        quantity="2",
+                        price="100",
+                        order_id="open-1",
+                        side=2,
+                    )
+                ],
+            ),
+            id="pending-order-side-change",
+        ),
+    ],
+)
+def test_snapshot_id_changes_for_each_state_change_class(changed_client):
+    baseline = make_broker(
+        FakeRestClient(
+            cash=cash_payload(balance="100000", mv="10000", total_asset="110000"),
+            positions=[position_row(market_value="10000")],
+            orders=[order_row(status=2, quantity="2", price="100", order_id="open-1")],
+        )
+    ).get_account_snapshot().snapshot_id
+
+    changed = make_broker(changed_client).get_account_snapshot()
+
+    assert changed.snapshot_id != baseline
+
+
 class FakeAuth:
     def __init__(self) -> None:
         self.token = "token-1"

@@ -190,13 +190,13 @@ def make_runner(tmp_path, tools, events, ledger=None):
     )
 
 
-def test_genuine_protocol_shape_no_trade_and_duplicate_event(tmp_path, tools):
+def test_genuine_protocol_shape_policy_approval_and_duplicate_event(tmp_path, tools):
     events = FakeEvents()
     ledger = SQLiteLedger(tmp_path / "ledger.db")
     runner = make_runner(tmp_path, tools, events, ledger)
     result = runner.run()
     assert result.status == "COMPLETED"
-    assert result.outcome == "POLICY_REJECTED"
+    assert result.outcome == "POLICY_APPROVAL"
     assert result.report_path.exists() and result.json_path.exists()
 
     created = runner.client.sessions.created
@@ -219,10 +219,8 @@ def test_genuine_protocol_shape_no_trade_and_duplicate_event(tmp_path, tools):
     artifact = json.loads(result.json_path.read_text(encoding="utf-8"))
     assert set(artifact["session_ids"]) == {"coordinator", "researcher", "auditor"}
     assert artifact["research"]["proposal"]["symbol"] == "SH"
-    assert artifact["risk"]["risk_decision"]["decision"] == "REJECT"
-    assert {
-        item["rule_id"] for item in artifact["risk"]["risk_decision"]["reasons"]
-    } == {"R002"}
+    assert artifact["risk"]["risk_decision"]["decision"] == "APPROVE"
+    assert artifact["risk"]["risk_decision"]["reasons"] == []
     assert artifact["agent_summaries"]["coordinator_final"] == "NO TRADE; historical evidence only"
     report = result.report_path.read_text(encoding="utf-8")
     assert "NO ORDER SUBMITTED" in report

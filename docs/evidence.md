@@ -29,6 +29,8 @@ Historical backtests are **not** performance levels; they are signal-quality stu
 | Read-only preflights contacted no order endpoint | `evidence/preflight/preflight-*.json` | 4 real preflights; `submission_performed=false`, `order_endpoint_contacted=false` | Real provider read |
 | Execution OAuth consent exists; write scope treated as potentially account-wide | `evidence/execution/*.json`; `docs/integrations.md` | Real consent 18 Nov; `account_exclusive_write_scope_verified=false` | Verified with caveat |
 | Local Task Scheduler runs the read-only workflow unattended | `evidence/scheduler/*`; `data/scheduler-events.jsonl` | Genuine timer-triggered catch-up run `qoder-83bc0a47-…`, 18 Nov | Verified |
+| AUTO_PAPER execution phase fails closed without the mode/pin | `backend/scripts/auto_paper_run.py`; `evidence/auto/2026-11-17/auto-paper-20261118T155123Z.json` | Real run against the genuine decision artifact: `TRADING_MODE=READ_ONLY`, `submission_performed=false` | Verified |
+| AUTO_PAPER scheduler task fires via Windows Task Scheduler | `evidence/scheduler/auto-task-2026-11-18.xml`, `auto-events-2026-11-18.jsonl` | Genuine 2-minute validation trigger: `LastTaskResult=0`, `SKIPPED_NOT_IN_WINDOW` at 10:53 ET; validation trigger removed afterwards | Verified |
 | Historical sanity check of `spy-directional` (`-0.40%` vs SPY `+15.47%`) | `docs/strategy-and-risk.md`; `evidence/current-market/2026-11-17/daily-bars.json` | Fixed-rule replay, 12 Aug 2025 – 17 Nov 2026 | Historical only |
 | **First broker-confirmed paper order and fill** | none | none | **Blocked / not yet performed** |
 
@@ -46,6 +48,7 @@ Artifacts: `evidence/qoder/qoder-<run-id>.md` and `.json` (sanitised; raw sessio
 | `qoder-62b08de4-d64f-43ab-b044-fe781eae393e` | HISTORICAL_DRY_RUN | directional-event-v2 | HISTORICAL_POLICY_APPROVAL (dry-run only) | 2026-11-18 05:59 |
 | `qoder-83bc0a47-e238-4672-a5cc-42e8080180ce` | CURRENT_MARKET_READ_ONLY | momentum-v1 | NO_TRADE (timer-triggered catch-up) | 2026-11-18 01:11 |
 | `qoder-328aefff-7dde-4a98-ac76-99b3e0e33728` | CURRENT_MARKET_READ_ONLY | spy-directional | POLICY_REJECTED (SH blocked at R002) | 2026-11-18 06:56 |
+| `qoder-12bd7001-ee8a-4d65-b94e-7c3075140b32` | CURRENT_MARKET_READ_ONLY | spy-directional | POLICY_REJECTED (SH BUY 147 rejected only by `R010`, writes disabled) | 2026-11-18 15:51 |
 
 Runs marked `directional-event-v2` and `momentum-v1` predate the 18 November pivot and are retained as historical execution evidence. The current `spy-directional` run recorded sessions: coordinator `sess_00vuffkjlafwgresy62p`, researcher `sess_00vuffpgw47pdzx2s53d`, auditor `sess_00vufg56d34sgybrbybv`. No run placed, modified or cancelled an order.
 
@@ -66,6 +69,8 @@ Runs marked `directional-event-v2` and `momentum-v1` predate the 18 November piv
 
 `evidence/scheduler/` holds the task registration XML, a Kernel-Power standby log explaining a missed 17 Nov timer, and validation exports. `data/scheduler-events.jsonl` records the run lifecycle (`ABANDONED` → `RUNNING` → `COMPLETED`, outcome `NO_TRADE`, `order_writes_enabled=false`). The timer-triggered catch-up run is genuine Task Scheduler evidence, not a manual invocation.
 
+The AUTO_PAPER execution task `MooTrade Auto Paper Scheduler` (two daily triggers at 13:35Z/14:35Z; execution window 09:35–10:30 ET) was registered 18 Nov and validated with a two-minute one-shot trigger: it fired at 15:53:38Z via Task Scheduler, logged `SKIPPED_NOT_IN_WINDOW` (10:53 ET, outside the window) with `order_writes_enabled=false` and exited 0. The validation trigger was then removed; `evidence/scheduler/auto-task-2026-11-18.xml` and `auto-events-2026-11-18.jsonl` capture the final task and event record. The in-window path is covered by `tests/test_schedule_auto_paper.py` and `tests/test_auto_paper_run.py` (mock-driven); its first real in-window firing is 19 Nov 2026 at 09:35 ET (14:35Z), which will abstain because AUTO_PAPER is not activated.
+
 ## Historical research (never paper performance)
 
 All under `evidence/research/`, all `HISTORICAL`:
@@ -83,7 +88,7 @@ Details and exact figures are in `docs/strategy-and-risk.md` (appendix) and each
 
 ## Automated test results
 
-- Backend: **313 tests passed**, Python 3.14.5, 18 November 2026 (`pytest`). Covers contracts, account lock, risk policy, ledger append-only/kill-switch persistence, trading flow and mock broker failure injection, Moomoo REST/history/quote/order adapters (including the three live-contract regression tests from the first paper trade), supervised CLI guards, Qoder runner and tools, `spy-directional` signal/HOLD/CASH/reversal, leverage gate, ETF baseline, scheduler recovery and dashboard API.
+- Backend: **368 tests passed**, Python 3.14.5, 18 November 2026 (`pytest`). Covers contracts, account lock, risk policy, ledger append-only/kill-switch persistence, trading flow and mock broker failure injection, Moomoo REST/history/quote/order adapters (including the three live-contract regression tests from the first paper trade), supervised CLI guards, Qoder runner and tools, `spy-directional` signal/HOLD/CASH/reversal, leverage gate, ETF baseline, scheduler recovery, dashboard API, and the AUTO_PAPER execution phase (`test_auto_paper_run.py`: abstention, CASH/HOLD/BUY/SELL, duplicate and `UNKNOWN` paths) and its scheduler (`test_schedule_auto_paper.py`: window/DST gating, skip rules, `RUNNING` recovery, env scoping).
 - Frontend: formatting regression tests via `node --test`, TypeScript `tsc --noEmit`, ESLint, `next build` — all passing on 18 November 2026.
 - Reproduce: `python -m pytest` from the root; frontend commands in `frontend/README.md`.
 
@@ -94,6 +99,7 @@ Details and exact figures are in `docs/strategy-and-risk.md` (appendix) and each
 3. **No demonstrated forward edge:** `spy-directional` has no filled forward paper sample; the historical sanity check underperformed SPY buy-and-hold. The 18 Nov diagnostic fills are connectivity evidence, not strategy performance.
 4. **Python cannot reach the cloud Moomoo MCP** (vault credentials are injection-only); reads use the local REST client instead.
 5. **Kill-switch operator command:** the kill switch is persisted and tested through the ledger API; no CLI command toggles it yet.
+6. **AUTO_PAPER deliberately not activated:** the execution phase, scheduler and activation command all exist and fail closed, but the owner has not yet authorised `TRADING_MODE=AUTO_PAPER` for the competition account. The first real in-window firing (19 Nov 2026, 09:35 ET) will therefore abstain. UPRO/SPXU remain disabled pending separate explicit approval.
 
 ## Regenerating the evidence summary
 

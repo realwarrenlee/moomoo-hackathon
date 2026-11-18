@@ -25,6 +25,12 @@ class PolicyDecision(str, Enum):
     REJECT = "REJECT"
 
 
+class TradingMode(str, Enum):
+    READ_ONLY = "READ_ONLY"
+    SUPERVISED_PAPER = "SUPERVISED_PAPER"
+    AUTO_PAPER = "AUTO_PAPER"
+
+
 class OrderStatus(str, Enum):
     PROPOSED = "PROPOSED"
     POLICY_REJECTED = "POLICY_REJECTED"
@@ -107,6 +113,36 @@ class ControlState(ContractModel):
     kill_switch_engaged: bool = False
     circuit_breaker_open: bool = False
     first_order_approved: bool = False
+
+
+class TradingActivation(ContractModel):
+    schema_version: Literal["1"] = "1"
+    activated_at_utc: AwareDatetime
+    activated_by: str = Field(min_length=1)
+    account_fingerprint: str = Field(min_length=64, max_length=64)
+    strategy_version: str = Field(min_length=1)
+    allowed_symbols: tuple[str, ...]
+    risk_policy_version: str = Field(min_length=1)
+    max_single_exposure: Decimal
+    max_total_exposure: Decimal
+    max_daily_drawdown: Decimal
+    position_fraction: Decimal
+    paper_only: Literal[True] = True
+    order_writes_enabled: Literal[True] = True
+
+    @model_validator(mode="after")
+    def validate_limits(self) -> Self:
+        if self.max_single_exposure <= 0 or self.max_single_exposure > 1:
+            raise ValueError("max single exposure must be within (0, 1]")
+        if self.max_total_exposure <= 0 or self.max_total_exposure > 1:
+            raise ValueError("max total exposure must be within (0, 1]")
+        if self.max_daily_drawdown <= 0 or self.max_daily_drawdown > 1:
+            raise ValueError("max daily drawdown must be within (0, 1]")
+        if self.position_fraction <= 0 or self.position_fraction > 1:
+            raise ValueError("position fraction must be within (0, 1]")
+        if len(self.allowed_symbols) == 0 or len(set(self.allowed_symbols)) != len(self.allowed_symbols):
+            raise ValueError("allowed symbols must be a non-empty tuple of unique symbols")
+        return self
 
 
 class RuleRejection(ContractModel):

@@ -2,7 +2,7 @@
 
 **Active strategy:** `spy-directional` — deterministic daily S&P 500 directional exposure through SPY, UPRO, SH, SPXU or CASH.
 
-**Status (18 November 2026):** research and read-only dry-run only. The production allowlist is unchanged (`SPY`, `QQQ`, `IWM`), leveraged execution is disabled by default, and `ORDER_WRITES_ENABLED=false`. SH/UPRO/SPXU proposals are rejected at `R002`. No order has been authorised by this pivot. The separately approved first diagnostic paper BUY/SELL verification remains a pending execution milestone and is unaffected.
+**Status (18 November 2026):** research and read-only dry-run only. The strategy execution allowlist is now `SPY`, `UPRO`, `SH`, `SPXU` with per-symbol leverage metadata; `SH` is eligible (1x inverse, long BUY), while `UPRO`/`SPXU` remain disabled by `R015` until separate leverage approval. `QQQ` is preserved for historical diagnostic reconciliation only and is not part of the strategy universe. `ORDER_WRITES_ENABLED=false`. No order has been authorised by this pivot. The separately approved first diagnostic paper BUY/SELL verification is complete and unaffected.
 
 ## One-page strategy specification
 
@@ -35,12 +35,12 @@ All four positions are opened with **BUY** orders. Inverse ETFs have negative ec
 
 | Symbol | Benchmark | Direction | Daily leverage | Effective exposure | Status |
 |---|---|---:|---:|---:|---|
-| SPY | S&P 500 | +1 | 1x | +1x | Production allowlist; quote/history verified |
-| UPRO | S&P 500 (3x daily) | +1 | 3x | +3x | Quote/history verified; **not enabled for paper execution**; outside allowlist and requires `R015` plus separate owner approval |
-| SH | S&P 500 (inverse) | -1 | 1x | -1x | Quote/history verified; **not enabled for paper execution**; outside production allowlist and requires separate owner approval |
-| SPXU | S&P 500 (3x inverse daily) | -1 | 3x | -3x | Quote/history verified; **not enabled for paper execution**; outside allowlist and requires `R015` plus separate owner approval |
+| SPY | S&P 500 | +1 | 1x | +1x | Execution allowlist; quote/history verified |
+| UPRO | S&P 500 (3x daily) | +1 | 3x | +3x | Quote/history verified; **not enabled for paper execution**; in allowlist but rejected by `R015` until separate leverage approval |
+| SH | S&P 500 (inverse) | -1 | 1x | -1x | Execution allowlist; quote/history verified; 1x inverse bought with a BUY order |
+| SPXU | S&P 500 (3x inverse daily) | -1 | 3x | -3x | Quote/history verified; **not enabled for paper execution**; in allowlist but rejected by `R015` until separate leverage approval |
 
-Verified with 370 read-only Moomoo daily bars per symbol through 17 November 2026, plus current quote reads for all four. Metadata lives in [`backend/app/research/instruments.py`](../backend/app/research/instruments.py). Quote support is not the same as competition-account execution eligibility: only SPY is currently inside the production execution allowlist. Enabling SH requires a deliberate allowlist decision; enabling UPRO/SPXU additionally requires `allow_leveraged=True` and product-specific execution checks. CASH is always permitted.
+Verified with 370 read-only Moomoo daily bars per symbol through 17 November 2026, plus current quote reads for all four. Metadata lives in [`backend/app/research/instruments.py`](../backend/app/research/instruments.py). Quote support is not the same as competition-account execution eligibility: SPY and SH are currently inside the execution allowlist, while UPRO/SPXU additionally require `allow_leveraged=True` and product-specific execution checks. QQQ is preserved for historical diagnostic reconciliation only. CASH is always permitted.
 
 ### State machine, sizing and costs
 
@@ -68,7 +68,7 @@ Verified with 370 read-only Moomoo daily bars per symbol through 17 November 202
 - `R015`: an instrument with leverage greater than 1 is rejected unless the gate is constructed with `allow_leveraged=True`. The default is `False`.
 - Per-symbol leverage metadata is validated; invalid or non-positive metadata rejects with `R007`.
 - `R004` and `R005` measure **effective** post-order exposure; `R008` still requires unlevered cash for the actual notional.
-- No exposure limit was raised to accommodate leverage. The production allowlist was not expanded.
+- No exposure limit was raised to accommodate leverage. The supervised-execution and research gates now carry the four-symbol universe with per-symbol leverage metadata, so SH is eligible at 1x while UPRO/SPXU stay disabled by `R015`.
 
 ### Research evidence and limitations
 

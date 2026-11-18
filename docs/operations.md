@@ -35,8 +35,8 @@ Copy `.env.example` to `.env` and set:
 | Variable | Purpose |
 |---|---|
 | `APP_ENV` | `development` or `demo` |
-| `TRADING_MODE` | documented convention, keep `paper_only`; not itself enforced — the enforced guard is `ORDER_WRITES_ENABLED` |
-| `ORDER_WRITES_ENABLED` | must stay `false` |
+| `TRADING_MODE` | `READ_ONLY` (default), `SUPERVISED_PAPER` or `AUTO_PAPER`; enforced by the supervised executor and the autonomous pipeline. The legacy `paper_only` value fails closed and must be replaced |
+| `ORDER_WRITES_ENABLED` | must stay `false` unless AUTO_PAPER is explicitly activated |
 | `DATABASE_URL` | SQLite path, default `sqlite:///./data/mootrade.db` |
 | `COMPETITION_ACCOUNT_MASKED_ID` | masked identity, e.g. `****0101` |
 | `COMPETITION_ACCOUNT_FINGERPRINT` | SHA-256 fingerprint from `fingerprint-account` |
@@ -53,6 +53,21 @@ The account lock fails closed if the masked id or fingerprint is missing; the ma
 - Tokens live in DPAPI-encrypted files outside the repository: `%LOCALAPPDATA%\MooTrade\moomoo-oauth.bin` (read) and `moomoo-execution-oauth.bin` (execution). Plaintext token files are rejected on Windows.
 - The browser dashboard never receives tokens, the full account id or the fingerprint.
 - Treat the execution `trade:write` consent as potentially account-wide; account-exclusive write scope is unverified. See `docs/integrations.md`.
+
+## Trading modes and AUTO_PAPER activation
+
+`TRADING_MODE` is read from the environment by every relevant command:
+
+- `READ_ONLY` (default when unset): all read paths work; `moomoo-supervised-execute` refuses with exit 2. Any unknown value (including the legacy `paper_only` convention) also fails closed.
+- `SUPERVISED_PAPER`: the operator-supervised execution workflow behaves as before — per-proposal durable approval, `--enable-order-writes` and exact `--confirm-client-order-key`.
+- `AUTO_PAPER`: additionally requires a durable activation pin recorded by `moomoo-activate-auto-paper`. The pin binds the exact competition-account SHA-256 fingerprint, strategy `spy-directional`, the `SPY`/`SH` allowlist, risk policy `risk-v1`, the 10% single / 30% gross / 2% daily-drawdown limits and the 5% position fraction. The record is append-only in the ledger.
+
+```bash
+.venv/Scripts/python -m app.cli moomoo-auto-paper-status   # mode, write flag, kill switch, activation pin
+.venv/Scripts/python -m app.cli moomoo-activate-auto-paper --confirm-auto-paper
+```
+
+Activation records a pin only; it never submits an order. It refuses unless `TRADING_MODE=AUTO_PAPER` and `ORDER_WRITES_ENABLED=true` are already set, and it stores the pin for the configured competition-account fingerprint. Autonomous submission additionally requires, at every run: `TRADING_MODE=AUTO_PAPER`, `ORDER_WRITES_ENABLED=true`, a matching activation pin, an unengaged kill switch and a fresh RiskGate decision. To stop autonomous trading: set `TRADING_MODE=READ_ONLY` and `ORDER_WRITES_ENABLED=false`, or engage the persistent kill switch for an immediate stop of new submissions.
 
 ## Read-only account verification
 
@@ -136,6 +151,27 @@ powershell -ExecutionPolicy Bypass -File backend/scripts/register_readonly_task.
 - The task requires the interactive user session (DPAPI) and cannot wake a machine in Modern Standby; `WakeToRun=true` is set for ordinary standby.
 
 For one-time timer validation add `-ValidationDelayMinutes 2`, then remove the validation trigger afterwards (see `docs/integrations.md`).
+
+## Autonomous AUTO_PAPER schedule
+
+The autonomous trading loop reuses the read-only scheduler for its evening decision phase and adds a separate execution-phase task. Nothing submits until the owner completes the AUTO_PAPER activation (see above); until then every execution attempt records an abstention.
+
+**Decision phase (read-only, existing task `MooTrade Read-Only Scheduler`):** at 16:20 ET it refreshes completed daily bars to `evidence/current-market/<session>/daily-bars.json` and runs the three-agent Qoder workflow into `evidence/qoder/<run-id>.json`. This is the pinned decision artifact the execution phase consumes.
+
+**Execution phase (new task `MooTrade Auto Paper Scheduler`):** triggers at 13:35Z and 14:35Z (09:35 ET in either US DST offset); `backend/scripts/schedule_auto_paper.py` runs `scripts.auto_paper_run` only while the wall clock is inside 09:35-10:30 ET. It re-reads the prior session's bars and decision artifact, recomputes the deterministic signal and holdings comparison, and auto-submits only when `TRADING_MODE=AUTO_PAPER`, the activation pin matches, the kill switch is clean, no `UNKNOWN` submission exists and a fresh execution-time RiskGate approves. `ORDER_WRITES_ENABLED` is set to `true` only inside that scheduled invocation and restored afterwards; the dashboard and all read paths never see it enabled.
+
+Register the task:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File backend/scripts/register_auto_paper_task.ps1
+```
+
+- Durable state: `data/auto_paper_schedule.json` (per-session history), `data/auto-scheduler-events.jsonl` (append-only events), `data/auto_paper_schedule.lock`.
+- A session is attempted once: an abstained or completed run is never retried later the same day, and missed windows are not backfilled (fail closed; the next session re-evaluates).
+- After a mid-week market holiday the prior weekday may not be the last bar session; the executor then abstains for that morning instead of trading on stale data.
+- Disabling the read-only scheduler (or its failure) also stops autonomous trading: the execution phase abstains when the pinned decision artifact is missing.
+- The task runs in the interactive user session (DPAPI) and cannot wake a machine in Modern Standby; `WakeToRun=true` is set for ordinary standby. If the machine sleeps through 09:35-10:30 ET, no trade occurs that day.
+- Stop autonomous trading: set `TRADING_MODE=READ_ONLY` and `ORDER_WRITES_ENABLED=false` in `.env`, engage the kill switch, or disable the `MooTrade Auto Paper Scheduler` task.
 
 ## Running tests
 

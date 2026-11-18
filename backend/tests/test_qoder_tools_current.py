@@ -74,7 +74,7 @@ def test_current_mode_research_uses_supplied_artifact_and_notice(history, accept
     assert "Current read-only Moomoo evidence" in result["notice"]
     expected = accepted.proposal.model_copy(update={"run_id": run_id}).model_dump(mode="json")
     assert result["proposal"] == expected
-    assert result["snapshot"]["target_symbol"] == "SPY"
+    assert result["snapshot"]["target_symbol"] == "SH"
 
 
 def test_current_mode_gate_reads_fresh_account_and_quote_and_keeps_writes_disabled(

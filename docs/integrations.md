@@ -89,7 +89,7 @@ The read-only local schedule is implemented; it has no order authority and never
 Use `.env.example` as a starting guide, not a claim that the providers expect those exact fields. Configure provider-issued credentials using the supported secret manager or OAuth connection.
 
 - `APP_ENV` = `development` / `demo`.
-- `TRADING_MODE` = `paper_only`; a documented convention. The enforced startup guard is `ORDER_WRITES_ENABLED` (the dashboard API and read-only scripts refuse to start when it is `true`).
+- `TRADING_MODE` is now enforced: `READ_ONLY` (default), `SUPERVISED_PAPER` or `AUTO_PAPER`. The earlier `paper_only` value was a documented convention only; it now fails closed and must be replaced in `.env`. `ORDER_WRITES_ENABLED` remains the write guard (the dashboard API and read-only scripts refuse to start when it is `true`).
 - `ORDER_WRITES_ENABLED` = `false` initially.
 - `DATABASE_URL` = durable local/test SQLite path.
 - `MOOTRADE_OAUTH_STORE` = optional path override for the DPAPI-encrypted local OAuth record; defaults to `%LOCALAPPDATA%\MooTrade\moomoo-oauth.bin` on Windows. Never commit its contents.
@@ -132,6 +132,8 @@ Two documented GET endpoints were verified against the competition token and add
 ```powershell
 powershell -ExecutionPolicy Bypass -File backend/scripts/register_readonly_task.ps1
 ```
+
+`backend/scripts/schedule_auto_paper.py` is the AUTO_PAPER execution-phase scheduler (`backend/config/auto_paper_schedule.json`, execution window `09:35`-`10:30` `America/New_York`). It is invoked by the Task Scheduler task `MooTrade Auto Paper Scheduler` through `backend/scripts/run_auto_paper_schedule.cmd`, registered by `backend/scripts/register_auto_paper_task.ps1` with two daily UTC triggers at `13:35Z` and `14:35Z` (covering 09:35 ET in both DST offsets). It consumes the read-only scheduler's evening decision artifacts (`evidence/qoder/`) and daily bars (`evidence/current-market/<session>/`), scopes `ORDER_WRITES_ENABLED=true` to the executor invocation only, and records a durable per-session history in `data/auto_paper_schedule.json` plus append-only events in `data/auto-scheduler-events.jsonl`. Outside the window, on non-trading days, after an already-attempted session or without an AUTO_PAPER activation pin it skips or abstains; no session is ever retried later the same day and no window is backfilled. Timer mechanics (WakeToRun, interactive DPAPI user session, Modern Standby limits) match the read-only task and were verified there on 18 November 2026.
 
 For a one-time timer validation, add `-ValidationDelayMinutes 2`; remove the validation trigger afterward with `Set-ScheduledTask` filtered to the daily triggers. Do not use a manual `--once` run as timer evidence.
 

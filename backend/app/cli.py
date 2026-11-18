@@ -48,6 +48,11 @@ from app.models.contracts import (
 from app.risk.policy import RiskGate
 from app.service import build_client_order_key
 from app.supervised import build_supervised_execution
+from app.trading_mode import (
+    TradingModeError,
+    build_auto_paper_activation,
+    resolve_trading_mode,
+)
 
 _LOCAL_ENV_KEYS = {
     "COMPETITION_ACCOUNT_MASKED_ID",
@@ -63,6 +68,8 @@ _LOCAL_ENV_KEYS = {
     "MOOTRADE_OAUTH_STORE",
     "MOOTRADE_EXECUTION_OAUTH_STORE",
     "MOOTRADE_PROJECT_ROOT",
+    "ORDER_WRITES_ENABLED",
+    "TRADING_MODE",
 }
 
 
@@ -297,6 +304,27 @@ def main(argv: Sequence[str] | None = None) -> int:
     supervised_reconcile.add_argument("--store")
     supervised_reconcile.add_argument("--env-file", default=".env")
     supervised_reconcile.add_argument("--ledger")
+
+    auto_paper_status = commands.add_parser(
+        "moomoo-auto-paper-status",
+        help="Show the trading mode, write flag and durable AUTO_PAPER activation state",
+    )
+    auto_paper_status.add_argument("--env-file", default=".env")
+    auto_paper_status.add_argument("--ledger")
+
+    auto_paper_activate = commands.add_parser(
+        "moomoo-activate-auto-paper",
+        help=(
+            "Record the explicit, durable AUTO_PAPER activation pin for the exact "
+            "competition paper account, strategy, symbols, policy version and limits. "
+            "Requires TRADING_MODE=AUTO_PAPER and ORDER_WRITES_ENABLED=true in the environment. "
+            "Never submits an order."
+        ),
+    )
+    auto_paper_activate.add_argument("--confirm-auto-paper", action="store_true")
+    auto_paper_activate.add_argument("--authorized-by", default="owner")
+    auto_paper_activate.add_argument("--env-file", default=".env")
+    auto_paper_activate.add_argument("--ledger")
 
     args = parser.parse_args(argv)
 
@@ -780,6 +808,18 @@ def main(argv: Sequence[str] | None = None) -> int:
         if args.quantity < 1:
             print("Execution quantity must be positive.")
             return 2
+        load_local_env(Path(args.env_file))
+        try:
+            mode = resolve_trading_mode(os.environ)
+        except TradingModeError as exc:
+            print(f"Refusing: {exc}")
+            return 2
+        if mode.value == "READ_ONLY":
+            print(
+                "Refusing: TRADING_MODE=READ_ONLY. Supervised execution requires "
+                "SUPERVISED_PAPER or AUTO_PAPER mode."
+            )
+            return 2
         client_order_key = build_client_order_key(
             args.strategy_version, args.proposal_id
         )
@@ -933,6 +973,121 @@ def main(argv: Sequence[str] | None = None) -> int:
         }
         print(json.dumps(report, indent=2, ensure_ascii=True))
         return 0 if reconciled is not None else 1
+
+    if args.command == "moomoo-auto-paper-status":
+        load_local_env(Path(args.env_file))
+        ledger = SQLiteLedger(args.ledger or ledger_path_from_env(os.environ))
+        try:
+            mode = resolve_trading_mode(os.environ)
+        except TradingModeError as exc:
+            print(f"Auto-paper status unavailable: {exc}")
+            return 2
+        activation = ledger.latest_trading_activation()
+        report = {
+            "mode": "PAPER",
+            "trading_mode": mode.value,
+            "order_writes_enabled_env": (
+                os.environ.get("ORDER_WRITES_ENABLED", "false").strip().lower()
+                in {"true", "1", "yes"}
+            ),
+            "kill_switch_engaged": ledger.kill_switch_engaged(),
+            "activation": (
+                {
+                    "activated_at_utc": activation.activated_at_utc.isoformat(),
+                    "activated_by": activation.activated_by,
+                    "account_fingerprint": activation.account_fingerprint,
+                    "strategy_version": activation.strategy_version,
+                    "allowed_symbols": list(activation.allowed_symbols),
+                    "risk_policy_version": activation.risk_policy_version,
+                    "max_single_exposure": str(activation.max_single_exposure),
+                    "max_total_exposure": str(activation.max_total_exposure),
+                    "max_daily_drawdown": str(activation.max_daily_drawdown),
+                    "position_fraction": str(activation.position_fraction),
+                    "paper_only": True,
+                    "order_writes_enabled": True,
+                }
+                if activation is not None
+                else None
+            ),
+        }
+        print(json.dumps(report, indent=2, ensure_ascii=True))
+        return 0
+
+    if args.command == "moomoo-activate-auto-paper":
+        load_local_env(Path(args.env_file))
+        if not args.confirm_auto_paper:
+            print(
+                "Refusing: --confirm-auto-paper is required to record the durable "
+                "AUTO_PAPER activation pin. Nothing was written."
+            )
+            return 2
+        try:
+            mode = resolve_trading_mode(os.environ)
+        except TradingModeError as exc:
+            print(f"Refusing: {exc}")
+            return 2
+        if mode.value != "AUTO_PAPER":
+            print(
+                "Refusing: TRADING_MODE must be AUTO_PAPER before recording the "
+                f"activation pin (current: {mode.value})."
+            )
+            return 2
+        writes_flag = os.environ.get("ORDER_WRITES_ENABLED", "false").strip().lower()
+        if writes_flag not in {"true", "1", "yes"}:
+            print(
+                "Refusing: ORDER_WRITES_ENABLED must be true before recording the "
+                "activation pin. Nothing was written."
+            )
+            return 2
+        fingerprint = os.environ.get("COMPETITION_ACCOUNT_FINGERPRINT", "").strip()
+        ledger = SQLiteLedger(args.ledger or ledger_path_from_env(os.environ))
+        try:
+            activation = build_auto_paper_activation(
+                fingerprint,
+                datetime.now(UTC),
+                activated_by=args.authorized_by,
+            )
+        except TradingModeError as exc:
+            print(f"Refusing: {exc}")
+            return 2
+        ledger.record_trading_activation(activation)
+        ledger.append_event(
+            "AUTO_PAPER_ACTIVATED",
+            activation.activated_at_utc,
+            None,
+            "operator-cli",
+            {
+                "strategy_version": activation.strategy_version,
+                "allowed_symbols": list(activation.allowed_symbols),
+                "risk_policy_version": activation.risk_policy_version,
+                "max_single_exposure": str(activation.max_single_exposure),
+                "max_total_exposure": str(activation.max_total_exposure),
+                "max_daily_drawdown": str(activation.max_daily_drawdown),
+                "position_fraction": str(activation.position_fraction),
+                "paper_only": True,
+                "order_writes_enabled": True,
+            },
+        )
+        print(json.dumps({
+            "mode": "PAPER",
+            "activation_recorded": True,
+            "order_submitted": False,
+            "trading_mode": mode.value,
+            "strategy_version": activation.strategy_version,
+            "allowed_symbols": list(activation.allowed_symbols),
+            "risk_policy_version": activation.risk_policy_version,
+            "max_single_exposure": str(activation.max_single_exposure),
+            "max_total_exposure": str(activation.max_total_exposure),
+            "max_daily_drawdown": str(activation.max_daily_drawdown),
+            "position_fraction": str(activation.position_fraction),
+            "account_fingerprint": activation.account_fingerprint,
+            "paper_only": True,
+            "note": (
+                "Autonomous submissions still require the per-run pipeline checks, "
+                "a fresh RiskGate decision and an unengaged kill switch."
+            ),
+        }, indent=2, ensure_ascii=True))
+        return 0
 
     ledger_path = args.ledger or ledger_path_from_env(os.environ)
     client_order_key = build_client_order_key(args.strategy_version, args.proposal_id)

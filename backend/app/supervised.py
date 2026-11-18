@@ -19,6 +19,8 @@ from app.broker.moomoo_orders import MoomooOrderTransport, MoomooPaperBroker
 from app.broker.moomoo_quotes import MoomooQuoteFeed
 from app.broker.moomoo_rest import MoomooRestBroker, MoomooRestClient
 from app.ledger.store import SQLiteLedger
+from app.research.data import UNIVERSE
+from app.research.instruments import INSTRUMENTS
 from app.risk.policy import RiskGate
 from app.service import TradingService
 
@@ -62,7 +64,12 @@ def build_supervised_execution(
         clock=clock,
     )
     risk_gate = RiskGate(
-        expected_account_fingerprint=account_lock.expected_fingerprint
+        expected_account_fingerprint=account_lock.expected_fingerprint,
+        allowed_symbols=frozenset(UNIVERSE),
+        leverage_by_symbol={
+            symbol: instrument.leverage for symbol, instrument in INSTRUMENTS.items()
+        },
+        allow_leveraged=False,
     )
     service = TradingService(
         broker=broker,

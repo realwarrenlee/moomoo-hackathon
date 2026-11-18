@@ -294,15 +294,15 @@ def test_latest_real_spy_signal_is_bearish_and_targets_sh(history):
     assert decision.proposal is not None
     assert decision.proposal.symbol == "SH"
     assert decision.risk_decision is not None
-    assert decision.risk_decision.decision is PolicyDecision.REJECT
-    assert {rule.rule_id for rule in decision.risk_decision.reasons} == {"R002"}
+    assert decision.risk_decision.decision is PolicyDecision.APPROVE
+    assert decision.risk_decision.reasons == ()
 
 
 def test_historical_accepted_example_passes_the_existing_gate(history):
     decision = find_accepted_example(history, STRATEGY, FINGERPRINT)
     assert decision is not None
     assert decision.proposal is not None
-    assert decision.proposal.symbol == "SPY"
+    assert decision.proposal.symbol == "SH"
     assert decision.risk_decision is not None
     assert decision.risk_decision.decision is PolicyDecision.APPROVE
     assert decision.risk_decision.approved_quantity == decision.proposal.requested_quantity

@@ -62,7 +62,7 @@ def test_neutral_pinned_session_returns_cash_without_a_proposal(service):
     assert service.evaluate_proposal({"run_id": run_id, "proposal": {}})["ok"] is False
 
 
-def test_latest_real_session_returns_a_policy_rejected_sh_proposal(service):
+def test_latest_real_session_returns_a_policy_approved_sh_proposal(service):
     run_id = service.create_run(STRATEGY)
     research = service.research_market({"run_id": run_id, "strategy_version": STRATEGY})
     assert research["ok"] is True
@@ -72,8 +72,8 @@ def test_latest_real_session_returns_a_policy_rejected_sh_proposal(service):
         {"run_id": run_id, "proposal": research["proposal"]}
     )
     assert evaluated["ok"] is True
-    assert evaluated["risk_decision"]["decision"] == "REJECT"
-    assert {rule["rule_id"] for rule in evaluated["risk_decision"]["reasons"]} == {"R002"}
+    assert evaluated["risk_decision"]["decision"] == "APPROVE"
+    assert evaluated["risk_decision"]["reasons"] == []
 
 
 def test_accepted_proposal_uses_real_risk_gate(service, history):
@@ -180,6 +180,6 @@ def test_outputs_exclude_account_fingerprint(service, history):
     assert FINGERPRINT not in combined
     assert "account_fingerprint" not in combined
     assert "equity" not in evaluated
-    assert research["snapshot"]["spy_session_date"] == "2026-10-13"
-    assert research["snapshot"]["target_symbol"] == "SPY"
+    assert research["snapshot"]["spy_session_date"] == "2026-11-16"
+    assert research["snapshot"]["target_symbol"] == "SH"
     assert research["snapshot"]["action"] == "BUY"

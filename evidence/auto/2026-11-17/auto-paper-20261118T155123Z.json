@@ -1,0 +1,8 @@
+{
+  "schema_version": "1",
+  "mode": "AUTO_PAPER_EXECUTION",
+  "status": "ABSTAINED",
+  "reason": "TRADING_MODE=READ_ONLY; autonomous execution requires AUTO_PAPER",
+  "executed_at_utc": "2026-11-18T15:51:23.809034+00:00",
+  "submission_performed": false
+}

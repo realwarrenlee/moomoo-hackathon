@@ -6,7 +6,13 @@ from pathlib import Path
 from typing import Any
 from uuid import uuid4
 
-from app.models.contracts import OrderRecord, OrderRequest, OrderStatus, can_transition
+from app.models.contracts import (
+    OrderRecord,
+    OrderRequest,
+    OrderStatus,
+    TradingActivation,
+    can_transition,
+)
 
 
 class SQLiteLedger:
@@ -64,6 +70,28 @@ class SQLiteLedger:
                     peak_equity TEXT NOT NULL,
                     PRIMARY KEY (account_fingerprint, trading_day)
                 );
+                CREATE TABLE IF NOT EXISTS trading_activations (
+                    activation_id TEXT PRIMARY KEY,
+                    activated_at_utc TEXT NOT NULL,
+                    activated_by TEXT NOT NULL,
+                    account_fingerprint TEXT NOT NULL,
+                    strategy_version TEXT NOT NULL,
+                    allowed_symbols_json TEXT NOT NULL,
+                    risk_policy_version TEXT NOT NULL,
+                    max_single_exposure TEXT NOT NULL,
+                    max_total_exposure TEXT NOT NULL,
+                    max_daily_drawdown TEXT NOT NULL,
+                    position_fraction TEXT NOT NULL,
+                    paper_only INTEGER NOT NULL,
+                    order_writes_enabled INTEGER NOT NULL,
+                    schema_version TEXT NOT NULL
+                );
+                CREATE TRIGGER IF NOT EXISTS trading_activations_no_update
+                BEFORE UPDATE ON trading_activations
+                BEGIN SELECT RAISE(ABORT, 'trading activations are append-only'); END;
+                CREATE TRIGGER IF NOT EXISTS trading_activations_no_delete
+                BEFORE DELETE ON trading_activations
+                BEGIN SELECT RAISE(ABORT, 'trading activations are append-only'); END;
                 """
             )
 
@@ -276,3 +304,55 @@ class SQLiteLedger:
         if row is None or row["order_json"] is None:
             return None
         return OrderRecord.model_validate_json(row["order_json"])
+
+    def record_trading_activation(self, activation: TradingActivation) -> str:
+        activation_id = str(uuid4())
+        with self._connect() as connection:
+            connection.execute(
+                """
+                INSERT INTO trading_activations (
+                    activation_id, activated_at_utc, activated_by,
+                    account_fingerprint, strategy_version, allowed_symbols_json,
+                    risk_policy_version, max_single_exposure, max_total_exposure,
+                    max_daily_drawdown, position_fraction, paper_only,
+                    order_writes_enabled, schema_version
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    activation_id,
+                    activation.activated_at_utc.isoformat(),
+                    activation.activated_by,
+                    activation.account_fingerprint,
+                    activation.strategy_version,
+                    json.dumps(list(activation.allowed_symbols)),
+                    activation.risk_policy_version,
+                    str(activation.max_single_exposure),
+                    str(activation.max_total_exposure),
+                    str(activation.max_daily_drawdown),
+                    str(activation.position_fraction),
+                    1,
+                    1,
+                    activation.schema_version,
+                ),
+            )
+        return activation_id
+
+    def latest_trading_activation(self) -> TradingActivation | None:
+        with self._connect() as connection:
+            row = connection.execute(
+                "SELECT * FROM trading_activations ORDER BY activated_at_utc DESC, rowid DESC LIMIT 1"
+            ).fetchone()
+        if row is None:
+            return None
+        return TradingActivation(
+            activated_at_utc=row["activated_at_utc"],
+            activated_by=row["activated_by"],
+            account_fingerprint=row["account_fingerprint"],
+            strategy_version=row["strategy_version"],
+            allowed_symbols=tuple(json.loads(row["allowed_symbols_json"])),
+            risk_policy_version=row["risk_policy_version"],
+            max_single_exposure=Decimal(row["max_single_exposure"]),
+            max_total_exposure=Decimal(row["max_total_exposure"]),
+            max_daily_drawdown=Decimal(row["max_daily_drawdown"]),
+            position_fraction=Decimal(row["position_fraction"]),
+        )

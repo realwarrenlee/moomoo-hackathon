@@ -8,7 +8,7 @@ from pathlib import Path
 
 from app.models.contracts import Quote
 
-UNIVERSE: tuple[str, ...] = ("IWM", "QQQ", "SPY")
+UNIVERSE: tuple[str, ...] = ("SPY", "UPRO", "SH", "SPXU")
 SESSION_CLOSE_UTC = time(21, 0)
 
 

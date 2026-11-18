@@ -1,0 +1,685 @@
+﻿{
+    "CimClass":  {
+                     "CimSuperClassName":  null,
+                     "CimSuperClass":  null,
+                     "CimClassProperties":  [
+                                                {
+                                                    "Name":  "Actions",
+                                                    "Value":  null,
+                                                    "CimType":  32,
+                                                    "Flags":  "Property, NullValue",
+                                                    "Qualifiers":  "EmbeddedInstance = \"MSFT_TaskAction\"",
+                                                    "ReferenceClassName":  "MSFT_TaskAction"
+                                                },
+                                                {
+                                                    "Name":  "Author",
+                                                    "Value":  null,
+                                                    "CimType":  14,
+                                                    "Flags":  "Property, NullValue",
+                                                    "Qualifiers":  "",
+                                                    "ReferenceClassName":  null
+                                                },
+                                                {
+                                                    "Name":  "Date",
+                                                    "Value":  null,
+                                                    "CimType":  14,
+                                                    "Flags":  "Property, NullValue",
+                                                    "Qualifiers":  "",
+                                                    "ReferenceClassName":  null
+                                                },
+                                                {
+                                                    "Name":  "Description",
+                                                    "Value":  null,
+                                                    "CimType":  14,
+                                                    "Flags":  "Property, NullValue",
+                                                    "Qualifiers":  "",
+                                                    "ReferenceClassName":  null
+                                                },
+                                                {
+                                                    "Name":  "Documentation",
+                                                    "Value":  null,
+                                                    "CimType":  14,
+                                                    "Flags":  "Property, NullValue",
+                                                    "Qualifiers":  "",
+                                                    "ReferenceClassName":  null
+                                                },
+                                                {
+                                                    "Name":  "Principal",
+                                                    "Value":  null,
+                                                    "CimType":  16,
+                                                    "Flags":  "Property, NullValue",
+                                                    "Qualifiers":  "EmbeddedInstance = \"MSFT_TaskPrincipal\"",
+                                                    "ReferenceClassName":  "MSFT_TaskPrincipal"
+                                                },
+                                                {
+                                                    "Name":  "SecurityDescriptor",
+                                                    "Value":  null,
+                                                    "CimType":  14,
+                                                    "Flags":  "Property, NullValue",
+                                                    "Qualifiers":  "",
+                                                    "ReferenceClassName":  null
+                                                },
+                                                {
+                                                    "Name":  "Settings",
+                                                    "Value":  null,
+                                                    "CimType":  16,
+                                                    "Flags":  "Property, NullValue",
+                                                    "Qualifiers":  "EmbeddedInstance = \"MSFT_TaskSettings\"",
+                                                    "ReferenceClassName":  "MSFT_TaskSettings"
+                                                },
+                                                {
+                                                    "Name":  "Source",
+                                                    "Value":  null,
+                                                    "CimType":  14,
+                                                    "Flags":  "Property, NullValue",
+                                                    "Qualifiers":  "",
+                                                    "ReferenceClassName":  null
+                                                },
+                                                {
+                                                    "Name":  "State",
+                                                    "Value":  null,
+                                                    "CimType":  7,
+                                                    "Flags":  "Property, ReadOnly, NullValue",
+                                                    "Qualifiers":  "read = True ValueMap = ... Values = ...",
+                                                    "ReferenceClassName":  null
+                                                },
+                                                {
+                                                    "Name":  "TaskName",
+                                                    "Value":  null,
+                                                    "CimType":  14,
+                                                    "Flags":  "Property, Key, ReadOnly, NullValue",
+                                                    "Qualifiers":  "key = True read = True",
+                                                    "ReferenceClassName":  null
+                                                },
+                                                {
+                                                    "Name":  "TaskPath",
+                                                    "Value":  null,
+                                                    "CimType":  14,
+                                                    "Flags":  "Property, Key, ReadOnly, NullValue",
+                                                    "Qualifiers":  "key = True read = True",
+                                                    "ReferenceClassName":  null
+                                                },
+                                                {
+                                                    "Name":  "Triggers",
+                                                    "Value":  null,
+                                                    "CimType":  32,
+                                                    "Flags":  "Property, NullValue",
+                                                    "Qualifiers":  "EmbeddedInstance = \"MSFT_TaskTrigger\"",
+                                                    "ReferenceClassName":  "MSFT_TaskTrigger"
+                                                },
+                                                {
+                                                    "Name":  "URI",
+                                                    "Value":  null,
+                                                    "CimType":  14,
+                                                    "Flags":  "Property, ReadOnly, NullValue",
+                                                    "Qualifiers":  "read = True",
+                                                    "ReferenceClassName":  null
+                                                },
+                                                {
+                                                    "Name":  "Version",
+                                                    "Value":  null,
+                                                    "CimType":  14,
+                                                    "Flags":  "Property, NullValue",
+                                                    "Qualifiers":  "",
+                                                    "ReferenceClassName":  null
+                                                }
+                                            ],
+                     "CimClassQualifiers":  [
+                                                {
+                                                    "Name":  "dynamic",
+                                                    "Value":  true,
+                                                    "CimType":  1,
+                                                    "Flags":  "EnableOverride, ToSubclass"
+                                                },
+                                                {
+                                                    "Name":  "provider",
+                                                    "Value":  "ScheduledTaskProv",
+                                                    "CimType":  14,
+                                                    "Flags":  "EnableOverride, ToSubclass"
+                                                }
+                                            ],
+                     "CimClassMethods":  [
+
+                                         ],
+                     "CimSystemProperties":  {
+                                                 "Namespace":  "Root/Microsoft/Windows/TaskScheduler",
+                                                 "ServerName":  "ZENBOOK",
+                                                 "ClassName":  "MSFT_ScheduledTask",
+                                                 "Path":  null
+                                             }
+                 },
+    "CimInstanceProperties":  [
+                                  {
+                                      "Name":  "Actions",
+                                      "Value":  [
+                                                    "MSFT_TaskExecAction"
+                                                ],
+                                      "CimType":  32,
+                                      "Flags":  "Property, NotModified",
+                                      "IsValueModified":  false
+                                  },
+                                  {
+                                      "Name":  "Author",
+                                      "Value":  null,
+                                      "CimType":  14,
+                                      "Flags":  "Property, NotModified, NullValue",
+                                      "IsValueModified":  false
+                                  },
+                                  {
+                                      "Name":  "Date",
+                                      "Value":  null,
+                                      "CimType":  14,
+                                      "Flags":  "Property, NotModified, NullValue",
+                                      "IsValueModified":  false
+                                  },
+                                  {
+                                      "Name":  "Description",
+                                      "Value":  "MooTrade AUTO_PAPER execution phase. Submits only inside the 09:35-10:30 ET window, only to the pinned competition paper account, only with an AUTO_PAPER activation pin and a clean kill switch.",
+                                      "CimType":  14,
+                                      "Flags":  "Property, NotModified",
+                                      "IsValueModified":  false
+                                  },
+                                  {
+                                      "Name":  "Documentation",
+                                      "Value":  null,
+                                      "CimType":  14,
+                                      "Flags":  "Property, NotModified, NullValue",
+                                      "IsValueModified":  false
+                                  },
+                                  {
+                                      "Name":  "Principal",
+                                      "Value":  {
+                                                    "CimClass":  "Root/Microsoft/Windows/TaskScheduler:MSFT_TaskPrincipal2",
+                                                    "CimInstanceProperties":  "DisplayName GroupId Id = \"Author\" LogonType = 3 RunLevel = 0 UserId = \"Warren\" ProcessTokenSidType = 2 RequiredPrivilege",
+                                                    "CimSystemProperties":  "Microsoft.Management.Infrastructure.CimSystemProperties"
+                                                },
+                                      "CimType":  16,
+                                      "Flags":  "Property, NotModified",
+                                      "IsValueModified":  false
+                                  },
+                                  {
+                                      "Name":  "SecurityDescriptor",
+                                      "Value":  "",
+                                      "CimType":  14,
+                                      "Flags":  "Property, NotModified",
+                                      "IsValueModified":  false
+                                  },
+                                  {
+                                      "Name":  "Settings",
+                                      "Value":  {
+                                                    "CimClass":  "Root/Microsoft/Windows/TaskScheduler:MSFT_TaskSettings3",
+                                                    "CimInstanceProperties":  "AllowDemandStart = True AllowHardTerminate = True Compatibility = 3 DeleteExpiredTaskAfter DisallowStartIfOnBatteries = False Enabled = True ExecutionTimeLimit = \"PT2H\" Hidden = False IdleSettings = ... MultipleInstances = 2 NetworkSettings = ... Priority = 7 RestartCount = 2 RestartInterval = \"PT15M\" RunOnlyIfIdle = False RunOnlyIfNetworkAvailable = False StartWhenAvailable = True StopIfGoingOnBatteries = False WakeToRun = True DisallowStartOnRemoteAppSession = False UseUnifiedSchedulingEngine = True MaintenanceSettings volatile = False",
+                                                    "CimSystemProperties":  "Microsoft.Management.Infrastructure.CimSystemProperties"
+                                                },
+                                      "CimType":  16,
+                                      "Flags":  "Property, NotModified",
+                                      "IsValueModified":  false
+                                  },
+                                  {
+                                      "Name":  "Source",
+                                      "Value":  null,
+                                      "CimType":  14,
+                                      "Flags":  "Property, NotModified, NullValue",
+                                      "IsValueModified":  false
+                                  },
+                                  {
+                                      "Name":  "State",
+                                      "Value":  3,
+                                      "CimType":  7,
+                                      "Flags":  "Property, ReadOnly, NotModified",
+                                      "IsValueModified":  false
+                                  },
+                                  {
+                                      "Name":  "TaskName",
+                                      "Value":  "MooTrade Auto Paper Scheduler",
+                                      "CimType":  14,
+                                      "Flags":  "Property, Key, ReadOnly, NotModified",
+                                      "IsValueModified":  false
+                                  },
+                                  {
+                                      "Name":  "TaskPath",
+                                      "Value":  "\\",
+                                      "CimType":  14,
+                                      "Flags":  "Property, Key, ReadOnly, NotModified",
+                                      "IsValueModified":  false
+                                  },
+                                  {
+                                      "Name":  "Triggers",
+                                      "Value":  [
+                                                    "MSFT_TaskDailyTrigger",
+                                                    "MSFT_TaskDailyTrigger"
+                                                ],
+                                      "CimType":  32,
+                                      "Flags":  "Property, NotModified",
+                                      "IsValueModified":  false
+                                  },
+                                  {
+                                      "Name":  "URI",
+                                      "Value":  "\\MooTrade Auto Paper Scheduler",
+                                      "CimType":  14,
+                                      "Flags":  "Property, ReadOnly, NotModified",
+                                      "IsValueModified":  false
+                                  },
+                                  {
+                                      "Name":  "Version",
+                                      "Value":  null,
+                                      "CimType":  14,
+                                      "Flags":  "Property, NotModified, NullValue",
+                                      "IsValueModified":  false
+                                  }
+                              ],
+    "CimSystemProperties":  {
+                                "Namespace":  "Root/Microsoft/Windows/TaskScheduler",
+                                "ServerName":  "ZENBOOK",
+                                "ClassName":  "MSFT_ScheduledTask",
+                                "Path":  null
+                            },
+    "State":  3,
+    "Actions":  [
+                    {
+                        "CimClass":  {
+                                         "CimSuperClassName":  "MSFT_TaskAction",
+                                         "CimSuperClass":  "ROOT/Microsoft/Windows/TaskScheduler:MSFT_TaskAction",
+                                         "CimClassProperties":  "Id Arguments Execute WorkingDirectory",
+                                         "CimClassQualifiers":  "",
+                                         "CimClassMethods":  "",
+                                         "CimSystemProperties":  "Microsoft.Management.Infrastructure.CimSystemProperties"
+                                     },
+                        "CimInstanceProperties":  [
+                                                      "Id",
+                                                      "Arguments = \"/d /c \"\"C:\\Users\\Warren\\Downloads\\qoder...",
+                                                      "Execute = \"C:\\WINDOWS\\system32\\cmd.exe\"",
+                                                      "WorkingDirectory = \"C:\\Users\\Warren\\Downloads\\qoder trading..."
+                                                  ],
+                        "CimSystemProperties":  {
+                                                    "Namespace":  "Root/Microsoft/Windows/TaskScheduler",
+                                                    "ServerName":  "ZENBOOK",
+                                                    "ClassName":  "MSFT_TaskExecAction",
+                                                    "Path":  null
+                                                }
+                    }
+                ],
+    "Author":  null,
+    "Date":  null,
+    "Description":  "MooTrade AUTO_PAPER execution phase. Submits only inside the 09:35-10:30 ET window, only to the pinned competition paper account, only with an AUTO_PAPER activation pin and a clean kill switch.",
+    "Documentation":  null,
+    "Principal":  {
+                      "CimClass":  {
+                                       "CimSuperClassName":  "MSFT_TaskPrincipal",
+                                       "CimSuperClass":  {
+                                                             "CimSuperClassName":  null,
+                                                             "CimSuperClass":  null,
+                                                             "CimClassProperties":  "DisplayName GroupId Id LogonType RunLevel UserId",
+                                                             "CimClassQualifiers":  "",
+                                                             "CimClassMethods":  "",
+                                                             "CimSystemProperties":  "Microsoft.Management.Infrastructure.CimSystemProperties"
+                                                         },
+                                       "CimClassProperties":  [
+                                                                  "DisplayName",
+                                                                  "GroupId",
+                                                                  "Id",
+                                                                  "LogonType",
+                                                                  "RunLevel",
+                                                                  "UserId",
+                                                                  "ProcessTokenSidType",
+                                                                  "RequiredPrivilege"
+                                                              ],
+                                       "CimClassQualifiers":  [
+
+                                                              ],
+                                       "CimClassMethods":  [
+
+                                                           ],
+                                       "CimSystemProperties":  {
+                                                                   "Namespace":  "Root/Microsoft/Windows/TaskScheduler",
+                                                                   "ServerName":  "ZENBOOK",
+                                                                   "ClassName":  "MSFT_TaskPrincipal2",
+                                                                   "Path":  null
+                                                               }
+                                   },
+                      "CimInstanceProperties":  [
+                                                    {
+                                                        "Name":  "DisplayName",
+                                                        "Value":  null,
+                                                        "CimType":  14,
+                                                        "Flags":  "Property, NotModified, NullValue",
+                                                        "IsValueModified":  false
+                                                    },
+                                                    {
+                                                        "Name":  "GroupId",
+                                                        "Value":  null,
+                                                        "CimType":  14,
+                                                        "Flags":  "Property, NotModified, NullValue",
+                                                        "IsValueModified":  false
+                                                    },
+                                                    {
+                                                        "Name":  "Id",
+                                                        "Value":  "Author",
+                                                        "CimType":  14,
+                                                        "Flags":  "Property, NotModified",
+                                                        "IsValueModified":  false
+                                                    },
+                                                    {
+                                                        "Name":  "LogonType",
+                                                        "Value":  3,
+                                                        "CimType":  7,
+                                                        "Flags":  "Property, ReadOnly, NotModified",
+                                                        "IsValueModified":  false
+                                                    },
+                                                    {
+                                                        "Name":  "RunLevel",
+                                                        "Value":  0,
+                                                        "CimType":  7,
+                                                        "Flags":  "Property, NotModified",
+                                                        "IsValueModified":  false
+                                                    },
+                                                    {
+                                                        "Name":  "UserId",
+                                                        "Value":  "Warren",
+                                                        "CimType":  14,
+                                                        "Flags":  "Property, NotModified",
+                                                        "IsValueModified":  false
+                                                    },
+                                                    {
+                                                        "Name":  "ProcessTokenSidType",
+                                                        "Value":  2,
+                                                        "CimType":  7,
+                                                        "Flags":  "Property, ReadOnly, NotModified",
+                                                        "IsValueModified":  false
+                                                    },
+                                                    {
+                                                        "Name":  "RequiredPrivilege",
+                                                        "Value":  null,
+                                                        "CimType":  30,
+                                                        "Flags":  "Property, NotModified, NullValue",
+                                                        "IsValueModified":  false
+                                                    }
+                                                ],
+                      "CimSystemProperties":  {
+                                                  "Namespace":  "Root/Microsoft/Windows/TaskScheduler",
+                                                  "ServerName":  "ZENBOOK",
+                                                  "ClassName":  "MSFT_TaskPrincipal2",
+                                                  "Path":  null
+                                              }
+                  },
+    "SecurityDescriptor":  "",
+    "Settings":  {
+                     "CimClass":  {
+                                      "CimSuperClassName":  "MSFT_TaskSettings2",
+                                      "CimSuperClass":  {
+                                                            "CimSuperClassName":  "MSFT_TaskSettings",
+                                                            "CimSuperClass":  "ROOT/Microsoft/Windows/TaskScheduler:MSFT_TaskSettings",
+                                                            "CimClassProperties":  "AllowDemandStart AllowHardTerminate Compatibility DeleteExpiredTaskAfter DisallowStartIfOnBatteries Enabled ExecutionTimeLimit Hidden IdleSettings MultipleInstances NetworkSettings Priority RestartCount RestartInterval RunOnlyIfIdle RunOnlyIfNetworkAvailable StartWhenAvailable StopIfGoingOnBatteries WakeToRun DisallowStartOnRemoteAppSession UseUnifiedSchedulingEngine",
+                                                            "CimClassQualifiers":  "",
+                                                            "CimClassMethods":  "",
+                                                            "CimSystemProperties":  "Microsoft.Management.Infrastructure.CimSystemProperties"
+                                                        },
+                                      "CimClassProperties":  [
+                                                                 "AllowDemandStart",
+                                                                 "AllowHardTerminate",
+                                                                 "Compatibility",
+                                                                 "DeleteExpiredTaskAfter",
+                                                                 "DisallowStartIfOnBatteries",
+                                                                 "Enabled",
+                                                                 "ExecutionTimeLimit",
+                                                                 "Hidden",
+                                                                 "IdleSettings",
+                                                                 "MultipleInstances",
+                                                                 "NetworkSettings",
+                                                                 "Priority",
+                                                                 "RestartCount",
+                                                                 "RestartInterval",
+                                                                 "RunOnlyIfIdle",
+                                                                 "RunOnlyIfNetworkAvailable",
+                                                                 "StartWhenAvailable",
+                                                                 "StopIfGoingOnBatteries",
+                                                                 "WakeToRun",
+                                                                 "DisallowStartOnRemoteAppSession",
+                                                                 "UseUnifiedSchedulingEngine",
+                                                                 "MaintenanceSettings",
+                                                                 "volatile"
+                                                             ],
+                                      "CimClassQualifiers":  [
+
+                                                             ],
+                                      "CimClassMethods":  [
+
+                                                          ],
+                                      "CimSystemProperties":  {
+                                                                  "Namespace":  "Root/Microsoft/Windows/TaskScheduler",
+                                                                  "ServerName":  "ZENBOOK",
+                                                                  "ClassName":  "MSFT_TaskSettings3",
+                                                                  "Path":  null
+                                                              }
+                                  },
+                     "CimInstanceProperties":  [
+                                                   {
+                                                       "Name":  "AllowDemandStart",
+                                                       "Value":  true,
+                                                       "CimType":  1,
+                                                       "Flags":  "Property, NotModified",
+                                                       "IsValueModified":  false
+                                                   },
+                                                   {
+                                                       "Name":  "AllowHardTerminate",
+                                                       "Value":  true,
+                                                       "CimType":  1,
+                                                       "Flags":  "Property, NotModified",
+                                                       "IsValueModified":  false
+                                                   },
+                                                   {
+                                                       "Name":  "Compatibility",
+                                                       "Value":  3,
+                                                       "CimType":  7,
+                                                       "Flags":  "Property, ReadOnly, NotModified",
+                                                       "IsValueModified":  false
+                                                   },
+                                                   {
+                                                       "Name":  "DeleteExpiredTaskAfter",
+                                                       "Value":  null,
+                                                       "CimType":  14,
+                                                       "Flags":  "Property, NotModified, NullValue",
+                                                       "IsValueModified":  false
+                                                   },
+                                                   {
+                                                       "Name":  "DisallowStartIfOnBatteries",
+                                                       "Value":  false,
+                                                       "CimType":  1,
+                                                       "Flags":  "Property, NotModified",
+                                                       "IsValueModified":  false
+                                                   },
+                                                   {
+                                                       "Name":  "Enabled",
+                                                       "Value":  true,
+                                                       "CimType":  1,
+                                                       "Flags":  "Property, NotModified",
+                                                       "IsValueModified":  false
+                                                   },
+                                                   {
+                                                       "Name":  "ExecutionTimeLimit",
+                                                       "Value":  "PT2H",
+                                                       "CimType":  14,
+                                                       "Flags":  "Property, NotModified",
+                                                       "IsValueModified":  false
+                                                   },
+                                                   {
+                                                       "Name":  "Hidden",
+                                                       "Value":  false,
+                                                       "CimType":  1,
+                                                       "Flags":  "Property, NotModified",
+                                                       "IsValueModified":  false
+                                                   },
+                                                   {
+                                                       "Name":  "IdleSettings",
+                                                       "Value":  "MSFT_TaskIdleSettings",
+                                                       "CimType":  16,
+                                                       "Flags":  "Property, NotModified",
+                                                       "IsValueModified":  false
+                                                   },
+                                                   {
+                                                       "Name":  "MultipleInstances",
+                                                       "Value":  2,
+                                                       "CimType":  7,
+                                                       "Flags":  "Property, ReadOnly, NotModified",
+                                                       "IsValueModified":  false
+                                                   },
+                                                   {
+                                                       "Name":  "NetworkSettings",
+                                                       "Value":  "MSFT_TaskNetworkSettings",
+                                                       "CimType":  16,
+                                                       "Flags":  "Property, NotModified",
+                                                       "IsValueModified":  false
+                                                   },
+                                                   {
+                                                       "Name":  "Priority",
+                                                       "Value":  7,
+                                                       "CimType":  6,
+                                                       "Flags":  "Property, NotModified",
+                                                       "IsValueModified":  false
+                                                   },
+                                                   {
+                                                       "Name":  "RestartCount",
+                                                       "Value":  2,
+                                                       "CimType":  6,
+                                                       "Flags":  "Property, NotModified",
+                                                       "IsValueModified":  false
+                                                   },
+                                                   {
+                                                       "Name":  "RestartInterval",
+                                                       "Value":  "PT15M",
+                                                       "CimType":  14,
+                                                       "Flags":  "Property, NotModified",
+                                                       "IsValueModified":  false
+                                                   },
+                                                   {
+                                                       "Name":  "RunOnlyIfIdle",
+                                                       "Value":  false,
+                                                       "CimType":  1,
+                                                       "Flags":  "Property, NotModified",
+                                                       "IsValueModified":  false
+                                                   },
+                                                   {
+                                                       "Name":  "RunOnlyIfNetworkAvailable",
+                                                       "Value":  false,
+                                                       "CimType":  1,
+                                                       "Flags":  "Property, NotModified",
+                                                       "IsValueModified":  false
+                                                   },
+                                                   {
+                                                       "Name":  "StartWhenAvailable",
+                                                       "Value":  true,
+                                                       "CimType":  1,
+                                                       "Flags":  "Property, NotModified",
+                                                       "IsValueModified":  false
+                                                   },
+                                                   {
+                                                       "Name":  "StopIfGoingOnBatteries",
+                                                       "Value":  false,
+                                                       "CimType":  1,
+                                                       "Flags":  "Property, NotModified",
+                                                       "IsValueModified":  false
+                                                   },
+                                                   {
+                                                       "Name":  "WakeToRun",
+                                                       "Value":  true,
+                                                       "CimType":  1,
+                                                       "Flags":  "Property, NotModified",
+                                                       "IsValueModified":  false
+                                                   },
+                                                   {
+                                                       "Name":  "DisallowStartOnRemoteAppSession",
+                                                       "Value":  false,
+                                                       "CimType":  1,
+                                                       "Flags":  "Property, NotModified",
+                                                       "IsValueModified":  false
+                                                   },
+                                                   {
+                                                       "Name":  "UseUnifiedSchedulingEngine",
+                                                       "Value":  true,
+                                                       "CimType":  1,
+                                                       "Flags":  "Property, NotModified",
+                                                       "IsValueModified":  false
+                                                   },
+                                                   {
+                                                       "Name":  "MaintenanceSettings",
+                                                       "Value":  null,
+                                                       "CimType":  16,
+                                                       "Flags":  "Property, NotModified, NullValue",
+                                                       "IsValueModified":  false
+                                                   },
+                                                   {
+                                                       "Name":  "volatile",
+                                                       "Value":  false,
+                                                       "CimType":  1,
+                                                       "Flags":  "Property, NotModified",
+                                                       "IsValueModified":  false
+                                                   }
+                                               ],
+                     "CimSystemProperties":  {
+                                                 "Namespace":  "Root/Microsoft/Windows/TaskScheduler",
+                                                 "ServerName":  "ZENBOOK",
+                                                 "ClassName":  "MSFT_TaskSettings3",
+                                                 "Path":  null
+                                             }
+                 },
+    "Source":  null,
+    "TaskName":  "MooTrade Auto Paper Scheduler",
+    "TaskPath":  "\\",
+    "Triggers":  [
+                     {
+                         "CimClass":  {
+                                          "CimSuperClassName":  "MSFT_TaskTrigger",
+                                          "CimSuperClass":  "ROOT/Microsoft/Windows/TaskScheduler:MSFT_TaskTrigger",
+                                          "CimClassProperties":  "Enabled EndBoundary ExecutionTimeLimit Id Repetition StartBoundary DaysInterval RandomDelay",
+                                          "CimClassQualifiers":  "",
+                                          "CimClassMethods":  "",
+                                          "CimSystemProperties":  "Microsoft.Management.Infrastructure.CimSystemProperties"
+                                      },
+                         "CimInstanceProperties":  [
+                                                       "Enabled = True",
+                                                       "EndBoundary",
+                                                       "ExecutionTimeLimit",
+                                                       "Id",
+                                                       "Repetition = ...",
+                                                       "StartBoundary = \"2026-11-18T21:35:00?08:00\"",
+                                                       "DaysInterval = 1",
+                                                       "RandomDelay"
+                                                   ],
+                         "CimSystemProperties":  {
+                                                     "Namespace":  "Root/Microsoft/Windows/TaskScheduler",
+                                                     "ServerName":  "ZENBOOK",
+                                                     "ClassName":  "MSFT_TaskDailyTrigger",
+                                                     "Path":  null
+                                                 }
+                     },
+                     {
+                         "CimClass":  {
+                                          "CimSuperClassName":  "MSFT_TaskTrigger",
+                                          "CimSuperClass":  "ROOT/Microsoft/Windows/TaskScheduler:MSFT_TaskTrigger",
+                                          "CimClassProperties":  "Enabled EndBoundary ExecutionTimeLimit Id Repetition StartBoundary DaysInterval RandomDelay",
+                                          "CimClassQualifiers":  "",
+                                          "CimClassMethods":  "",
+                                          "CimSystemProperties":  "Microsoft.Management.Infrastructure.CimSystemProperties"
+                                      },
+                         "CimInstanceProperties":  [
+                                                       "Enabled = True",
+                                                       "EndBoundary",
+                                                       "ExecutionTimeLimit",
+                                                       "Id",
+                                                       "Repetition = ...",
+                                                       "StartBoundary = \"2026-11-18T22:35:00?08:00\"",
+                                                       "DaysInterval = 1",
+                                                       "RandomDelay"
+                                                   ],
+                         "CimSystemProperties":  {
+                                                     "Namespace":  "Root/Microsoft/Windows/TaskScheduler",
+                                                     "ServerName":  "ZENBOOK",
+                                                     "ClassName":  "MSFT_TaskDailyTrigger",
+                                                     "Path":  null
+                                                 }
+                     }
+                 ],
+    "URI":  "\\MooTrade Auto Paper Scheduler",
+    "Version":  null,
+    "PSComputerName":  null
+}

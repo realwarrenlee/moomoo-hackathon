@@ -15,16 +15,21 @@ from app.models.contracts import (
     TradeProposal,
 )
 
+POLICY_VERSION = "risk-v1"
+DEFAULT_MAX_SINGLE_EXPOSURE = Decimal("0.10")
+DEFAULT_MAX_TOTAL_EXPOSURE = Decimal("0.30")
+DEFAULT_MAX_DAILY_DRAWDOWN = Decimal("0.02")
+
 
 class RiskGate:
     def __init__(
         self,
         expected_account_fingerprint: str,
         allowed_symbols: frozenset[str] = frozenset({"SPY", "QQQ", "IWM"}),
-        max_single_exposure: Decimal = Decimal("0.10"),
-        max_total_exposure: Decimal = Decimal("0.30"),
+        max_single_exposure: Decimal = DEFAULT_MAX_SINGLE_EXPOSURE,
+        max_total_exposure: Decimal = DEFAULT_MAX_TOTAL_EXPOSURE,
         max_open_positions: int = 3,
-        max_daily_drawdown: Decimal = Decimal("0.02"),
+        max_daily_drawdown: Decimal = DEFAULT_MAX_DAILY_DRAWDOWN,
         buying_power_buffer: Decimal = Decimal("5"),
         max_quote_age_seconds: int = 300,
         max_account_age_seconds: int = 60,
@@ -249,7 +254,7 @@ class RiskGate:
         approved = not reasons and proposal.action is not ProposalAction.NO_TRADE
         return RiskDecision(
             proposal_id=proposal.proposal_id,
-            policy_version="risk-v1",
+            policy_version=POLICY_VERSION,
             decision=PolicyDecision.APPROVE if approved else PolicyDecision.REJECT,
             reasons=tuple(reasons),
             approved_quantity=proposal.requested_quantity if approved else 0,
@@ -266,7 +271,7 @@ class RiskGate:
     ) -> RiskDecision:
         return RiskDecision(
             proposal_id=proposal.proposal_id,
-            policy_version="risk-v1",
+            policy_version=POLICY_VERSION,
             decision=PolicyDecision.REJECT,
             reasons=(RuleRejection(rule_id="R009", message=reason),),
             approved_quantity=0,

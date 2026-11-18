@@ -30,15 +30,15 @@
 
 - [x] Audit legacy strategies and retire `momentum-v1`, `news-catalyst-v1`, `volume-confirmed-relative-strength-v1`, `moomoo-oversold-reversal-v1` and the research-only ETF trend comparator from the active product.
 - [x] Define one `spy-directional` specification covering the SPY signal, four-ETF mapping, HOLD/exit/reversal state, sizing, costs, benchmarks and acceptance/rejection criteria (`docs/strategy-and-risk.md`).
-- [x] Verify SPY/UPRO/SH/SPXU against real read-only Moomoo daily bars and current quotes; record benchmark, direction, leverage, effective exposure and execution eligibility. Only SPY is in the production execution allowlist.
+- [x] Verify SPY/UPRO/SH/SPXU against real read-only Moomoo daily bars and current quotes; record benchmark, direction, leverage, effective exposure and execution eligibility. SPY and SH are in the execution allowlist; UPRO/SPXU remain disabled by `R015`.
 - [x] Implement the fixed SPY signal, HOLD/exit/CASH/reversal state machine, four-symbol selection and 5% effective-exposure sizing.
-- [x] Add opt-in `R015` leverage rejection and effective-exposure checks to `RiskGate` without raising limits or expanding the production allowlist.
+- [x] Add opt-in `R015` leverage rejection and effective-exposure checks to `RiskGate` without raising limits.
 - [x] Rewire the Qoder tool schema, historical/current runners and daily bar refresh to `spy-directional`; update the researcher agent to v4.
 - [x] Extend the existing dashboard read model and agents page with the SPY signal, four candidates, thesis, target/current position and risk verdict; no new page or order control.
 - [x] Remove obsolete event archive/module/fixture, demo/report, momentum deployable-limit, catalyst-study and signal-observation code; preserve historical evidence artifacts.
 - [x] Backend suite, frontend typecheck, frontend tests and `next build` pass (310 backend tests on 18 November 2026).
 - [x] Repository cleanup: unused reference clones archived outside the project, generated caches removed, and documentation aligned to `spy-directional`, the four candidate ETFs and the three implemented Qoder agents (18 November 2026).
-- [ ] Enable SH for paper execution through a deliberate allowlist decision and owner approval, then run forward paper validation.
+- [x] Enable SH for paper execution through a deliberate allowlist decision (strategy gates now carry `SPY`/`UPRO`/`SH`/`SPXU` with leverage metadata; QQQ is diagnostic-only). Forward paper validation awaits a separately approved small SH execution test.
 - [ ] Separately review and approve leverage-aware paper execution before any UPRO/SPXU order is eligible.
 - [x] Historical: dry-run proposal → `RiskGate.evaluate` demonstration covering approved hypothetical proposals and `R004`/`R007`/`R010`/`R014` rejections. No broker call and no order submitted.
 - [x] Deterministic risk gate, account refresh, kill switch, idempotency, first-order approval and broker state machine (local/mock).
