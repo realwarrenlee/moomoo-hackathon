@@ -1,0 +1,67 @@
+{
+  "inputs": {
+    "symbols": [
+      "IWM",
+      "QQQ",
+      "SPY"
+    ],
+    "weights": {
+      "IWM": 0.37633198,
+      "QQQ": 0.28842994,
+      "SPY": 0.33523808
+    },
+    "aligned_days": 349,
+    "return_observations": 348,
+    "first_date": "2025-06-30 00:00:00-04:00",
+    "last_date": "2026-11-16 00:00:00-05:00"
+  },
+  "concentration": {
+    "hhi": 0.33720215914358476,
+    "effective_n": 2.9655800619419757,
+    "top1_weight": 0.3763319777056323,
+    "top3_weight": 0.9999999999999999
+  },
+  "exposure": {
+    "gross": 1.0,
+    "net": 1.0,
+    "long_weight": 1.0,
+    "short_weight": 0.0,
+    "long_count": 3,
+    "short_count": 0
+  },
+  "volatility": {
+    "daily_vol": 0.010115473156895483,
+    "annualized_vol": 0.1605781582013694,
+    "downside_deviation_annualized": 0.11240144270458323
+  },
+  "drawdown": {
+    "max_drawdown": -0.09939279366741856,
+    "max_drawdown_start": "2026-01-27 00:00:00-05:00",
+    "max_drawdown_trough": "2026-03-30 00:00:00-04:00"
+  },
+  "tail_risk": {
+    "var_95": 0.01724123548262672,
+    "expected_shortfall_95": 0.022234884655428153,
+    "var_99": 0.022102289896517052,
+    "expected_shortfall_99": 0.034782670542880964,
+    "method": "historical simulation (non-parametric)"
+  },
+  "diversification": {
+    "diversification_ratio": 1.070929148314509
+  },
+  "correlation": {
+    "avg_pairwise_abs": 0.8211281214871237,
+    "max_pair": {
+      "symbols": [
+        "QQQ",
+        "SPY"
+      ],
+      "corr": 0.9292114545191579
+    },
+    "beta_to_equal_weight": 0.9950556080984333
+  },
+  "skipped": [],
+  "warnings": [
+    "weights summed to 0.066393; renormalized to 1.0"
+  ]
+}

@@ -1,0 +1,49 @@
+{
+  "schema_version": "1",
+  "captured_at_utc": "2026-11-18T01:20:00Z",
+  "task_name": "MooTrade Read-Only Scheduler",
+  "state": "Ready",
+  "last_run_time_utc": "2026-11-18T01:10:52Z",
+  "last_task_result": 0,
+  "next_run_time_sgt": "2026-11-19T04:20:00+08:00",
+  "number_of_missed_runs": 0,
+  "validation_trigger_present": false,
+  "stop_on_idle_end": false,
+  "wake_to_run": true,
+  "start_when_available": true,
+  "multiple_instances": "IgnoreNew",
+  "logon_type": "Interactive",
+  "run_level": "Limited",
+  "daily_triggers": [
+    {
+      "local": "2026-11-19T04:20:00+08:00",
+      "utc": "2026-11-18T20:20:00Z",
+      "role": "EDT-offset cover; at 15:20 ET it resolves to the prior session, normally SKIPPED_ALREADY_RUN but available as a catch-up slot"
+    },
+    {
+      "local": "2026-11-19T05:20:00+08:00",
+      "utc": "2026-11-18T21:20:00Z",
+      "role": "EST-offset cover; at 16:20 ET it is the due run"
+    }
+  ],
+  "verified_run": {
+    "trigger": "task_scheduler",
+    "run_key": "2026-11-17",
+    "status": "COMPLETED",
+    "attempt": 2,
+    "started_at_utc": "2026-11-18T01:10:53.618353+00:00",
+    "finished_at_utc": "2026-11-18T01:11:13.723537+00:00",
+    "minutes_late": 230.894,
+    "catch_up": true,
+    "qoder_run_id": "qoder-83bc0a47-e238-4672-a5cc-42e8080180ce",
+    "outcome": "NO_TRADE",
+    "order_writes_enabled": false
+  },
+  "first_attempt": {
+    "started_at_utc": "2026-11-18T01:07:00.179317+00:00",
+    "status": "ABANDONED",
+    "task_result": "0xC000013A",
+    "cause": "Task Scheduler default StopOnIdleEnd=true terminated the console process; the run was recovered as ABANDONED on the next locked start"
+  },
+  "order_writes_enabled": false
+}

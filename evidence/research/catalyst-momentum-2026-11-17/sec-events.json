@@ -1,0 +1,1434 @@
+{
+  "schema_version": "1",
+  "events": [
+    {
+      "symbol": "NVDA",
+      "cik": "0001045810",
+      "accession": "0001045810-25-000115",
+      "form": "8-K",
+      "items": [
+        "2.02",
+        "9.01"
+      ],
+      "accepted_at_utc": "2025-05-28T20:21:30Z",
+      "filing_date": "2025-05-28",
+      "report_date": "2025-05-28",
+      "primary_document": "nvda-20250528.htm",
+      "source_file": "webfetch-a5ae6e32-15de-4874-bf58-4caa02fce5f7.md",
+      "source_sha256": "84d40a550596382bc042628d4fa11620b6feec9f588003ac1b4ec2307b97e3fc"
+    },
+    {
+      "symbol": "COST",
+      "cik": "0000909832",
+      "accession": "0000909832-25-000031",
+      "form": "8-K",
+      "items": [
+        "2.02",
+        "9.01"
+      ],
+      "accepted_at_utc": "2025-05-29T20:24:57Z",
+      "filing_date": "2025-05-29",
+      "report_date": "2025-05-29",
+      "primary_document": "cost-20250529.htm",
+      "source_file": "webfetch-ac5707a2-c455-4730-b4ba-168ab9686a8c.md",
+      "source_sha256": "6f1c07666d610a73fa4f2622bf2d6ca01f83b2f41b1fd374d3139bee82c5c513"
+    },
+    {
+      "symbol": "AVGO",
+      "cik": "0001730168",
+      "accession": "0001730168-25-000061",
+      "form": "8-K",
+      "items": [
+        "2.02",
+        "8.01",
+        "9.01"
+      ],
+      "accepted_at_utc": "2025-06-05T20:27:02Z",
+      "filing_date": "2025-06-05",
+      "report_date": "2025-06-05",
+      "primary_document": "avgo-20250605.htm",
+      "source_file": "webfetch-a19b800f-66ef-429b-b826-7c4633aab8b5.md",
+      "source_sha256": "41ec85346d2b5ffbd8358ab2d3ef9400598660be94281edacf784da984097866"
+    },
+    {
+      "symbol": "TSLA",
+      "cik": "0001318605",
+      "accession": "0001628280-25-033842",
+      "form": "8-K",
+      "items": [
+        "2.02",
+        "9.01"
+      ],
+      "accepted_at_utc": "2025-07-02T13:05:13Z",
+      "filing_date": "2025-07-02",
+      "report_date": "2025-07-02",
+      "primary_document": "tsla-20250702.htm",
+      "source_file": "webfetch-752b592b-2f36-49f3-844f-bcb061434bf9.md",
+      "source_sha256": "5ac4219ed1b698f5381501bea9987cf3cd0cb75d0ae4066359db28b6be717e65"
+    },
+    {
+      "symbol": "JPM",
+      "cik": "0000019617",
+      "accession": "0000019617-25-000518",
+      "form": "8-K",
+      "items": [
+        "2.02",
+        "9.01"
+      ],
+      "accepted_at_utc": "2025-07-15T10:30:58Z",
+      "filing_date": "2025-07-15",
+      "report_date": "2025-07-15",
+      "primary_document": "jpm-20250715.htm",
+      "source_file": "webfetch-4085fed0-6b0c-406f-aae4-ffae73692fb6.md",
+      "source_sha256": "ed3dc1cb3e71684419dafc354e03aedd05adaee87d8700f1fd8fa29875afe911"
+    },
+    {
+      "symbol": "GOOGL",
+      "cik": "0001652044",
+      "accession": "0001652044-25-000056",
+      "form": "8-K",
+      "items": [
+        "2.02",
+        "8.01",
+        "9.01"
+      ],
+      "accepted_at_utc": "2025-07-23T20:01:33Z",
+      "filing_date": "2025-07-23",
+      "report_date": "2025-07-23",
+      "primary_document": "goog-20250723.htm",
+      "source_file": "webfetch-285489ec-9e06-49ff-a7c6-9b68fd3ce629.md",
+      "source_sha256": "790a73a46054350b1c9e9b433a68ced09efdf4e7499ecb1b7155ec6879306f79"
+    },
+    {
+      "symbol": "TSLA",
+      "cik": "0001318605",
+      "accession": "0001628280-25-035738",
+      "form": "8-K",
+      "items": [
+        "2.02",
+        "9.01"
+      ],
+      "accepted_at_utc": "2025-07-23T20:14:09Z",
+      "filing_date": "2025-07-23",
+      "report_date": "2025-07-23",
+      "primary_document": "tsla-20250723.htm",
+      "source_file": "webfetch-752b592b-2f36-49f3-844f-bcb061434bf9.md",
+      "source_sha256": "5ac4219ed1b698f5381501bea9987cf3cd0cb75d0ae4066359db28b6be717e65"
+    },
+    {
+      "symbol": "MSFT",
+      "cik": "0000789019",
+      "accession": "0000950170-25-100226",
+      "form": "8-K",
+      "items": [
+        "2.02",
+        "9.01"
+      ],
+      "accepted_at_utc": "2025-07-30T20:08:53Z",
+      "filing_date": "2025-07-30",
+      "report_date": "2025-07-30",
+      "primary_document": "msft-20250730.htm",
+      "source_file": "webfetch-f9ee4644-fa72-4ef1-a833-c9014ced2f32.md",
+      "source_sha256": "0c7415804bdda6f5daea74122223596eecc02ee5fe23de8e83cf4e2630ff03e0"
+    },
+    {
+      "symbol": "META",
+      "cik": "0001326801",
+      "accession": "0001628280-25-036719",
+      "form": "8-K",
+      "items": [
+        "2.02",
+        "9.01"
+      ],
+      "accepted_at_utc": "2025-07-30T20:13:01Z",
+      "filing_date": "2025-07-30",
+      "report_date": "2025-07-30",
+      "primary_document": "meta-20250730.htm",
+      "source_file": "webfetch-740e685a-a6b5-44b3-8e28-fc4191f1af66.md",
+      "source_sha256": "bf44c79857da625fe54030680bbf1800016b47ed60fa7b7bfd1f0d29ce364e95"
+    },
+    {
+      "symbol": "AMZN",
+      "cik": "0001018724",
+      "accession": "0001018724-25-000084",
+      "form": "8-K",
+      "items": [
+        "2.02",
+        "9.01"
+      ],
+      "accepted_at_utc": "2025-07-31T20:13:17Z",
+      "filing_date": "2025-07-31",
+      "report_date": "2025-07-31",
+      "primary_document": "amzn-20250731.htm",
+      "source_file": "webfetch-70374b43-f492-4cd2-a77e-18f842598820.md",
+      "source_sha256": "e2b203de152a69f8ecaf158473e6aaac763f2ace46b9f83f269d16ba3a8dfc08"
+    },
+    {
+      "symbol": "AAPL",
+      "cik": "0000320193",
+      "accession": "0000320193-25-000071",
+      "form": "8-K",
+      "items": [
+        "2.02",
+        "9.01"
+      ],
+      "accepted_at_utc": "2025-07-31T20:30:25Z",
+      "filing_date": "2025-07-31",
+      "report_date": "2025-07-31",
+      "primary_document": "aapl-20250731.htm",
+      "source_file": "webfetch-56a09b29-a2b5-49b8-92ae-f4540a12786c.md",
+      "source_sha256": "b65b1dc29464fe1d6829cc2b20c5781fb8ae44b5b46d243de84e22dd41c80707"
+    },
+    {
+      "symbol": "XOM",
+      "cik": "0000034088",
+      "accession": "0000034088-25-000040",
+      "form": "8-K",
+      "items": [
+        "2.02",
+        "7.01"
+      ],
+      "accepted_at_utc": "2025-08-01T10:32:05Z",
+      "filing_date": "2025-08-01",
+      "report_date": "2025-08-01",
+      "primary_document": "xom-20250801.htm",
+      "source_file": "webfetch-cdb69bf4-04f9-472b-ac2a-655ba2026214.md",
+      "source_sha256": "79aacad669ef044bf654934b659b9fda89514e0ba5514838dbfb787d53e48773"
+    },
+    {
+      "symbol": "LLY",
+      "cik": "0000059478",
+      "accession": "0000059478-25-000202",
+      "form": "8-K",
+      "items": [
+        "2.02",
+        "9.01"
+      ],
+      "accepted_at_utc": "2025-08-07T11:05:40Z",
+      "filing_date": "2025-08-07",
+      "report_date": "2025-08-07",
+      "primary_document": "lly-20250807.htm",
+      "source_file": "webfetch-bc383db9-9d43-4ee5-8aed-b5fc17746593.md",
+      "source_sha256": "76f86d4c50749c64191db75c1b7e762e3fbbae0c794d2576411f07d7f89b36d7"
+    },
+    {
+      "symbol": "NVDA",
+      "cik": "0001045810",
+      "accession": "0001045810-25-000207",
+      "form": "8-K",
+      "items": [
+        "2.02",
+        "9.01"
+      ],
+      "accepted_at_utc": "2025-08-27T20:22:14Z",
+      "filing_date": "2025-08-27",
+      "report_date": "2025-08-27",
+      "primary_document": "nvda-20250827.htm",
+      "source_file": "webfetch-a5ae6e32-15de-4874-bf58-4caa02fce5f7.md",
+      "source_sha256": "84d40a550596382bc042628d4fa11620b6feec9f588003ac1b4ec2307b97e3fc"
+    },
+    {
+      "symbol": "AVGO",
+      "cik": "0001730168",
+      "accession": "0001730168-25-000094",
+      "form": "8-K",
+      "items": [
+        "2.02",
+        "8.01",
+        "9.01"
+      ],
+      "accepted_at_utc": "2025-09-04T20:19:50Z",
+      "filing_date": "2025-09-04",
+      "report_date": "2025-09-04",
+      "primary_document": "avgo-20250904.htm",
+      "source_file": "webfetch-a19b800f-66ef-429b-b826-7c4633aab8b5.md",
+      "source_sha256": "41ec85346d2b5ffbd8358ab2d3ef9400598660be94281edacf784da984097866"
+    },
+    {
+      "symbol": "COST",
+      "cik": "0000909832",
+      "accession": "0000909832-25-000093",
+      "form": "8-K",
+      "items": [
+        "2.02",
+        "9.01"
+      ],
+      "accepted_at_utc": "2025-09-25T20:16:57Z",
+      "filing_date": "2025-09-25",
+      "report_date": "2025-09-25",
+      "primary_document": "cost-20250925.htm",
+      "source_file": "webfetch-ac5707a2-c455-4730-b4ba-168ab9686a8c.md",
+      "source_sha256": "6f1c07666d610a73fa4f2622bf2d6ca01f83b2f41b1fd374d3139bee82c5c513"
+    },
+    {
+      "symbol": "TSLA",
+      "cik": "0001318605",
+      "accession": "0001628280-25-043530",
+      "form": "8-K",
+      "items": [
+        "2.02",
+        "9.01"
+      ],
+      "accepted_at_utc": "2025-10-02T13:04:54Z",
+      "filing_date": "2025-10-02",
+      "report_date": "2025-10-02",
+      "primary_document": "tsla-20251002.htm",
+      "source_file": "webfetch-752b592b-2f36-49f3-844f-bcb061434bf9.md",
+      "source_sha256": "5ac4219ed1b698f5381501bea9987cf3cd0cb75d0ae4066359db28b6be717e65"
+    },
+    {
+      "symbol": "JPM",
+      "cik": "0000019617",
+      "accession": "0001628280-25-044845",
+      "form": "8-K",
+      "items": [
+        "2.02",
+        "9.01"
+      ],
+      "accepted_at_utc": "2025-10-14T10:30:57Z",
+      "filing_date": "2025-10-14",
+      "report_date": "2025-10-14",
+      "primary_document": "jpm-20251014.htm",
+      "source_file": "webfetch-570f69a8-f9c5-489b-907f-a600f6ddc50d.md",
+      "source_sha256": "faaac9e450d25d1bf6c6e7a19c6010bdec0ba2eb1ad15d057f1db64535e94f68"
+    },
+    {
+      "symbol": "TSLA",
+      "cik": "0001318605",
+      "accession": "0001628280-25-045861",
+      "form": "8-K",
+      "items": [
+        "2.02",
+        "9.01"
+      ],
+      "accepted_at_utc": "2025-10-22T20:06:36Z",
+      "filing_date": "2025-10-22",
+      "report_date": "2025-10-22",
+      "primary_document": "tsla-20251022.htm",
+      "source_file": "webfetch-752b592b-2f36-49f3-844f-bcb061434bf9.md",
+      "source_sha256": "5ac4219ed1b698f5381501bea9987cf3cd0cb75d0ae4066359db28b6be717e65"
+    },
+    {
+      "symbol": "GOOGL",
+      "cik": "0001652044",
+      "accession": "0001652044-25-000087",
+      "form": "8-K",
+      "items": [
+        "2.02",
+        "9.01"
+      ],
+      "accepted_at_utc": "2025-10-29T20:01:48Z",
+      "filing_date": "2025-10-29",
+      "report_date": "2025-10-29",
+      "primary_document": "goog-20251029.htm",
+      "source_file": "webfetch-285489ec-9e06-49ff-a7c6-9b68fd3ce629.md",
+      "source_sha256": "790a73a46054350b1c9e9b433a68ced09efdf4e7499ecb1b7155ec6879306f79"
+    },
+    {
+      "symbol": "MSFT",
+      "cik": "0000789019",
+      "accession": "0001193125-25-256310",
+      "form": "8-K",
+      "items": [
+        "2.02",
+        "7.01",
+        "9.01"
+      ],
+      "accepted_at_utc": "2025-10-29T20:07:42Z",
+      "filing_date": "2025-10-29",
+      "report_date": "2025-10-28",
+      "primary_document": "msft-20251028.htm",
+      "source_file": "webfetch-f9ee4644-fa72-4ef1-a833-c9014ced2f32.md",
+      "source_sha256": "0c7415804bdda6f5daea74122223596eecc02ee5fe23de8e83cf4e2630ff03e0"
+    },
+    {
+      "symbol": "META",
+      "cik": "0001326801",
+      "accession": "0001628280-25-047114",
+      "form": "8-K",
+      "items": [
+        "2.02",
+        "9.01"
+      ],
+      "accepted_at_utc": "2025-10-29T20:08:34Z",
+      "filing_date": "2025-10-29",
+      "report_date": "2025-10-29",
+      "primary_document": "meta-20251029.htm",
+      "source_file": "webfetch-740e685a-a6b5-44b3-8e28-fc4191f1af66.md",
+      "source_sha256": "bf44c79857da625fe54030680bbf1800016b47ed60fa7b7bfd1f0d29ce364e95"
+    },
+    {
+      "symbol": "LLY",
+      "cik": "0000059478",
+      "accession": "0000059478-25-000251",
+      "form": "8-K",
+      "items": [
+        "2.02",
+        "9.01"
+      ],
+      "accepted_at_utc": "2025-10-30T11:03:41Z",
+      "filing_date": "2025-10-30",
+      "report_date": "2025-10-30",
+      "primary_document": "lly-20251030.htm",
+      "source_file": "webfetch-bc383db9-9d43-4ee5-8aed-b5fc17746593.md",
+      "source_sha256": "76f86d4c50749c64191db75c1b7e762e3fbbae0c794d2576411f07d7f89b36d7"
+    },
+    {
+      "symbol": "AMZN",
+      "cik": "0001018724",
+      "accession": "0001018724-25-000121",
+      "form": "8-K",
+      "items": [
+        "2.02",
+        "9.01"
+      ],
+      "accepted_at_utc": "2025-10-30T20:13:01Z",
+      "filing_date": "2025-10-30",
+      "report_date": "2025-10-30",
+      "primary_document": "amzn-20251030.htm",
+      "source_file": "webfetch-70374b43-f492-4cd2-a77e-18f842598820.md",
+      "source_sha256": "e2b203de152a69f8ecaf158473e6aaac763f2ace46b9f83f269d16ba3a8dfc08"
+    },
+    {
+      "symbol": "AAPL",
+      "cik": "0000320193",
+      "accession": "0000320193-25-000077",
+      "form": "8-K",
+      "items": [
+        "2.02",
+        "9.01"
+      ],
+      "accepted_at_utc": "2025-10-30T20:30:35Z",
+      "filing_date": "2025-10-30",
+      "report_date": "2025-10-30",
+      "primary_document": "aapl-20251030.htm",
+      "source_file": "webfetch-56a09b29-a2b5-49b8-92ae-f4540a12786c.md",
+      "source_sha256": "b65b1dc29464fe1d6829cc2b20c5781fb8ae44b5b46d243de84e22dd41c80707"
+    },
+    {
+      "symbol": "XOM",
+      "cik": "0000034088",
+      "accession": "0000034088-25-000059",
+      "form": "8-K",
+      "items": [
+        "2.02",
+        "7.01"
+      ],
+      "accepted_at_utc": "2025-10-31T10:31:49Z",
+      "filing_date": "2025-10-31",
+      "report_date": "2025-10-31",
+      "primary_document": "xom-20251031.htm",
+      "source_file": "webfetch-cdb69bf4-04f9-472b-ac2a-655ba2026214.md",
+      "source_sha256": "79aacad669ef044bf654934b659b9fda89514e0ba5514838dbfb787d53e48773"
+    },
+    {
+      "symbol": "NVDA",
+      "cik": "0001045810",
+      "accession": "0001045810-25-000228",
+      "form": "8-K",
+      "items": [
+        "2.02",
+        "9.01"
+      ],
+      "accepted_at_utc": "2025-11-19T21:20:44Z",
+      "filing_date": "2025-11-19",
+      "report_date": "2025-11-19",
+      "primary_document": "nvda-20251119.htm",
+      "source_file": "webfetch-a5ae6e32-15de-4874-bf58-4caa02fce5f7.md",
+      "source_sha256": "84d40a550596382bc042628d4fa11620b6feec9f588003ac1b4ec2307b97e3fc"
+    },
+    {
+      "symbol": "AVGO",
+      "cik": "0001730168",
+      "accession": "0001730168-25-000116",
+      "form": "8-K",
+      "items": [
+        "2.02",
+        "8.01",
+        "9.01"
+      ],
+      "accepted_at_utc": "2025-12-11T21:17:37Z",
+      "filing_date": "2025-12-11",
+      "report_date": "2025-12-11",
+      "primary_document": "avgo-20251211.htm",
+      "source_file": "webfetch-a19b800f-66ef-429b-b826-7c4633aab8b5.md",
+      "source_sha256": "41ec85346d2b5ffbd8358ab2d3ef9400598660be94281edacf784da984097866"
+    },
+    {
+      "symbol": "COST",
+      "cik": "0000909832",
+      "accession": "0000909832-25-000164",
+      "form": "8-K",
+      "items": [
+        "2.02",
+        "9.01"
+      ],
+      "accepted_at_utc": "2025-12-11T21:22:04Z",
+      "filing_date": "2025-12-11",
+      "report_date": "2025-12-11",
+      "primary_document": "cost-20251211.htm",
+      "source_file": "webfetch-ac5707a2-c455-4730-b4ba-168ab9686a8c.md",
+      "source_sha256": "6f1c07666d610a73fa4f2622bf2d6ca01f83b2f41b1fd374d3139bee82c5c513"
+    },
+    {
+      "symbol": "TSLA",
+      "cik": "0001318605",
+      "accession": "0001628280-26-000016",
+      "form": "8-K",
+      "items": [
+        "2.02",
+        "9.01"
+      ],
+      "accepted_at_utc": "2026-01-02T14:20:13Z",
+      "filing_date": "2026-01-02",
+      "report_date": "2026-01-02",
+      "primary_document": "tsla-20260102.htm",
+      "source_file": "webfetch-752b592b-2f36-49f3-844f-bcb061434bf9.md",
+      "source_sha256": "5ac4219ed1b698f5381501bea9987cf3cd0cb75d0ae4066359db28b6be717e65"
+    },
+    {
+      "symbol": "JPM",
+      "cik": "0000019617",
+      "accession": "0001628280-26-001902",
+      "form": "8-K",
+      "items": [
+        "2.02",
+        "9.01"
+      ],
+      "accepted_at_utc": "2026-01-13T11:41:09Z",
+      "filing_date": "2026-01-13",
+      "report_date": "2026-01-13",
+      "primary_document": "jpm-20260113.htm",
+      "source_file": "webfetch-310af6fe-f06d-4c8e-b125-818fc5a64197.md",
+      "source_sha256": "58a5fb71a627d8d605ce629934096f3d1840be8d3dde59355751184e40142358"
+    },
+    {
+      "symbol": "META",
+      "cik": "0001326801",
+      "accession": "0001628280-26-003832",
+      "form": "8-K",
+      "items": [
+        "2.02",
+        "9.01"
+      ],
+      "accepted_at_utc": "2026-01-28T21:04:20Z",
+      "filing_date": "2026-01-28",
+      "report_date": "2026-01-28",
+      "primary_document": "meta-20260128.htm",
+      "source_file": "webfetch-740e685a-a6b5-44b3-8e28-fc4191f1af66.md",
+      "source_sha256": "bf44c79857da625fe54030680bbf1800016b47ed60fa7b7bfd1f0d29ce364e95"
+    },
+    {
+      "symbol": "MSFT",
+      "cik": "0000789019",
+      "accession": "0001193125-26-027198",
+      "form": "8-K",
+      "items": [
+        "2.02",
+        "9.01"
+      ],
+      "accepted_at_utc": "2026-01-28T21:04:38Z",
+      "filing_date": "2026-01-28",
+      "report_date": "2026-01-28",
+      "primary_document": "msft-20260128.htm",
+      "source_file": "webfetch-f9ee4644-fa72-4ef1-a833-c9014ced2f32.md",
+      "source_sha256": "0c7415804bdda6f5daea74122223596eecc02ee5fe23de8e83cf4e2630ff03e0"
+    },
+    {
+      "symbol": "TSLA",
+      "cik": "0001318605",
+      "accession": "0001628280-26-003837",
+      "form": "8-K",
+      "items": [
+        "2.02",
+        "9.01"
+      ],
+      "accepted_at_utc": "2026-01-28T21:11:04Z",
+      "filing_date": "2026-01-28",
+      "report_date": "2026-01-28",
+      "primary_document": "tsla-20260128.htm",
+      "source_file": "webfetch-752b592b-2f36-49f3-844f-bcb061434bf9.md",
+      "source_sha256": "5ac4219ed1b698f5381501bea9987cf3cd0cb75d0ae4066359db28b6be717e65"
+    },
+    {
+      "symbol": "AAPL",
+      "cik": "0000320193",
+      "accession": "0000320193-26-000005",
+      "form": "8-K",
+      "items": [
+        "2.02",
+        "9.01"
+      ],
+      "accepted_at_utc": "2026-01-29T21:30:33Z",
+      "filing_date": "2026-01-29",
+      "report_date": "2026-01-29",
+      "primary_document": "aapl-20260129.htm",
+      "source_file": "webfetch-56a09b29-a2b5-49b8-92ae-f4540a12786c.md",
+      "source_sha256": "b65b1dc29464fe1d6829cc2b20c5781fb8ae44b5b46d243de84e22dd41c80707"
+    },
+    {
+      "symbol": "XOM",
+      "cik": "0000034088",
+      "accession": "0000034088-26-000033",
+      "form": "8-K",
+      "items": [
+        "2.02",
+        "7.01"
+      ],
+      "accepted_at_utc": "2026-01-30T11:31:24Z",
+      "filing_date": "2026-01-30",
+      "report_date": "2026-01-30",
+      "primary_document": "xom-20260130.htm",
+      "source_file": "webfetch-cdb69bf4-04f9-472b-ac2a-655ba2026214.md",
+      "source_sha256": "79aacad669ef044bf654934b659b9fda89514e0ba5514838dbfb787d53e48773"
+    },
+    {
+      "symbol": "LLY",
+      "cik": "0000059478",
+      "accession": "0000059478-26-000008",
+      "form": "8-K",
+      "items": [
+        "2.02",
+        "9.01"
+      ],
+      "accepted_at_utc": "2026-02-04T12:05:22Z",
+      "filing_date": "2026-02-04",
+      "report_date": "2026-02-04",
+      "primary_document": "lly-20260204.htm",
+      "source_file": "webfetch-bc383db9-9d43-4ee5-8aed-b5fc17746593.md",
+      "source_sha256": "76f86d4c50749c64191db75c1b7e762e3fbbae0c794d2576411f07d7f89b36d7"
+    },
+    {
+      "symbol": "GOOGL",
+      "cik": "0001652044",
+      "accession": "0001652044-26-000012",
+      "form": "8-K",
+      "items": [
+        "2.02",
+        "9.01"
+      ],
+      "accepted_at_utc": "2026-02-04T21:01:37Z",
+      "filing_date": "2026-02-04",
+      "report_date": "2026-02-04",
+      "primary_document": "goog-20260204.htm",
+      "source_file": "webfetch-285489ec-9e06-49ff-a7c6-9b68fd3ce629.md",
+      "source_sha256": "790a73a46054350b1c9e9b433a68ced09efdf4e7499ecb1b7155ec6879306f79"
+    },
+    {
+      "symbol": "AMZN",
+      "cik": "0001018724",
+      "accession": "0001018724-26-000002",
+      "form": "8-K",
+      "items": [
+        "2.02",
+        "9.01"
+      ],
+      "accepted_at_utc": "2026-02-05T21:25:12Z",
+      "filing_date": "2026-02-05",
+      "report_date": "2026-02-05",
+      "primary_document": "amzn-20260205.htm",
+      "source_file": "webfetch-70374b43-f492-4cd2-a77e-18f842598820.md",
+      "source_sha256": "e2b203de152a69f8ecaf158473e6aaac763f2ace46b9f83f269d16ba3a8dfc08"
+    },
+    {
+      "symbol": "NVDA",
+      "cik": "0001045810",
+      "accession": "0001045810-26-000019",
+      "form": "8-K",
+      "items": [
+        "2.02",
+        "9.01"
+      ],
+      "accepted_at_utc": "2026-02-25T21:31:25Z",
+      "filing_date": "2026-02-25",
+      "report_date": "2026-02-25",
+      "primary_document": "nvda-20260225.htm",
+      "source_file": "webfetch-a5ae6e32-15de-4874-bf58-4caa02fce5f7.md",
+      "source_sha256": "84d40a550596382bc042628d4fa11620b6feec9f588003ac1b4ec2307b97e3fc"
+    },
+    {
+      "symbol": "AVGO",
+      "cik": "0001730168",
+      "accession": "0001730168-26-000011",
+      "form": "8-K",
+      "items": [
+        "2.02",
+        "8.01",
+        "9.01"
+      ],
+      "accepted_at_utc": "2026-03-04T21:16:10Z",
+      "filing_date": "2026-03-04",
+      "report_date": "2026-03-04",
+      "primary_document": "avgo-20260304.htm",
+      "source_file": "webfetch-a19b800f-66ef-429b-b826-7c4633aab8b5.md",
+      "source_sha256": "41ec85346d2b5ffbd8358ab2d3ef9400598660be94281edacf784da984097866"
+    },
+    {
+      "symbol": "COST",
+      "cik": "0000909832",
+      "accession": "0000909832-26-000025",
+      "form": "8-K",
+      "items": [
+        "2.02",
+        "9.01"
+      ],
+      "accepted_at_utc": "2026-03-05T21:19:07Z",
+      "filing_date": "2026-03-05",
+      "report_date": "2026-03-05",
+      "primary_document": "cost-20260305.htm",
+      "source_file": "webfetch-ac5707a2-c455-4730-b4ba-168ab9686a8c.md",
+      "source_sha256": "6f1c07666d610a73fa4f2622bf2d6ca01f83b2f41b1fd374d3139bee82c5c513"
+    },
+    {
+      "symbol": "TSLA",
+      "cik": "0001318605",
+      "accession": "0001628280-26-022956",
+      "form": "8-K",
+      "items": [
+        "2.02",
+        "9.01"
+      ],
+      "accepted_at_utc": "2026-04-02T13:07:13Z",
+      "filing_date": "2026-04-02",
+      "report_date": "2026-04-02",
+      "primary_document": "tsla-20260402.htm",
+      "source_file": "webfetch-752b592b-2f36-49f3-844f-bcb061434bf9.md",
+      "source_sha256": "5ac4219ed1b698f5381501bea9987cf3cd0cb75d0ae4066359db28b6be717e65"
+    },
+    {
+      "symbol": "JPM",
+      "cik": "0000019617",
+      "accession": "0001628280-26-024990",
+      "form": "8-K",
+      "items": [
+        "2.02",
+        "9.01"
+      ],
+      "accepted_at_utc": "2026-04-14T10:32:42Z",
+      "filing_date": "2026-04-14",
+      "report_date": "2026-04-14",
+      "primary_document": "jpm-20260414.htm",
+      "source_file": "webfetch-310af6fe-f06d-4c8e-b125-818fc5a64197.md",
+      "source_sha256": "58a5fb71a627d8d605ce629934096f3d1840be8d3dde59355751184e40142358"
+    },
+    {
+      "symbol": "TSLA",
+      "cik": "0001318605",
+      "accession": "0001628280-26-026551",
+      "form": "8-K",
+      "items": [
+        "2.02",
+        "9.01"
+      ],
+      "accepted_at_utc": "2026-04-22T20:10:44Z",
+      "filing_date": "2026-04-22",
+      "report_date": "2026-04-22",
+      "primary_document": "tsla-20260422.htm",
+      "source_file": "webfetch-752b592b-2f36-49f3-844f-bcb061434bf9.md",
+      "source_sha256": "5ac4219ed1b698f5381501bea9987cf3cd0cb75d0ae4066359db28b6be717e65"
+    },
+    {
+      "symbol": "GOOGL",
+      "cik": "0001652044",
+      "accession": "0001652044-26-000043",
+      "form": "8-K",
+      "items": [
+        "2.02",
+        "9.01"
+      ],
+      "accepted_at_utc": "2026-04-29T20:01:35Z",
+      "filing_date": "2026-04-29",
+      "report_date": "2026-04-29",
+      "primary_document": "goog-20260429.htm",
+      "source_file": "webfetch-285489ec-9e06-49ff-a7c6-9b68fd3ce629.md",
+      "source_sha256": "790a73a46054350b1c9e9b433a68ced09efdf4e7499ecb1b7155ec6879306f79"
+    },
+    {
+      "symbol": "MSFT",
+      "cik": "0000789019",
+      "accession": "0001193125-26-191457",
+      "form": "8-K",
+      "items": [
+        "2.02",
+        "9.01"
+      ],
+      "accepted_at_utc": "2026-04-29T20:03:31Z",
+      "filing_date": "2026-04-29",
+      "report_date": "2026-04-29",
+      "primary_document": "msft-20260429.htm",
+      "source_file": "webfetch-f9ee4644-fa72-4ef1-a833-c9014ced2f32.md",
+      "source_sha256": "0c7415804bdda6f5daea74122223596eecc02ee5fe23de8e83cf4e2630ff03e0"
+    },
+    {
+      "symbol": "META",
+      "cik": "0001326801",
+      "accession": "0001628280-26-028364",
+      "form": "8-K",
+      "items": [
+        "2.02",
+        "9.01"
+      ],
+      "accepted_at_utc": "2026-04-29T20:05:41Z",
+      "filing_date": "2026-04-29",
+      "report_date": "2026-04-29",
+      "primary_document": "meta-20260429.htm",
+      "source_file": "webfetch-740e685a-a6b5-44b3-8e28-fc4191f1af66.md",
+      "source_sha256": "bf44c79857da625fe54030680bbf1800016b47ed60fa7b7bfd1f0d29ce364e95"
+    },
+    {
+      "symbol": "AMZN",
+      "cik": "0001018724",
+      "accession": "0001018724-26-000012",
+      "form": "8-K",
+      "items": [
+        "2.02",
+        "9.01"
+      ],
+      "accepted_at_utc": "2026-04-29T20:18:55Z",
+      "filing_date": "2026-04-29",
+      "report_date": "2026-04-29",
+      "primary_document": "amzn-20260429.htm",
+      "source_file": "webfetch-70374b43-f492-4cd2-a77e-18f842598820.md",
+      "source_sha256": "e2b203de152a69f8ecaf158473e6aaac763f2ace46b9f83f269d16ba3a8dfc08"
+    },
+    {
+      "symbol": "LLY",
+      "cik": "0000059478",
+      "accession": "0000059478-26-000043",
+      "form": "8-K",
+      "items": [
+        "2.02",
+        "9.01"
+      ],
+      "accepted_at_utc": "2026-04-30T11:03:30Z",
+      "filing_date": "2026-04-30",
+      "report_date": "2026-04-30",
+      "primary_document": "lly-20260430.htm",
+      "source_file": "webfetch-bc383db9-9d43-4ee5-8aed-b5fc17746593.md",
+      "source_sha256": "76f86d4c50749c64191db75c1b7e762e3fbbae0c794d2576411f07d7f89b36d7"
+    },
+    {
+      "symbol": "AAPL",
+      "cik": "0000320193",
+      "accession": "0000320193-26-000011",
+      "form": "8-K",
+      "items": [
+        "2.02",
+        "9.01"
+      ],
+      "accepted_at_utc": "2026-04-30T20:30:41Z",
+      "filing_date": "2026-04-30",
+      "report_date": "2026-04-30",
+      "primary_document": "aapl-20260430.htm",
+      "source_file": "webfetch-56a09b29-a2b5-49b8-92ae-f4540a12786c.md",
+      "source_sha256": "b65b1dc29464fe1d6829cc2b20c5781fb8ae44b5b46d243de84e22dd41c80707"
+    },
+    {
+      "symbol": "XOM",
+      "cik": "0000034088",
+      "accession": "0000034088-26-000065",
+      "form": "8-K",
+      "items": [
+        "2.02",
+        "7.01"
+      ],
+      "accepted_at_utc": "2026-05-01T10:31:52Z",
+      "filing_date": "2026-05-01",
+      "report_date": "2026-05-01",
+      "primary_document": "xom-20260501.htm",
+      "source_file": "webfetch-cdb69bf4-04f9-472b-ac2a-655ba2026214.md",
+      "source_sha256": "79aacad669ef044bf654934b659b9fda89514e0ba5514838dbfb787d53e48773"
+    },
+    {
+      "symbol": "NVDA",
+      "cik": "0001045810",
+      "accession": "0001045810-26-000051",
+      "form": "8-K",
+      "items": [
+        "2.02",
+        "9.01"
+      ],
+      "accepted_at_utc": "2026-05-20T20:21:19Z",
+      "filing_date": "2026-05-20",
+      "report_date": "2026-05-20",
+      "primary_document": "nvda-20260520.htm",
+      "source_file": "webfetch-a5ae6e32-15de-4874-bf58-4caa02fce5f7.md",
+      "source_sha256": "84d40a550596382bc042628d4fa11620b6feec9f588003ac1b4ec2307b97e3fc"
+    },
+    {
+      "symbol": "COST",
+      "cik": "0000909832",
+      "accession": "0000909832-26-000046",
+      "form": "8-K",
+      "items": [
+        "2.02",
+        "9.01"
+      ],
+      "accepted_at_utc": "2026-05-28T20:17:32Z",
+      "filing_date": "2026-05-28",
+      "report_date": "2026-05-28",
+      "primary_document": "cost-20260528.htm",
+      "source_file": "webfetch-ac5707a2-c455-4730-b4ba-168ab9686a8c.md",
+      "source_sha256": "6f1c07666d610a73fa4f2622bf2d6ca01f83b2f41b1fd374d3139bee82c5c513"
+    },
+    {
+      "symbol": "AVGO",
+      "cik": "0001730168",
+      "accession": "0001730168-26-000051",
+      "form": "8-K",
+      "items": [
+        "2.02",
+        "8.01",
+        "9.01"
+      ],
+      "accepted_at_utc": "2026-06-03T20:21:35Z",
+      "filing_date": "2026-06-03",
+      "report_date": "2026-06-03",
+      "primary_document": "avgo-20260603.htm",
+      "source_file": "webfetch-a19b800f-66ef-429b-b826-7c4633aab8b5.md",
+      "source_sha256": "41ec85346d2b5ffbd8358ab2d3ef9400598660be94281edacf784da984097866"
+    },
+    {
+      "symbol": "TSLA",
+      "cik": "0001318605",
+      "accession": "0001628280-26-046717",
+      "form": "8-K",
+      "items": [
+        "2.02",
+        "9.01"
+      ],
+      "accepted_at_utc": "2026-07-02T13:01:26Z",
+      "filing_date": "2026-07-02",
+      "report_date": "2026-07-02",
+      "primary_document": "tsla-20260702.htm",
+      "source_file": "webfetch-752b592b-2f36-49f3-844f-bcb061434bf9.md",
+      "source_sha256": "5ac4219ed1b698f5381501bea9987cf3cd0cb75d0ae4066359db28b6be717e65"
+    },
+    {
+      "symbol": "JPM",
+      "cik": "0000019617",
+      "accession": "0001628280-26-048078",
+      "form": "8-K",
+      "items": [
+        "2.02",
+        "9.01"
+      ],
+      "accepted_at_utc": "2026-07-14T10:30:38Z",
+      "filing_date": "2026-07-14",
+      "report_date": "2026-07-14",
+      "primary_document": "jpm-20260714.htm",
+      "source_file": "webfetch-310af6fe-f06d-4c8e-b125-818fc5a64197.md",
+      "source_sha256": "58a5fb71a627d8d605ce629934096f3d1840be8d3dde59355751184e40142358"
+    },
+    {
+      "symbol": "GOOGL",
+      "cik": "0001652044",
+      "accession": "0001652044-26-000066",
+      "form": "8-K",
+      "items": [
+        "2.02",
+        "9.01"
+      ],
+      "accepted_at_utc": "2026-07-22T20:01:36Z",
+      "filing_date": "2026-07-22",
+      "report_date": "2026-07-22",
+      "primary_document": "goog-20260722.htm",
+      "source_file": "webfetch-285489ec-9e06-49ff-a7c6-9b68fd3ce629.md",
+      "source_sha256": "790a73a46054350b1c9e9b433a68ced09efdf4e7499ecb1b7155ec6879306f79"
+    },
+    {
+      "symbol": "TSLA",
+      "cik": "0001318605",
+      "accession": "0001628280-26-049213",
+      "form": "8-K",
+      "items": [
+        "2.02",
+        "9.01"
+      ],
+      "accepted_at_utc": "2026-07-22T20:35:52Z",
+      "filing_date": "2026-07-22",
+      "report_date": "2026-07-22",
+      "primary_document": "tsla-20260722.htm",
+      "source_file": "webfetch-752b592b-2f36-49f3-844f-bcb061434bf9.md",
+      "source_sha256": "5ac4219ed1b698f5381501bea9987cf3cd0cb75d0ae4066359db28b6be717e65"
+    },
+    {
+      "symbol": "META",
+      "cik": "0001326801",
+      "accession": "0001628280-26-050596",
+      "form": "8-K",
+      "items": [
+        "2.02",
+        "9.01"
+      ],
+      "accepted_at_utc": "2026-07-29T20:03:23Z",
+      "filing_date": "2026-07-29",
+      "report_date": "2026-07-29",
+      "primary_document": "meta-20260729.htm",
+      "source_file": "webfetch-740e685a-a6b5-44b3-8e28-fc4191f1af66.md",
+      "source_sha256": "bf44c79857da625fe54030680bbf1800016b47ed60fa7b7bfd1f0d29ce364e95"
+    },
+    {
+      "symbol": "MSFT",
+      "cik": "0000789019",
+      "accession": "0001193125-26-323632",
+      "form": "8-K",
+      "items": [
+        "2.02",
+        "9.01"
+      ],
+      "accepted_at_utc": "2026-07-29T20:04:53Z",
+      "filing_date": "2026-07-29",
+      "report_date": "2026-07-29",
+      "primary_document": "msft-20260729.htm",
+      "source_file": "webfetch-f9ee4644-fa72-4ef1-a833-c9014ced2f32.md",
+      "source_sha256": "0c7415804bdda6f5daea74122223596eecc02ee5fe23de8e83cf4e2630ff03e0"
+    },
+    {
+      "symbol": "AMZN",
+      "cik": "0001018724",
+      "accession": "0001018724-26-000024",
+      "form": "8-K",
+      "items": [
+        "2.02",
+        "9.01"
+      ],
+      "accepted_at_utc": "2026-07-30T20:06:23Z",
+      "filing_date": "2026-07-30",
+      "report_date": "2026-07-30",
+      "primary_document": "amzn-20260730.htm",
+      "source_file": "webfetch-70374b43-f492-4cd2-a77e-18f842598820.md",
+      "source_sha256": "e2b203de152a69f8ecaf158473e6aaac763f2ace46b9f83f269d16ba3a8dfc08"
+    },
+    {
+      "symbol": "AAPL",
+      "cik": "0000320193",
+      "accession": "0000320193-26-000018",
+      "form": "8-K",
+      "items": [
+        "2.02",
+        "9.01"
+      ],
+      "accepted_at_utc": "2026-07-30T20:30:28Z",
+      "filing_date": "2026-07-30",
+      "report_date": "2026-07-30",
+      "primary_document": "aapl-20260730.htm",
+      "source_file": "webfetch-56a09b29-a2b5-49b8-92ae-f4540a12786c.md",
+      "source_sha256": "b65b1dc29464fe1d6829cc2b20c5781fb8ae44b5b46d243de84e22dd41c80707"
+    },
+    {
+      "symbol": "LLY",
+      "cik": "0000059478",
+      "accession": "0000059478-26-000077",
+      "form": "8-K",
+      "items": [
+        "2.02",
+        "9.01"
+      ],
+      "accepted_at_utc": "2026-08-05T11:05:09Z",
+      "filing_date": "2026-08-05",
+      "report_date": "2026-08-05",
+      "primary_document": "lly-20260805.htm",
+      "source_file": "webfetch-bc383db9-9d43-4ee5-8aed-b5fc17746593.md",
+      "source_sha256": "76f86d4c50749c64191db75c1b7e762e3fbbae0c794d2576411f07d7f89b36d7"
+    },
+    {
+      "symbol": "NVDA",
+      "cik": "0001045810",
+      "accession": "0001045810-26-000073",
+      "form": "8-K",
+      "items": [
+        "2.02",
+        "9.01"
+      ],
+      "accepted_at_utc": "2026-08-26T20:21:19Z",
+      "filing_date": "2026-08-26",
+      "report_date": "2026-08-26",
+      "primary_document": "nvda-20260826.htm",
+      "source_file": "webfetch-a5ae6e32-15de-4874-bf58-4caa02fce5f7.md",
+      "source_sha256": "84d40a550596382bc042628d4fa11620b6feec9f588003ac1b4ec2307b97e3fc"
+    },
+    {
+      "symbol": "AVGO",
+      "cik": "0001730168",
+      "accession": "0001730168-26-000076",
+      "form": "8-K",
+      "items": [
+        "2.02",
+        "8.01",
+        "9.01"
+      ],
+      "accepted_at_utc": "2026-09-02T20:26:04Z",
+      "filing_date": "2026-09-02",
+      "report_date": "2026-09-02",
+      "primary_document": "avgo-20260902.htm",
+      "source_file": "webfetch-a19b800f-66ef-429b-b826-7c4633aab8b5.md",
+      "source_sha256": "41ec85346d2b5ffbd8358ab2d3ef9400598660be94281edacf784da984097866"
+    },
+    {
+      "symbol": "COST",
+      "cik": "0000909832",
+      "accession": "0000909832-26-000084",
+      "form": "8-K",
+      "items": [
+        "2.02",
+        "9.01"
+      ],
+      "accepted_at_utc": "2026-09-24T20:17:37Z",
+      "filing_date": "2026-09-24",
+      "report_date": "2026-09-24",
+      "primary_document": "cost-20260924.htm",
+      "source_file": "webfetch-ac5707a2-c455-4730-b4ba-168ab9686a8c.md",
+      "source_sha256": "6f1c07666d610a73fa4f2622bf2d6ca01f83b2f41b1fd374d3139bee82c5c513"
+    },
+    {
+      "symbol": "TSLA",
+      "cik": "0001318605",
+      "accession": "0001628280-26-064366",
+      "form": "8-K",
+      "items": [
+        "2.02",
+        "9.01"
+      ],
+      "accepted_at_utc": "2026-10-02T13:04:26Z",
+      "filing_date": "2026-10-02",
+      "report_date": "2026-10-02",
+      "primary_document": "tsla-20261002.htm",
+      "source_file": "webfetch-752b592b-2f36-49f3-844f-bcb061434bf9.md",
+      "source_sha256": "5ac4219ed1b698f5381501bea9987cf3cd0cb75d0ae4066359db28b6be717e65"
+    },
+    {
+      "symbol": "JPM",
+      "cik": "0000019617",
+      "accession": "0001628280-26-065582",
+      "form": "8-K",
+      "items": [
+        "2.02",
+        "9.01"
+      ],
+      "accepted_at_utc": "2026-10-13T10:30:38Z",
+      "filing_date": "2026-10-13",
+      "report_date": "2026-10-13",
+      "primary_document": "jpm-20261013.htm",
+      "source_file": "webfetch-310af6fe-f06d-4c8e-b125-818fc5a64197.md",
+      "source_sha256": "58a5fb71a627d8d605ce629934096f3d1840be8d3dde59355751184e40142358"
+    },
+    {
+      "symbol": "META",
+      "cik": "0001326801",
+      "accession": "0001628280-26-066700",
+      "form": "8-K",
+      "items": [
+        "1.01",
+        "2.02",
+        "8.01",
+        "9.01"
+      ],
+      "accepted_at_utc": "2026-10-21T20:03:35Z",
+      "filing_date": "2026-10-21",
+      "report_date": "2026-10-19",
+      "primary_document": "meta-20261019.htm",
+      "source_file": "webfetch-740e685a-a6b5-44b3-8e28-fc4191f1af66.md",
+      "source_sha256": "bf44c79857da625fe54030680bbf1800016b47ed60fa7b7bfd1f0d29ce364e95"
+    },
+    {
+      "symbol": "TSLA",
+      "cik": "0001318605",
+      "accession": "0001628280-26-066738",
+      "form": "8-K",
+      "items": [
+        "2.02",
+        "9.01"
+      ],
+      "accepted_at_utc": "2026-10-21T20:41:42Z",
+      "filing_date": "2026-10-21",
+      "report_date": "2026-10-21",
+      "primary_document": "tsla-20261021.htm",
+      "source_file": "webfetch-752b592b-2f36-49f3-844f-bcb061434bf9.md",
+      "source_sha256": "5ac4219ed1b698f5381501bea9987cf3cd0cb75d0ae4066359db28b6be717e65"
+    },
+    {
+      "symbol": "GOOGL",
+      "cik": "0001652044",
+      "accession": "0001652044-26-000080",
+      "form": "8-K",
+      "items": [
+        "2.02",
+        "9.01"
+      ],
+      "accepted_at_utc": "2026-10-28T20:01:33Z",
+      "filing_date": "2026-10-28",
+      "report_date": "2026-10-28",
+      "primary_document": "goog-20261028.htm",
+      "source_file": "webfetch-285489ec-9e06-49ff-a7c6-9b68fd3ce629.md",
+      "source_sha256": "790a73a46054350b1c9e9b433a68ced09efdf4e7499ecb1b7155ec6879306f79"
+    },
+    {
+      "symbol": "MSFT",
+      "cik": "0000789019",
+      "accession": "0001193125-26-436122",
+      "form": "8-K",
+      "items": [
+        "2.02",
+        "9.01"
+      ],
+      "accepted_at_utc": "2026-10-28T20:04:44Z",
+      "filing_date": "2026-10-28",
+      "report_date": "2026-10-28",
+      "primary_document": "msft-20261028.htm",
+      "source_file": "webfetch-f9ee4644-fa72-4ef1-a833-c9014ced2f32.md",
+      "source_sha256": "0c7415804bdda6f5daea74122223596eecc02ee5fe23de8e83cf4e2630ff03e0"
+    },
+    {
+      "symbol": "LLY",
+      "cik": "0000059478",
+      "accession": "0000059478-26-000104",
+      "form": "8-K",
+      "items": [
+        "2.02",
+        "9.01"
+      ],
+      "accepted_at_utc": "2026-10-29T11:03:30Z",
+      "filing_date": "2026-10-29",
+      "report_date": "2026-10-29",
+      "primary_document": "lly-20261029.htm",
+      "source_file": "webfetch-bc383db9-9d43-4ee5-8aed-b5fc17746593.md",
+      "source_sha256": "76f86d4c50749c64191db75c1b7e762e3fbbae0c794d2576411f07d7f89b36d7"
+    },
+    {
+      "symbol": "AMZN",
+      "cik": "0001018724",
+      "accession": "0001018724-26-000038",
+      "form": "8-K",
+      "items": [
+        "2.02",
+        "9.01"
+      ],
+      "accepted_at_utc": "2026-10-29T20:05:27Z",
+      "filing_date": "2026-10-29",
+      "report_date": "2026-10-29",
+      "primary_document": "amzn-20261029.htm",
+      "source_file": "webfetch-70374b43-f492-4cd2-a77e-18f842598820.md",
+      "source_sha256": "e2b203de152a69f8ecaf158473e6aaac763f2ace46b9f83f269d16ba3a8dfc08"
+    },
+    {
+      "symbol": "AAPL",
+      "cik": "0000320193",
+      "accession": "0000320193-26-000024",
+      "form": "8-K",
+      "items": [
+        "2.02",
+        "9.01"
+      ],
+      "accepted_at_utc": "2026-11-02T21:30:23Z",
+      "filing_date": "2026-11-02",
+      "report_date": "2026-11-02",
+      "primary_document": "aapl-20261102.htm",
+      "source_file": "webfetch-56a09b29-a2b5-49b8-92ae-f4540a12786c.md",
+      "source_sha256": "b65b1dc29464fe1d6829cc2b20c5781fb8ae44b5b46d243de84e22dd41c80707"
+    }
+  ],
+  "quality": {
+    "coverage": {
+      "AAPL": {
+        "cik": "0000320193",
+        "earliest_filing_date_observed": "2015-10-07",
+        "latest_filing_date_observed": "2026-11-16",
+        "original_item_2_02_events": 6,
+        "item_2_02_amendments": 0,
+        "sources": [
+          {
+            "file": "webfetch-56a09b29-a2b5-49b8-92ae-f4540a12786c.md",
+            "sha256": "b65b1dc29464fe1d6829cc2b20c5781fb8ae44b5b46d243de84e22dd41c80707",
+            "rows": 1003
+          }
+        ]
+      },
+      "MSFT": {
+        "cik": "0000789019",
+        "earliest_filing_date_observed": "2020-09-09",
+        "latest_filing_date_observed": "2026-11-16",
+        "original_item_2_02_events": 6,
+        "item_2_02_amendments": 0,
+        "sources": [
+          {
+            "file": "webfetch-f9ee4644-fa72-4ef1-a833-c9014ced2f32.md",
+            "sha256": "0c7415804bdda6f5daea74122223596eecc02ee5fe23de8e83cf4e2630ff03e0",
+            "rows": 1010
+          }
+        ]
+      },
+      "NVDA": {
+        "cik": "0001045810",
+        "earliest_filing_date_observed": "2020-09-18",
+        "latest_filing_date_observed": "2026-11-16",
+        "original_item_2_02_events": 6,
+        "item_2_02_amendments": 0,
+        "sources": [
+          {
+            "file": "webfetch-a5ae6e32-15de-4874-bf58-4caa02fce5f7.md",
+            "sha256": "84d40a550596382bc042628d4fa11620b6feec9f588003ac1b4ec2307b97e3fc",
+            "rows": 1001
+          }
+        ]
+      },
+      "AMZN": {
+        "cik": "0001018724",
+        "earliest_filing_date_observed": "2020-11-04",
+        "latest_filing_date_observed": "2026-11-16",
+        "original_item_2_02_events": 6,
+        "item_2_02_amendments": 0,
+        "sources": [
+          {
+            "file": "webfetch-70374b43-f492-4cd2-a77e-18f842598820.md",
+            "sha256": "e2b203de152a69f8ecaf158473e6aaac763f2ace46b9f83f269d16ba3a8dfc08",
+            "rows": 1006
+          }
+        ]
+      },
+      "GOOGL": {
+        "cik": "0001652044",
+        "earliest_filing_date_observed": "2023-09-05",
+        "latest_filing_date_observed": "2026-11-16",
+        "original_item_2_02_events": 6,
+        "item_2_02_amendments": 0,
+        "sources": [
+          {
+            "file": "webfetch-285489ec-9e06-49ff-a7c6-9b68fd3ce629.md",
+            "sha256": "790a73a46054350b1c9e9b433a68ced09efdf4e7499ecb1b7155ec6879306f79",
+            "rows": 1002
+          }
+        ]
+      },
+      "META": {
+        "cik": "0001326801",
+        "earliest_filing_date_observed": "2024-07-03",
+        "latest_filing_date_observed": "2026-11-16",
+        "original_item_2_02_events": 6,
+        "item_2_02_amendments": 0,
+        "sources": [
+          {
+            "file": "webfetch-740e685a-a6b5-44b3-8e28-fc4191f1af66.md",
+            "sha256": "bf44c79857da625fe54030680bbf1800016b47ed60fa7b7bfd1f0d29ce364e95",
+            "rows": 1005
+          }
+        ]
+      },
+      "AVGO": {
+        "cik": "0001730168",
+        "earliest_filing_date_observed": "2018-02-06",
+        "latest_filing_date_observed": "2026-10-27",
+        "original_item_2_02_events": 6,
+        "item_2_02_amendments": 0,
+        "sources": [
+          {
+            "file": "webfetch-a19b800f-66ef-429b-b826-7c4633aab8b5.md",
+            "sha256": "41ec85346d2b5ffbd8358ab2d3ef9400598660be94281edacf784da984097866",
+            "rows": 999
+          }
+        ]
+      },
+      "TSLA": {
+        "cik": "0001318605",
+        "earliest_filing_date_observed": "2018-06-18",
+        "latest_filing_date_observed": "2026-11-16",
+        "original_item_2_02_events": 12,
+        "item_2_02_amendments": 0,
+        "sources": [
+          {
+            "file": "webfetch-752b592b-2f36-49f3-844f-bcb061434bf9.md",
+            "sha256": "5ac4219ed1b698f5381501bea9987cf3cd0cb75d0ae4066359db28b6be717e65",
+            "rows": 1001
+          }
+        ]
+      },
+      "JPM": {
+        "cik": "0000019617",
+        "earliest_filing_date_observed": "2025-04-22",
+        "latest_filing_date_observed": "2026-11-16",
+        "original_item_2_02_events": 6,
+        "item_2_02_amendments": 0,
+        "sources": [
+          {
+            "file": "webfetch-310af6fe-f06d-4c8e-b125-818fc5a64197.md",
+            "sha256": "58a5fb71a627d8d605ce629934096f3d1840be8d3dde59355751184e40142358",
+            "rows": 26528
+          },
+          {
+            "file": "webfetch-1aec301f-44a5-4c6c-8aeb-c8065c87f7fe.md",
+            "sha256": "f01a2c5411f8b93e44fde45538bacf260f4fcba59f694aff73029bc9b2316677",
+            "rows": 2019
+          },
+          {
+            "file": "webfetch-570f69a8-f9c5-489b-907f-a600f6ddc50d.md",
+            "sha256": "faaac9e450d25d1bf6c6e7a19c6010bdec0ba2eb1ad15d057f1db64535e94f68",
+            "rows": 2047
+          },
+          {
+            "file": "webfetch-6bb38ff4-bd84-48cd-8451-338ca869181e.md",
+            "sha256": "9b6085fb93394b1d4ed1e738da0bf7775cd5932b1cab4e07988031e096447c35",
+            "rows": 2061
+          },
+          {
+            "file": "webfetch-4085fed0-6b0c-406f-aae4-ffae73692fb6.md",
+            "sha256": "ed3dc1cb3e71684419dafc354e03aedd05adaee87d8700f1fd8fa29875afe911",
+            "rows": 2037
+          },
+          {
+            "file": "webfetch-caab13ac-19d7-4f5c-9c67-23d1c80d1483.md",
+            "sha256": "c2a691358384528128fe16bc03721f6f15a1e619683c17efe2a5bb1b5d2e5ac6",
+            "rows": 2089
+          },
+          {
+            "file": "webfetch-593dfbf7-dea3-4088-8a63-4970533def84.md",
+            "sha256": "7fe039df30a8e2fd844a5f9eb014eaf6e217700a89bd0fda9e723870c4ed992f",
+            "rows": 2009
+          }
+        ]
+      },
+      "XOM": {
+        "cik": "0000034088",
+        "earliest_filing_date_observed": "2020-01-03",
+        "latest_filing_date_observed": "2026-10-27",
+        "original_item_2_02_events": 4,
+        "item_2_02_amendments": 0,
+        "sources": [
+          {
+            "file": "webfetch-cdb69bf4-04f9-472b-ac2a-655ba2026214.md",
+            "sha256": "79aacad669ef044bf654934b659b9fda89514e0ba5514838dbfb787d53e48773",
+            "rows": 1005
+          }
+        ]
+      },
+      "LLY": {
+        "cik": "0000059478",
+        "earliest_filing_date_observed": "2022-02-03",
+        "latest_filing_date_observed": "2026-11-10",
+        "original_item_2_02_events": 6,
+        "item_2_02_amendments": 0,
+        "sources": [
+          {
+            "file": "webfetch-bc383db9-9d43-4ee5-8aed-b5fc17746593.md",
+            "sha256": "76f86d4c50749c64191db75c1b7e762e3fbbae0c794d2576411f07d7f89b36d7",
+            "rows": 1002
+          }
+        ]
+      },
+      "COST": {
+        "cik": "0000909832",
+        "earliest_filing_date_observed": "2016-11-03",
+        "latest_filing_date_observed": "2026-11-13",
+        "original_item_2_02_events": 6,
+        "item_2_02_amendments": 0,
+        "sources": [
+          {
+            "file": "webfetch-ac5707a2-c455-4730-b4ba-168ab9686a8c.md",
+            "sha256": "6f1c07666d610a73fa4f2622bf2d6ca01f83b2f41b1fd374d3139bee82c5c513",
+            "rows": 1000
+          }
+        ]
+      }
+    },
+    "excluded_events": []
+  }
+}

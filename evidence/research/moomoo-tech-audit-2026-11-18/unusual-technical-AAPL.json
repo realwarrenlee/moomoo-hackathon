@@ -1,0 +1,18 @@
+{
+  "http_status": 403,
+  "path": "/api/v1.0/quote/US.AAPL/unusual/technical",
+  "params": null,
+  "body": {
+    "indicator_filters": [
+      "RSI6",
+      "MACD",
+      "KDJ"
+    ],
+    "language_id": 0,
+    "time_range": 7
+  },
+  "response": {
+    "code": -12006,
+    "trace_id": "53a4b2a9c7eb112b4e8ac06f751bf380"
+  }
+}

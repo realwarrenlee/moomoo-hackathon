@@ -1,0 +1,570 @@
+{
+  "artifacts": [
+    {
+      "path": "artifacts/equity.csv",
+      "sha256": "427bf554b7c216c9dc8a39b279cdc053af67454bcce04b2afc4776f12c5f5ed8",
+      "size_bytes": 287940
+    },
+    {
+      "path": "artifacts/fills.jsonl",
+      "sha256": "a59ad13fd6dc0a56d01211f4b715b527f5c8aad3868840751cc52f5713037324",
+      "size_bytes": 99428
+    },
+    {
+      "path": "artifacts/metrics.csv",
+      "sha256": "49e859298419ff99c2ef2c94c82d796086b734e1d27b64bf22a39b4f9230abba",
+      "size_bytes": 7718
+    },
+    {
+      "path": "artifacts/ohlcv_AAPL.csv",
+      "sha256": "f9b8f97c66304855b3e0dbf42651dd857310600a1a2bc85dfbd868e620b883ad",
+      "size_bytes": 225771
+    },
+    {
+      "path": "artifacts/ohlcv_AMD.csv",
+      "sha256": "8af66eff91b1bdccef324645d51bfd0be8ffda0e4bf9297e2f6c903178fdf495",
+      "size_bytes": 151115
+    },
+    {
+      "path": "artifacts/ohlcv_AMZN.csv",
+      "sha256": "c7d2ddbabf81111fb9660df3dad605c0689147f360c8b1296977e129312ec4a9",
+      "size_bytes": 166892
+    },
+    {
+      "path": "artifacts/ohlcv_AVGO.csv",
+      "sha256": "51849bc4a6e8897c2db17fb0b9b557a5ad9270e31e54c372fc01c5849a0f2a3e",
+      "size_bytes": 220392
+    },
+    {
+      "path": "artifacts/ohlcv_COST.csv",
+      "sha256": "33c1be3832a073e91b591487c495bd674e88dcd59ac650ac084fb4298d02df1d",
+      "size_bytes": 227737
+    },
+    {
+      "path": "artifacts/ohlcv_GOOGL.csv",
+      "sha256": "aec7ccda2b1046ad22e6ce237576ac0e5fb2d55eb26ea7610e0283691a9b4d56",
+      "size_bytes": 223566
+    },
+    {
+      "path": "artifacts/ohlcv_HD.csv",
+      "sha256": "d821e9faeadb93c3d85f27b59fa14c28061a8e73aec7d8b24c6c6831397db834",
+      "size_bytes": 226486
+    },
+    {
+      "path": "artifacts/ohlcv_JNJ.csv",
+      "sha256": "a5f42b96dd3c0fe3118f103d9bccdb257ca004f909f8353325710163fa4f598c",
+      "size_bytes": 225389
+    },
+    {
+      "path": "artifacts/ohlcv_JPM.csv",
+      "sha256": "268d1e423087e4adcdd8e1f9950e9d3dd6b8c7c2885e2096ed64add4f810a3c4",
+      "size_bytes": 224010
+    },
+    {
+      "path": "artifacts/ohlcv_MA.csv",
+      "sha256": "fe8947f3150a2bcdbd2260cf0bc0054b0aee92c82a0e4fbf4324a799938ea0de",
+      "size_bytes": 225590
+    },
+    {
+      "path": "artifacts/ohlcv_META.csv",
+      "sha256": "78c107f510f6cef9c037a8a6599b53ac1084451bddd5bd55f1a9a75ece598686",
+      "size_bytes": 229301
+    },
+    {
+      "path": "artifacts/ohlcv_MSFT.csv",
+      "sha256": "b35ce5405c0a723cdd9116a5f643c7b500ab995c99a3e629a53d994ce1490c9b",
+      "size_bytes": 226468
+    },
+    {
+      "path": "artifacts/ohlcv_NFLX.csv",
+      "sha256": "97f91c31ad7a0bdd883005d779d2d6f31198ff85ddbb188e3d513441112ca838",
+      "size_bytes": 165199
+    },
+    {
+      "path": "artifacts/ohlcv_NVDA.csv",
+      "sha256": "2c5c2ced92450ab2b42a1794b48b88a636da946bf980dc3e14acfc1988d8ad2d",
+      "size_bytes": 217908
+    },
+    {
+      "path": "artifacts/ohlcv_PG.csv",
+      "sha256": "5fd8747432a77097b1407dcee9661e987bc8d08faa275d00e8ceb62c050e6bad",
+      "size_bytes": 223318
+    },
+    {
+      "path": "artifacts/ohlcv_SPY.csv",
+      "sha256": "74750b948b8519279993b2553c71fe3befddaf8c2e0792c83f2912360a487ff2",
+      "size_bytes": 230981
+    },
+    {
+      "path": "artifacts/ohlcv_TSLA.csv",
+      "sha256": "d999a452d2d1ed974140a1eda06a431d87a0e7267317ee69f15ebda056017ff1",
+      "size_bytes": 197847
+    },
+    {
+      "path": "artifacts/ohlcv_UNH.csv",
+      "sha256": "0f27f2ef45076d20a5a201dcaaa14f1cd78968c4ec6e8be3c34c3a6aec701004",
+      "size_bytes": 226845
+    },
+    {
+      "path": "artifacts/ohlcv_V.csv",
+      "sha256": "8dd827c43513d7d7934a0e2bec546c73025281e82d831e56b4fe647d77cb89db",
+      "size_bytes": 225500
+    },
+    {
+      "path": "artifacts/ohlcv_WMT.csv",
+      "sha256": "f3cb5f9eb4cfd3e43ec3fff3b2fb050bf4c08281fce81f593bdf0f36123061b1",
+      "size_bytes": 220246
+    },
+    {
+      "path": "artifacts/ohlcv_XOM.csv",
+      "sha256": "ad07c7b483a4d44827c69c949608c526ca5b58071ddf4b4e4e992e5f5c77af79",
+      "size_bytes": 220555
+    },
+    {
+      "path": "artifacts/positions.csv",
+      "sha256": "12bbc217ade12db8cc794510974d8c4bcf60623a749a4d1a36d0b2ff4828d025",
+      "size_bytes": 286197
+    },
+    {
+      "path": "artifacts/rebalance_notes.json",
+      "sha256": "5c0075b2c5764574eddafbbbf5284a2864a5253bf7a39691d3434ef701433d60",
+      "size_bytes": 321029
+    },
+    {
+      "path": "artifacts/rebalance_notes.md",
+      "sha256": "df31c80e2d6bd58de9943966d0f45912ce2379b6981904bd3dc33e8989f0405a",
+      "size_bytes": 80051
+    },
+    {
+      "path": "artifacts/risk_xray.json",
+      "sha256": "2ea0375142a08615ddfb34fdebabd8f11bb294874e3c45cd85c0db4809e6b7f0",
+      "size_bytes": 1491
+    },
+    {
+      "path": "artifacts/risk_xray.md",
+      "sha256": "f2c81a097ecbc710f81df1a39cf08928bda919a8bfc590d8480d8c2f32c33983",
+      "size_bytes": 368
+    },
+    {
+      "path": "artifacts/target_positions.csv",
+      "sha256": "a1c8b71024caf9b60b4b4408b5f0c4ce856d6cd98dd441c11855dbeb577757cc",
+      "size_bytes": 251405
+    },
+    {
+      "path": "artifacts/trades.csv",
+      "sha256": "0da61f5a788069fbe9343cc8acece40a3c7a574407e82cff1d8c5f64fae586c3",
+      "size_bytes": 37326
+    },
+    {
+      "path": "config.json",
+      "sha256": "2ba12c16be3ef3da561119e54920637d9c404b896d9a28107f72087d9155dbfd",
+      "size_bytes": 9700
+    }
+  ],
+  "backtest": {
+    "codes": [
+      "AAPL",
+      "AMD",
+      "AMZN",
+      "AVGO",
+      "COST",
+      "GOOGL",
+      "HD",
+      "JNJ",
+      "JPM",
+      "MA",
+      "META",
+      "MSFT",
+      "NFLX",
+      "NVDA",
+      "PG",
+      "TSLA",
+      "UNH",
+      "V",
+      "WMT",
+      "XOM",
+      "SPY"
+    ],
+    "end_date": "2024-12-31",
+    "engine": "global_equity",
+    "initial_cash": 100000.0,
+    "interval": "1D",
+    "source": "moomoo_protocol_2015_2024",
+    "start_date": "2015-01-02"
+  },
+  "citations": [
+    {
+      "artifact_id": "artifacts/metrics.csv",
+      "column": "final_value",
+      "metric": "final_value",
+      "row": 1,
+      "sha256": "49e859298419ff99c2ef2c94c82d796086b734e1d27b64bf22a39b4f9230abba"
+    },
+    {
+      "artifact_id": "artifacts/metrics.csv",
+      "column": "total_return",
+      "metric": "total_return",
+      "row": 1,
+      "sha256": "49e859298419ff99c2ef2c94c82d796086b734e1d27b64bf22a39b4f9230abba"
+    },
+    {
+      "artifact_id": "artifacts/metrics.csv",
+      "column": "annual_return",
+      "metric": "annual_return",
+      "row": 1,
+      "sha256": "49e859298419ff99c2ef2c94c82d796086b734e1d27b64bf22a39b4f9230abba"
+    },
+    {
+      "artifact_id": "artifacts/metrics.csv",
+      "column": "max_drawdown",
+      "metric": "max_drawdown",
+      "row": 1,
+      "sha256": "49e859298419ff99c2ef2c94c82d796086b734e1d27b64bf22a39b4f9230abba"
+    },
+    {
+      "artifact_id": "artifacts/metrics.csv",
+      "column": "sharpe",
+      "metric": "sharpe",
+      "row": 1,
+      "sha256": "49e859298419ff99c2ef2c94c82d796086b734e1d27b64bf22a39b4f9230abba"
+    },
+    {
+      "artifact_id": "artifacts/metrics.csv",
+      "column": "calmar",
+      "metric": "calmar",
+      "row": 1,
+      "sha256": "49e859298419ff99c2ef2c94c82d796086b734e1d27b64bf22a39b4f9230abba"
+    },
+    {
+      "artifact_id": "artifacts/metrics.csv",
+      "column": "sortino",
+      "metric": "sortino",
+      "row": 1,
+      "sha256": "49e859298419ff99c2ef2c94c82d796086b734e1d27b64bf22a39b4f9230abba"
+    },
+    {
+      "artifact_id": "artifacts/metrics.csv",
+      "column": "win_rate",
+      "metric": "win_rate",
+      "row": 1,
+      "sha256": "49e859298419ff99c2ef2c94c82d796086b734e1d27b64bf22a39b4f9230abba"
+    },
+    {
+      "artifact_id": "artifacts/metrics.csv",
+      "column": "profit_loss_ratio",
+      "metric": "profit_loss_ratio",
+      "row": 1,
+      "sha256": "49e859298419ff99c2ef2c94c82d796086b734e1d27b64bf22a39b4f9230abba"
+    },
+    {
+      "artifact_id": "artifacts/metrics.csv",
+      "column": "profit_factor",
+      "metric": "profit_factor",
+      "row": 1,
+      "sha256": "49e859298419ff99c2ef2c94c82d796086b734e1d27b64bf22a39b4f9230abba"
+    },
+    {
+      "artifact_id": "artifacts/metrics.csv",
+      "column": "max_consecutive_loss",
+      "metric": "max_consecutive_loss",
+      "row": 1,
+      "sha256": "49e859298419ff99c2ef2c94c82d796086b734e1d27b64bf22a39b4f9230abba"
+    },
+    {
+      "artifact_id": "artifacts/metrics.csv",
+      "column": "avg_holding_days",
+      "metric": "avg_holding_days",
+      "row": 1,
+      "sha256": "49e859298419ff99c2ef2c94c82d796086b734e1d27b64bf22a39b4f9230abba"
+    },
+    {
+      "artifact_id": "artifacts/metrics.csv",
+      "column": "trade_count",
+      "metric": "trade_count",
+      "row": 1,
+      "sha256": "49e859298419ff99c2ef2c94c82d796086b734e1d27b64bf22a39b4f9230abba"
+    },
+    {
+      "artifact_id": "artifacts/metrics.csv",
+      "column": "benchmark_return",
+      "metric": "benchmark_return",
+      "row": 1,
+      "sha256": "49e859298419ff99c2ef2c94c82d796086b734e1d27b64bf22a39b4f9230abba"
+    },
+    {
+      "artifact_id": "artifacts/metrics.csv",
+      "column": "excess_return",
+      "metric": "excess_return",
+      "row": 1,
+      "sha256": "49e859298419ff99c2ef2c94c82d796086b734e1d27b64bf22a39b4f9230abba"
+    },
+    {
+      "artifact_id": "artifacts/metrics.csv",
+      "column": "information_ratio",
+      "metric": "information_ratio",
+      "row": 1,
+      "sha256": "49e859298419ff99c2ef2c94c82d796086b734e1d27b64bf22a39b4f9230abba"
+    },
+    {
+      "artifact_id": "artifacts/metrics.csv",
+      "column": "tracking_error",
+      "metric": "tracking_error",
+      "row": 1,
+      "sha256": "49e859298419ff99c2ef2c94c82d796086b734e1d27b64bf22a39b4f9230abba"
+    },
+    {
+      "artifact_id": "artifacts/metrics.csv",
+      "column": "benchmark_beta",
+      "metric": "benchmark_beta",
+      "row": 1,
+      "sha256": "49e859298419ff99c2ef2c94c82d796086b734e1d27b64bf22a39b4f9230abba"
+    },
+    {
+      "artifact_id": "artifacts/metrics.csv",
+      "column": "avg_turnover",
+      "metric": "avg_turnover",
+      "row": 1,
+      "sha256": "49e859298419ff99c2ef2c94c82d796086b734e1d27b64bf22a39b4f9230abba"
+    },
+    {
+      "artifact_id": "artifacts/metrics.csv",
+      "column": "total_turnover",
+      "metric": "total_turnover",
+      "row": 1,
+      "sha256": "49e859298419ff99c2ef2c94c82d796086b734e1d27b64bf22a39b4f9230abba"
+    },
+    {
+      "artifact_id": "artifacts/metrics.csv",
+      "column": "benchmark_kind",
+      "metric": "benchmark_kind",
+      "row": 1,
+      "sha256": "49e859298419ff99c2ef2c94c82d796086b734e1d27b64bf22a39b4f9230abba"
+    },
+    {
+      "artifact_id": "artifacts/metrics.csv",
+      "column": "benchmark_label",
+      "metric": "benchmark_label",
+      "row": 1,
+      "sha256": "49e859298419ff99c2ef2c94c82d796086b734e1d27b64bf22a39b4f9230abba"
+    },
+    {
+      "artifact_id": "artifacts/metrics.csv",
+      "column": "unfilled_plan_rejections",
+      "metric": "unfilled_plan_rejections",
+      "row": 1,
+      "sha256": "49e859298419ff99c2ef2c94c82d796086b734e1d27b64bf22a39b4f9230abba"
+    },
+    {
+      "artifact_id": "artifacts/metrics.csv",
+      "column": "rebalance_bars_executed",
+      "metric": "rebalance_bars_executed",
+      "row": 1,
+      "sha256": "49e859298419ff99c2ef2c94c82d796086b734e1d27b64bf22a39b4f9230abba"
+    },
+    {
+      "artifact_id": "artifacts/metrics.csv",
+      "column": "target_change_count",
+      "metric": "target_change_count",
+      "row": 1,
+      "sha256": "49e859298419ff99c2ef2c94c82d796086b734e1d27b64bf22a39b4f9230abba"
+    },
+    {
+      "artifact_id": "artifacts/metrics.csv",
+      "column": "rebalance_executed_bars",
+      "metric": "rebalance_executed_bars",
+      "row": 1,
+      "sha256": "49e859298419ff99c2ef2c94c82d796086b734e1d27b64bf22a39b4f9230abba"
+    },
+    {
+      "artifact_id": "artifacts/metrics.csv",
+      "column": "rebalance_executed_fills",
+      "metric": "rebalance_executed_fills",
+      "row": 1,
+      "sha256": "49e859298419ff99c2ef2c94c82d796086b734e1d27b64bf22a39b4f9230abba"
+    },
+    {
+      "artifact_id": "artifacts/metrics.csv",
+      "column": "rebalance_realized_turnover",
+      "metric": "rebalance_realized_turnover",
+      "row": 1,
+      "sha256": "49e859298419ff99c2ef2c94c82d796086b734e1d27b64bf22a39b4f9230abba"
+    },
+    {
+      "artifact_id": "artifacts/metrics.csv",
+      "column": "rebalance_turnover_mean",
+      "metric": "rebalance_turnover_mean",
+      "row": 1,
+      "sha256": "49e859298419ff99c2ef2c94c82d796086b734e1d27b64bf22a39b4f9230abba"
+    },
+    {
+      "artifact_id": "artifacts/metrics.csv",
+      "column": "rebalance_turnover_max",
+      "metric": "rebalance_turnover_max",
+      "row": 1,
+      "sha256": "49e859298419ff99c2ef2c94c82d796086b734e1d27b64bf22a39b4f9230abba"
+    },
+    {
+      "artifact_id": "artifacts/metrics.csv",
+      "column": "position_adjustment",
+      "metric": "position_adjustment",
+      "row": 1,
+      "sha256": "49e859298419ff99c2ef2c94c82d796086b734e1d27b64bf22a39b4f9230abba"
+    },
+    {
+      "artifact_id": "artifacts/metrics.csv",
+      "column": "rebalance_tolerance",
+      "metric": "rebalance_tolerance",
+      "row": 1,
+      "sha256": "49e859298419ff99c2ef2c94c82d796086b734e1d27b64bf22a39b4f9230abba"
+    },
+    {
+      "artifact_id": "artifacts/metrics.csv",
+      "column": "dropped_target_adjustment_count",
+      "metric": "dropped_target_adjustment_count",
+      "row": 1,
+      "sha256": "49e859298419ff99c2ef2c94c82d796086b734e1d27b64bf22a39b4f9230abba"
+    },
+    {
+      "artifact_id": "artifacts/metrics.csv",
+      "column": "risk_xray_hhi",
+      "metric": "risk_xray_hhi",
+      "row": 1,
+      "sha256": "49e859298419ff99c2ef2c94c82d796086b734e1d27b64bf22a39b4f9230abba"
+    },
+    {
+      "artifact_id": "artifacts/metrics.csv",
+      "column": "risk_xray_effective_n",
+      "metric": "risk_xray_effective_n",
+      "row": 1,
+      "sha256": "49e859298419ff99c2ef2c94c82d796086b734e1d27b64bf22a39b4f9230abba"
+    },
+    {
+      "artifact_id": "artifacts/metrics.csv",
+      "column": "risk_xray_annualized_vol",
+      "metric": "risk_xray_annualized_vol",
+      "row": 1,
+      "sha256": "49e859298419ff99c2ef2c94c82d796086b734e1d27b64bf22a39b4f9230abba"
+    },
+    {
+      "artifact_id": "artifacts/metrics.csv",
+      "column": "risk_xray_max_drawdown",
+      "metric": "risk_xray_max_drawdown",
+      "row": 1,
+      "sha256": "49e859298419ff99c2ef2c94c82d796086b734e1d27b64bf22a39b4f9230abba"
+    },
+    {
+      "artifact_id": "artifacts/metrics.csv",
+      "column": "risk_xray_avg_invested",
+      "metric": "risk_xray_avg_invested",
+      "row": 1,
+      "sha256": "49e859298419ff99c2ef2c94c82d796086b734e1d27b64bf22a39b4f9230abba"
+    }
+  ],
+  "data_sources": [
+    "moomoo_protocol_2015_2024"
+  ],
+  "generated_at": "2026-11-18T01:47:45.297520Z",
+  "metrics": {
+    "annual_return": 0.044517691533658255,
+    "avg_holding_days": 576.2,
+    "avg_turnover": 0.000484,
+    "benchmark_beta": 0.2439,
+    "benchmark_kind": "equal_weight",
+    "benchmark_label": "equal-weight basket of 21 symbols",
+    "benchmark_return": 9.120467,
+    "calmar": 0.3959,
+    "dropped_target_adjustment_count": 0,
+    "excess_return": -8.641556,
+    "final_value": 147891.0701139543,
+    "information_ratio": -1.4921,
+    "max_consecutive_loss": 5,
+    "max_drawdown": -0.11245714164458383,
+    "position_adjustment": "rebalance",
+    "profit_factor": 1032.9854,
+    "profit_loss_ratio": 24.7126,
+    "rebalance_bars_executed": 470,
+    "rebalance_executed_bars": 337,
+    "rebalance_executed_fills": 337,
+    "rebalance_realized_turnover": 0.7981212202068442,
+    "rebalance_tolerance": 0.0,
+    "rebalance_turnover_max": 0.15,
+    "rebalance_turnover_mean": 0.14999999999999997,
+    "risk_xray_annualized_vol": 0.17838290129955042,
+    "risk_xray_avg_invested": 0.2989326542042771,
+    "risk_xray_effective_n": 1.0,
+    "risk_xray_hhi": 1.0,
+    "risk_xray_max_drawdown": -0.337173884337483,
+    "sharpe": 0.8460703267070576,
+    "sortino": 1.1778,
+    "target_change_count": 939,
+    "total_return": 0.47891070113954304,
+    "total_turnover": 1.09679,
+    "tracking_error": 0.156933,
+    "trade_count": 214,
+    "unfilled_plan_rejections": 0,
+    "win_rate": 0.9766355140186916
+  },
+  "model_provenance": {
+    "cutoff_source": null,
+    "files": {
+      "config.json": {
+        "model_id": null,
+        "model_source": null,
+        "provider": null
+      }
+    },
+    "training_cutoff": null
+  },
+  "reproducibility": {
+    "config_hash": "2ba12c16be3ef3da561119e54920637d9c404b896d9a28107f72087d9155dbfd"
+  },
+  "run_dir": "C:\\Users\\Warren\\Downloads\\qoder trading challenge\\evidence\\research\\vibe-trading-poc-2026-11-18\\protocol-runs\\constant_spy",
+  "schema_version": "1.0",
+  "structured_metrics": {
+    "_omitted": [
+      "rebalance_mask"
+    ],
+    "by_exit_reason": {
+      "end_of_backtest": {
+        "count": 1,
+        "total_pnl": 16872.18
+      },
+      "target_rebalance": {
+        "count": 213,
+        "total_pnl": 31018.89
+      }
+    },
+    "by_symbol": {
+      "SPY": {
+        "avg_pnl": 223.79,
+        "count": 214,
+        "total_pnl": 47891.07,
+        "win_rate": 0.9766
+      }
+    },
+    "dropped_target_adjustments": [],
+    "execution_costs": {
+      "commission_rate": 0.0,
+      "market": "us_equity",
+      "slippage_buy_rate": 0.00019999999999997797,
+      "slippage_config_key": "slippage_us",
+      "slippage_sell_rate": 0.00019999999999997797
+    },
+    "unfilled_plan_rejections_by_symbol": {}
+  },
+  "tool_traces": [
+    {
+      "args_hash": "d39ef372ded3b1b31e39d9d3569ce7bb902bebf0339d3221910491491f322f00",
+      "ended_at": "2026-11-18T01:47:45.295471Z",
+      "result_hash": "2c554a4241ebc38b20515439d48229c74c253e3240e2399a5f1d0809c4b8bd4d",
+      "started_at": "2026-11-18T01:47:36.778207Z",
+      "status": "ok",
+      "tool": "backtest"
+    }
+  ],
+  "warnings": [
+    "benchmark 'none' could not be resolved over the evaluation window; benchmark-relative metrics use the equal-weight basket of 21 symbols",
+    "No strategy model provenance was recorded for config.json; writer identity is unknown.",
+    "Training cutoff for unknown model is unknown; assume results may reflect what the model remembers."
+  ]
+}

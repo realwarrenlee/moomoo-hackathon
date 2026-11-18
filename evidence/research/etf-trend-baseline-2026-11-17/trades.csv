@@ -1,0 +1,4 @@
+strategy,symbol,signal_date,entry_date,exit_date,entry_price,exit_price,entry_notional_usd,exit_notional_usd,return_pct
+etf-trend-baseline-v1-SPY,SPY,2026-04-30,2026-05-01,,721.394250,739.95,9998.00,10257.22,2.5722
+SPY-buy-hold-0.10,SPY,2026-04-01,2026-04-01,,654.03078,739.95,9998.00,11313.69,13.1369
+SPY-buy-hold-1,SPY,2026-04-01,2026-04-01,,654.03078,739.95,99980.00,113136.88,13.1369

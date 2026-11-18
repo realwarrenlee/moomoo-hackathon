@@ -1,0 +1,62 @@
+{
+  "schema_version": "1",
+  "strategy_version": "sec-earnings-relative-momentum-v1",
+  "frozen_before_return_calculation": true,
+  "frozen_at_utc": "2026-11-17T10:23:55Z",
+  "universe": ["AAPL", "MSFT", "NVDA", "AMZN", "GOOGL", "META", "AVGO", "TSLA", "JPM", "XOM", "LLY", "COST"],
+  "catalyst": {
+    "provider": "SEC EDGAR submissions JSON",
+    "form": "8-K",
+    "item": "2.02",
+    "timestamp": "acceptanceDateTime converted to UTC",
+    "eligibility": "Original 8-K only; exact timestamp required; eligible at a completed session close only if accepted by 21:00 UTC and within that close plus the prior four completed sessions. A known later Item 2.02 8-K/A invalidates the original event. Missing or ambiguous timestamps exclude the event.",
+    "one_entry_per_accession_per_window": true,
+    "same_name_overlap": "No pyramiding and no reset of the holding clock; an Item 2.02 amendment known after entry schedules an exit."
+  },
+  "entry": {
+    "signal_time": "21:00 UTC after each completed US session",
+    "stock_return_5_sessions": "> 0",
+    "relative_strength": "stock five-session close return > SPY five-session close return",
+    "stock_trend": "stock close > its 20-session simple moving average",
+    "regime": "SPY close > its 20-session simple moving average",
+    "ranking": "five-session stock return minus SPY return descending, then symbol and accession ascending",
+    "execution": "next available common-session open",
+    "adverse_cost_bps": 2,
+    "position_fraction_of_prior_close_equity": 0.10,
+    "maximum_positions": 3,
+    "maximum_target_gross_exposure": 0.30,
+    "fractional_shares": true,
+    "cash_rule": "Skip an entry if cash cannot fund the full 10% target including adverse cost; exits execute before entries at the same open; no same-open exit and re-entry in one symbol."
+  },
+  "exit": {
+    "maximum_holding_sessions": 10,
+    "trend_failure": "stock close <= its 20-session SMA or SPY close <= its 20-session SMA",
+    "amendment": "any same-symbol Item 2.02 8-K/A accepted after entry and known by the close",
+    "execution": "next available common-session open with 2 bps adverse cost",
+    "end_of_window": "Mark open positions at the final close without hypothetical liquidation cost."
+  },
+  "evaluation": {
+    "initial_equity_usd": 100000,
+    "warmup_sessions": 20,
+    "development": {"first_execution_session": "2025-06-30", "last_session": "2026-03-31"},
+    "holdout": {"first_execution_session": "2026-04-01", "last_session": "2026-11-16"},
+    "holdout_rule": "The 1 April 2026 boundary and all rules are fixed before outcomes; holdout starts with 100,000 USD cash and uses only prior-session information for its first signal.",
+    "benchmarks": ["SPY buy-and-hold", "QQQ buy-and-hold", "cash", "momentum-v1", "news-catalyst-v1"],
+    "benchmark_universe_note": "Previous strategies retain their existing SPY/QQQ/IWM universe and all-in single-position implementation; only the evaluation windows are changed.",
+    "turnover": "gross raw-open execution notional divided by average daily close equity",
+    "exposure": "daily close gross market value divided by daily close equity, averaged across evaluation sessions",
+    "costs": "sum of explicit 2 bps adverse execution adjustments on actual entries and exits; no cost on final mark-to-market",
+    "trade_count": "entries, with open and closed positions separately identified",
+    "sharpe": "Descriptive annualized arithmetic daily Sharpe at 0% risk-free only when at least 60 daily returns and nonzero volatility exist; no statistical significance claim with fewer than 30 closed trades.",
+    "validation": "One chronological development/holdout evaluation only. No optimization, no random-entry claim, and no Vibe walk-forward mislabelled as out-of-sample training. Bootstrap confidence intervals only if at least 30 closed trades; Monte Carlo trade-order permutation only as a path diagnostic."
+  },
+  "limitations": [
+    "Current-liquid-universe and survivorship bias",
+    "Approximately 370 daily bars and sparse earnings events",
+    "Moomoo autype=1 forward ex-dividend-adjusted OHLC; not a total-return series",
+    "Common sessions and fractional shares; no borrow, tax, spread, market-impact or borrow modelling",
+    "SEC Item 2.02 is a deterministic earnings-filing proxy, not a semantic measure of every material company news event",
+    "Historical filings and adjusted prices are sourced now, so retrospective corrections by providers cannot be ruled out"
+  ],
+  "execution_authorization": "Research only. No order placement or automatic execution is enabled."
+}

@@ -1,0 +1,869 @@
+{
+  "rebalances": [
+    {
+      "date": "2025-08-04",
+      "turnover": 0.05,
+      "entries": [],
+      "exits": [
+        {
+          "code": "QQQ",
+          "weight": 0.1
+        }
+      ],
+      "top_moves": [
+        {
+          "code": "QQQ",
+          "from": 0.1,
+          "to": 0.0,
+          "delta": -0.1
+        }
+      ]
+    },
+    {
+      "date": "2025-08-08",
+      "turnover": 0.05,
+      "entries": [
+        {
+          "code": "QQQ",
+          "weight": 0.1
+        }
+      ],
+      "exits": [],
+      "top_moves": [
+        {
+          "code": "QQQ",
+          "from": 0.0,
+          "to": 0.1,
+          "delta": 0.1
+        }
+      ]
+    },
+    {
+      "date": "2025-08-20",
+      "turnover": 0.05,
+      "entries": [],
+      "exits": [
+        {
+          "code": "QQQ",
+          "weight": 0.1
+        }
+      ],
+      "top_moves": [
+        {
+          "code": "QQQ",
+          "from": 0.1,
+          "to": 0.0,
+          "delta": -0.1
+        }
+      ]
+    },
+    {
+      "date": "2025-08-25",
+      "turnover": 0.05,
+      "entries": [
+        {
+          "code": "IWM",
+          "weight": 0.1
+        }
+      ],
+      "exits": [],
+      "top_moves": [
+        {
+          "code": "IWM",
+          "from": 0.0,
+          "to": 0.1,
+          "delta": 0.1
+        }
+      ]
+    },
+    {
+      "date": "2025-10-13",
+      "turnover": 0.05,
+      "entries": [],
+      "exits": [
+        {
+          "code": "IWM",
+          "weight": 0.1
+        }
+      ],
+      "top_moves": [
+        {
+          "code": "IWM",
+          "from": 0.1,
+          "to": 0.0,
+          "delta": -0.1
+        }
+      ]
+    },
+    {
+      "date": "2025-10-16",
+      "turnover": 0.05,
+      "entries": [
+        {
+          "code": "IWM",
+          "weight": 0.1
+        }
+      ],
+      "exits": [],
+      "top_moves": [
+        {
+          "code": "IWM",
+          "from": 0.0,
+          "to": 0.1,
+          "delta": 0.1
+        }
+      ]
+    },
+    {
+      "date": "2025-10-20",
+      "turnover": 0.05,
+      "entries": [],
+      "exits": [
+        {
+          "code": "IWM",
+          "weight": 0.1
+        }
+      ],
+      "top_moves": [
+        {
+          "code": "IWM",
+          "from": 0.1,
+          "to": 0.0,
+          "delta": -0.1
+        }
+      ]
+    },
+    {
+      "date": "2025-10-21",
+      "turnover": 0.05,
+      "entries": [
+        {
+          "code": "QQQ",
+          "weight": 0.1
+        }
+      ],
+      "exits": [],
+      "top_moves": [
+        {
+          "code": "QQQ",
+          "from": 0.0,
+          "to": 0.1,
+          "delta": 0.1
+        }
+      ]
+    },
+    {
+      "date": "2025-11-07",
+      "turnover": 0.05,
+      "entries": [],
+      "exits": [
+        {
+          "code": "QQQ",
+          "weight": 0.1
+        }
+      ],
+      "top_moves": [
+        {
+          "code": "QQQ",
+          "from": 0.1,
+          "to": 0.0,
+          "delta": -0.1
+        }
+      ]
+    },
+    {
+      "date": "2025-11-12",
+      "turnover": 0.05,
+      "entries": [
+        {
+          "code": "SPY",
+          "weight": 0.1
+        }
+      ],
+      "exits": [],
+      "top_moves": [
+        {
+          "code": "SPY",
+          "from": 0.0,
+          "to": 0.1,
+          "delta": 0.1
+        }
+      ]
+    },
+    {
+      "date": "2025-11-14",
+      "turnover": 0.05,
+      "entries": [],
+      "exits": [
+        {
+          "code": "SPY",
+          "weight": 0.1
+        }
+      ],
+      "top_moves": [
+        {
+          "code": "SPY",
+          "from": 0.1,
+          "to": 0.0,
+          "delta": -0.1
+        }
+      ]
+    },
+    {
+      "date": "2025-11-26",
+      "turnover": 0.05,
+      "entries": [
+        {
+          "code": "IWM",
+          "weight": 0.1
+        }
+      ],
+      "exits": [],
+      "top_moves": [
+        {
+          "code": "IWM",
+          "from": 0.0,
+          "to": 0.1,
+          "delta": 0.1
+        }
+      ]
+    },
+    {
+      "date": "2025-12-30",
+      "turnover": 0.05,
+      "entries": [],
+      "exits": [
+        {
+          "code": "IWM",
+          "weight": 0.1
+        }
+      ],
+      "top_moves": [
+        {
+          "code": "IWM",
+          "from": 0.1,
+          "to": 0.0,
+          "delta": -0.1
+        }
+      ]
+    },
+    {
+      "date": "2025-12-31",
+      "turnover": 0.05,
+      "entries": [
+        {
+          "code": "SPY",
+          "weight": 0.1
+        }
+      ],
+      "exits": [],
+      "top_moves": [
+        {
+          "code": "SPY",
+          "from": 0.0,
+          "to": 0.1,
+          "delta": 0.1
+        }
+      ]
+    },
+    {
+      "date": "2026-01-02",
+      "turnover": 0.05,
+      "entries": [],
+      "exits": [
+        {
+          "code": "SPY",
+          "weight": 0.1
+        }
+      ],
+      "top_moves": [
+        {
+          "code": "SPY",
+          "from": 0.1,
+          "to": 0.0,
+          "delta": -0.1
+        }
+      ]
+    },
+    {
+      "date": "2026-01-06",
+      "turnover": 0.05,
+      "entries": [
+        {
+          "code": "IWM",
+          "weight": 0.1
+        }
+      ],
+      "exits": [],
+      "top_moves": [
+        {
+          "code": "IWM",
+          "from": 0.0,
+          "to": 0.1,
+          "delta": 0.1
+        }
+      ]
+    },
+    {
+      "date": "2026-02-02",
+      "turnover": 0.05,
+      "entries": [],
+      "exits": [
+        {
+          "code": "IWM",
+          "weight": 0.1
+        }
+      ],
+      "top_moves": [
+        {
+          "code": "IWM",
+          "from": 0.1,
+          "to": 0.0,
+          "delta": -0.1
+        }
+      ]
+    },
+    {
+      "date": "2026-02-03",
+      "turnover": 0.05,
+      "entries": [
+        {
+          "code": "SPY",
+          "weight": 0.1
+        }
+      ],
+      "exits": [],
+      "top_moves": [
+        {
+          "code": "SPY",
+          "from": 0.0,
+          "to": 0.1,
+          "delta": 0.1
+        }
+      ]
+    },
+    {
+      "date": "2026-02-04",
+      "turnover": 0.05,
+      "entries": [],
+      "exits": [
+        {
+          "code": "SPY",
+          "weight": 0.1
+        }
+      ],
+      "top_moves": [
+        {
+          "code": "SPY",
+          "from": 0.1,
+          "to": 0.0,
+          "delta": -0.1
+        }
+      ]
+    },
+    {
+      "date": "2026-02-09",
+      "turnover": 0.05,
+      "entries": [
+        {
+          "code": "IWM",
+          "weight": 0.1
+        }
+      ],
+      "exits": [],
+      "top_moves": [
+        {
+          "code": "IWM",
+          "from": 0.0,
+          "to": 0.1,
+          "delta": 0.1
+        }
+      ]
+    },
+    {
+      "date": "2026-02-13",
+      "turnover": 0.05,
+      "entries": [],
+      "exits": [
+        {
+          "code": "IWM",
+          "weight": 0.1
+        }
+      ],
+      "top_moves": [
+        {
+          "code": "IWM",
+          "from": 0.1,
+          "to": 0.0,
+          "delta": -0.1
+        }
+      ]
+    },
+    {
+      "date": "2026-02-23",
+      "turnover": 0.05,
+      "entries": [
+        {
+          "code": "IWM",
+          "weight": 0.1
+        }
+      ],
+      "exits": [],
+      "top_moves": [
+        {
+          "code": "IWM",
+          "from": 0.0,
+          "to": 0.1,
+          "delta": 0.1
+        }
+      ]
+    },
+    {
+      "date": "2026-02-24",
+      "turnover": 0.05,
+      "entries": [],
+      "exits": [
+        {
+          "code": "IWM",
+          "weight": 0.1
+        }
+      ],
+      "top_moves": [
+        {
+          "code": "IWM",
+          "from": 0.1,
+          "to": 0.0,
+          "delta": -0.1
+        }
+      ]
+    },
+    {
+      "date": "2026-02-26",
+      "turnover": 0.05,
+      "entries": [
+        {
+          "code": "QQQ",
+          "weight": 0.1
+        }
+      ],
+      "exits": [],
+      "top_moves": [
+        {
+          "code": "QQQ",
+          "from": 0.0,
+          "to": 0.1,
+          "delta": 0.1
+        }
+      ]
+    },
+    {
+      "date": "2026-02-27",
+      "turnover": 0.05,
+      "entries": [],
+      "exits": [
+        {
+          "code": "QQQ",
+          "weight": 0.1
+        }
+      ],
+      "top_moves": [
+        {
+          "code": "QQQ",
+          "from": 0.1,
+          "to": 0.0,
+          "delta": -0.1
+        }
+      ]
+    },
+    {
+      "date": "2026-04-07",
+      "turnover": 0.05,
+      "entries": [
+        {
+          "code": "SPY",
+          "weight": 0.1
+        }
+      ],
+      "exits": [],
+      "top_moves": [
+        {
+          "code": "SPY",
+          "from": 0.0,
+          "to": 0.1,
+          "delta": 0.1
+        }
+      ]
+    },
+    {
+      "date": "2026-06-08",
+      "turnover": 0.05,
+      "entries": [],
+      "exits": [
+        {
+          "code": "SPY",
+          "weight": 0.1
+        }
+      ],
+      "top_moves": [
+        {
+          "code": "SPY",
+          "from": 0.1,
+          "to": 0.0,
+          "delta": -0.1
+        }
+      ]
+    },
+    {
+      "date": "2026-06-16",
+      "turnover": 0.05,
+      "entries": [
+        {
+          "code": "QQQ",
+          "weight": 0.1
+        }
+      ],
+      "exits": [],
+      "top_moves": [
+        {
+          "code": "QQQ",
+          "from": 0.0,
+          "to": 0.1,
+          "delta": 0.1
+        }
+      ]
+    },
+    {
+      "date": "2026-06-18",
+      "turnover": 0.05,
+      "entries": [],
+      "exits": [
+        {
+          "code": "QQQ",
+          "weight": 0.1
+        }
+      ],
+      "top_moves": [
+        {
+          "code": "QQQ",
+          "from": 0.1,
+          "to": 0.0,
+          "delta": -0.1
+        }
+      ]
+    },
+    {
+      "date": "2026-07-01",
+      "turnover": 0.05,
+      "entries": [
+        {
+          "code": "QQQ",
+          "weight": 0.1
+        }
+      ],
+      "exits": [],
+      "top_moves": [
+        {
+          "code": "QQQ",
+          "from": 0.0,
+          "to": 0.1,
+          "delta": 0.1
+        }
+      ]
+    },
+    {
+      "date": "2026-07-06",
+      "turnover": 0.05,
+      "entries": [],
+      "exits": [
+        {
+          "code": "QQQ",
+          "weight": 0.1
+        }
+      ],
+      "top_moves": [
+        {
+          "code": "QQQ",
+          "from": 0.1,
+          "to": 0.0,
+          "delta": -0.1
+        }
+      ]
+    },
+    {
+      "date": "2026-07-07",
+      "turnover": 0.05,
+      "entries": [
+        {
+          "code": "SPY",
+          "weight": 0.1
+        }
+      ],
+      "exits": [],
+      "top_moves": [
+        {
+          "code": "SPY",
+          "from": 0.0,
+          "to": 0.1,
+          "delta": 0.1
+        }
+      ]
+    },
+    {
+      "date": "2026-07-20",
+      "turnover": 0.05,
+      "entries": [],
+      "exits": [
+        {
+          "code": "SPY",
+          "weight": 0.1
+        }
+      ],
+      "top_moves": [
+        {
+          "code": "SPY",
+          "from": 0.1,
+          "to": 0.0,
+          "delta": -0.1
+        }
+      ]
+    },
+    {
+      "date": "2026-08-03",
+      "turnover": 0.05,
+      "entries": [
+        {
+          "code": "SPY",
+          "weight": 0.1
+        }
+      ],
+      "exits": [],
+      "top_moves": [
+        {
+          "code": "SPY",
+          "from": 0.0,
+          "to": 0.1,
+          "delta": 0.1
+        }
+      ]
+    },
+    {
+      "date": "2026-08-25",
+      "turnover": 0.05,
+      "entries": [],
+      "exits": [
+        {
+          "code": "SPY",
+          "weight": 0.1
+        }
+      ],
+      "top_moves": [
+        {
+          "code": "SPY",
+          "from": 0.1,
+          "to": 0.0,
+          "delta": -0.1
+        }
+      ]
+    },
+    {
+      "date": "2026-08-28",
+      "turnover": 0.05,
+      "entries": [
+        {
+          "code": "QQQ",
+          "weight": 0.1
+        }
+      ],
+      "exits": [],
+      "top_moves": [
+        {
+          "code": "QQQ",
+          "from": 0.0,
+          "to": 0.1,
+          "delta": 0.1
+        }
+      ]
+    },
+    {
+      "date": "2026-08-31",
+      "turnover": 0.05,
+      "entries": [],
+      "exits": [
+        {
+          "code": "QQQ",
+          "weight": 0.1
+        }
+      ],
+      "top_moves": [
+        {
+          "code": "QQQ",
+          "from": 0.1,
+          "to": 0.0,
+          "delta": -0.1
+        }
+      ]
+    },
+    {
+      "date": "2026-09-04",
+      "turnover": 0.05,
+      "entries": [
+        {
+          "code": "SPY",
+          "weight": 0.1
+        }
+      ],
+      "exits": [],
+      "top_moves": [
+        {
+          "code": "SPY",
+          "from": 0.0,
+          "to": 0.1,
+          "delta": 0.1
+        }
+      ]
+    },
+    {
+      "date": "2026-09-09",
+      "turnover": 0.05,
+      "entries": [],
+      "exits": [
+        {
+          "code": "SPY",
+          "weight": 0.1
+        }
+      ],
+      "top_moves": [
+        {
+          "code": "SPY",
+          "from": 0.1,
+          "to": 0.0,
+          "delta": -0.1
+        }
+      ]
+    },
+    {
+      "date": "2026-09-22",
+      "turnover": 0.05,
+      "entries": [
+        {
+          "code": "QQQ",
+          "weight": 0.1
+        }
+      ],
+      "exits": [],
+      "top_moves": [
+        {
+          "code": "QQQ",
+          "from": 0.0,
+          "to": 0.1,
+          "delta": 0.1
+        }
+      ]
+    },
+    {
+      "date": "2026-10-15",
+      "turnover": 0.05,
+      "entries": [],
+      "exits": [
+        {
+          "code": "QQQ",
+          "weight": 0.1
+        }
+      ],
+      "top_moves": [
+        {
+          "code": "QQQ",
+          "from": 0.1,
+          "to": 0.0,
+          "delta": -0.1
+        }
+      ]
+    },
+    {
+      "date": "2026-10-22",
+      "turnover": 0.05,
+      "entries": [
+        {
+          "code": "SPY",
+          "weight": 0.1
+        }
+      ],
+      "exits": [],
+      "top_moves": [
+        {
+          "code": "SPY",
+          "from": 0.0,
+          "to": 0.1,
+          "delta": 0.1
+        }
+      ]
+    },
+    {
+      "date": "2026-10-23",
+      "turnover": 0.05,
+      "entries": [],
+      "exits": [
+        {
+          "code": "SPY",
+          "weight": 0.1
+        }
+      ],
+      "top_moves": [
+        {
+          "code": "SPY",
+          "from": 0.1,
+          "to": 0.0,
+          "delta": -0.1
+        }
+      ]
+    },
+    {
+      "date": "2026-10-29",
+      "turnover": 0.05,
+      "entries": [
+        {
+          "code": "IWM",
+          "weight": 0.1
+        }
+      ],
+      "exits": [],
+      "top_moves": [
+        {
+          "code": "IWM",
+          "from": 0.0,
+          "to": 0.1,
+          "delta": 0.1
+        }
+      ]
+    },
+    {
+      "date": "2026-11-06",
+      "turnover": 0.05,
+      "entries": [],
+      "exits": [
+        {
+          "code": "IWM",
+          "weight": 0.1
+        }
+      ],
+      "top_moves": [
+        {
+          "code": "IWM",
+          "from": 0.1,
+          "to": 0.0,
+          "delta": -0.1
+        }
+      ]
+    }
+  ],
+  "summary": {
+    "target_change_count": 45,
+    "turnover_total": 2.25,
+    "turnover_mean": 0.04999999999999998,
+    "turnover_max": 0.05,
+    "largest_rebalance_date": "2025-08-04",
+    "rebalance_executed_bars": 0,
+    "rebalance_executed_fills": 0,
+    "rebalance_realized_turnover": 0.0
+  }
+}

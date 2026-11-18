@@ -1,0 +1,653 @@
+{
+  "schema_version": "1",
+  "generated_at_utc": "2026-11-18T02:00:03.224688+00:00",
+  "research_only": true,
+  "order_writes_enabled": false,
+  "no_broker_or_order_path": true,
+  "vibe_trading": {
+    "version": "0.1.19",
+    "commit": "a8d815d17ec054a34dbdfc7ce8d1d9972566b709",
+    "license": "MIT",
+    "modules_used": [
+      "backtest.engines.global_equity.GlobalEquityEngine",
+      "backtest.engines.base.BaseEngine.run_backtest",
+      "backtest.engines.base._align",
+      "backtest.loaders.base.validate_ohlc",
+      "backtest.metrics.calc_metrics",
+      "backtest.run_card.write_run_card",
+      "backtest.rebalance_notes",
+      "backtest.risk_xray"
+    ],
+    "runner_used": false,
+    "runner_blocker": "fastmcp missing via safe_run_dir; yfinance imported by backtest.benchmark",
+    "offline_substitution": "sys.modules['backtest.benchmark'].resolve_benchmark returns None",
+    "engine": "GlobalEquityEngine (US rules) with a POC whole-share round_size override"
+  },
+  "data": {
+    "fixture": "backend\\tests\\fixtures\\moomoo_daily_bars_2026-11-16.json",
+    "sha256": "e92006dbd3ba07944a831ad154aa84b505407b4bfc53290c2ba80ea38509de98",
+    "provider": "Moomoo MCP read-only session",
+    "tool": "quote_cur_kline",
+    "arguments": {
+      "ktype": 2,
+      "autype": 1,
+      "extended_time": 0,
+      "num": 370
+    },
+    "last_completed_session": "2026-11-16"
+  },
+  "validation": {
+    "schema_version": "1",
+    "checked_at_utc": "2026-11-18T02:00:02.753458+00:00",
+    "fixture": {
+      "path": "backend\\tests\\fixtures\\moomoo_daily_bars_2026-11-16.json",
+      "sha256": "e92006dbd3ba07944a831ad154aa84b505407b4bfc53290c2ba80ea38509de98",
+      "source": {
+        "provider": "Moomoo MCP read-only session",
+        "tool": "quote_cur_kline",
+        "adjustment_claim": "autype=1 (provider forward-adjusted)",
+        "interval": "1D",
+        "extended_time": 0,
+        "num": 370,
+        "last_completed_session": "2026-11-16"
+      }
+    },
+    "checks": {
+      "symbols": [
+        "SPY",
+        "QQQ",
+        "IWM"
+      ],
+      "provider_sessions": 370,
+      "provider_market": "US",
+      "calendar_sessions": 370,
+      "calendar_matches_fixture": true,
+      "calendar_source": {
+        "provider": "Moomoo REST trading-days",
+        "endpoint": "/api/v1.0/quote/trading-days",
+        "market": "US",
+        "start": "2025-05-29",
+        "end": "2026-11-16",
+        "fetched_at_utc": "2026-11-18T01:30:22.530322+00:00"
+      },
+      "timestamp_errors": [],
+      "timestamps_are_midnight_new_york": true,
+      "all_symbols_share_calendar": true,
+      "no_duplicate_sessions": true,
+      "strictly_increasing_sessions": true,
+      "no_weekend_bars": true,
+      "sessions_per_symbol": {
+        "SPY": 370,
+        "QQQ": 370,
+        "IWM": 370
+      },
+      "ohlc_errors": [],
+      "ohlc_valid": true
+    },
+    "price_basis_crosscheck": {
+      "probe": "evidence\\research\\vibe-trading-poc-2026-11-18\\autype-probe.json",
+      "fixture_matches_autype_0_raw": true,
+      "fixture_matches_autype_1_forward": false,
+      "fixture_metadata_claim": "autype=1",
+      "metadata_matches_values": false,
+      "example": {
+        "date": "2025-05-29",
+        "fixture_close": "590.05",
+        "autype_0_close": 590.05,
+        "autype_1_close": 580.422236757
+      }
+    },
+    "limitations": [
+      "The fixture's source metadata says autype=1, but its 2025-05-29 bar matches history-kline autype=0 (raw), not autype=1 (forward-adjusted). Relative engine results remain comparable because both engines used the same bars.",
+      "The fixture contains three US ETFs only; no delisted, halted or cross-listed instruments.",
+      "The provider calendar and the bar timestamps are consistent, but corporate-action adjustment factors are not separately reconstructed."
+    ]
+  },
+  "config": {
+    "codes": [
+      "SPY",
+      "QQQ",
+      "IWM"
+    ],
+    "start_date": "2025-05-29",
+    "end_date": "2026-11-16",
+    "interval": "1D",
+    "source": "moomoo_fixture",
+    "engine": "global_equity",
+    "position_adjustment": "hold",
+    "initial_cash": 100000.0,
+    "slippage_us": 0.0002,
+    "execution_cost_multiplier": 1.0,
+    "extra_slippage_bps": 0.0,
+    "warmup_bars": 21,
+    "benchmark": "none",
+    "leverage": 1.0
+  },
+  "vibe_metrics": {
+    "final_value": 100089.45874243704,
+    "total_return": 0.0008945874243704299,
+    "annual_return": 0.0006458682393446491,
+    "max_drawdown": -0.012155503827850125,
+    "sharpe": 0.05730273467929389,
+    "sortino": 0.0761,
+    "calmar": 0.0531,
+    "win_rate": 0.2608695652173913,
+    "profit_factor": 1.0388,
+    "trade_count": 23,
+    "avg_holding_days": 10.0,
+    "benchmark_return": 0.223148,
+    "excess_return": -0.222253,
+    "benchmark_kind": "equal_weight",
+    "benchmark_label": "equal-weight basket of 3 symbols",
+    "execution_costs": {
+      "market": "us_equity",
+      "slippage_config_key": "slippage_us",
+      "slippage_buy_rate": 0.00019999999999997797,
+      "slippage_sell_rate": 0.00019999999999997797,
+      "commission_rate": 0.0
+    }
+  },
+  "mootrade_metrics": {
+    "name": "momentum-v1",
+    "start_date": "2025-06-27",
+    "end_date": "2026-11-16",
+    "sessions": 349,
+    "final_value": 100089.45874243703,
+    "total_return": 0.0008945874243702079,
+    "cagr": 0.0006440223074262175,
+    "annualized_volatility": 0.012663356481246035,
+    "sharpe": 0.05730274186264601,
+    "max_drawdown": 0.012155503827849986,
+    "average_exposure": 0.066203368284416,
+    "maximum_exposure": 0.11248715590514648,
+    "entries": 23,
+    "closed_trades": 23,
+    "win_rate": 0.2608695652173913,
+    "average_trade_return": 0.0003364596920778945,
+    "open_position": null
+  },
+  "curve_comparison": {
+    "common_sessions": 349,
+    "max_abs_equity_difference": 5.820766091346741e-11,
+    "largest_difference": {
+      "date": "2026-04-10",
+      "vibe": 100085.91397403707,
+      "mootrade": 100085.91397403702,
+      "difference": 5.820766091346741e-11
+    },
+    "terminal_vibe": 100089.45874243704,
+    "terminal_mootrade": 100089.45874243703
+  },
+  "vibe_trades": [
+    {
+      "symbol": "QQQ",
+      "signal_date": "2025-06-30T00:00:00-04:00",
+      "entry_date": "2025-06-30T00:00:00-04:00",
+      "exit_date": "2025-08-04T00:00:00-04:00",
+      "entry_price": 551.3702519999999,
+      "exit_price": 558.93819,
+      "return_pct": 1.372569,
+      "exit_reason": "signal"
+    },
+    {
+      "symbol": "QQQ",
+      "signal_date": "2025-08-08T00:00:00-04:00",
+      "entry_date": "2025-08-08T00:00:00-04:00",
+      "exit_date": "2025-08-20T00:00:00-04:00",
+      "entry_price": 570.5640900000001,
+      "exit_price": 568.2163340000001,
+      "return_pct": -0.41148,
+      "exit_reason": "signal"
+    },
+    {
+      "symbol": "IWM",
+      "signal_date": "2025-08-25T00:00:00-04:00",
+      "entry_date": "2025-08-25T00:00:00-04:00",
+      "exit_date": "2025-10-13T00:00:00-04:00",
+      "entry_price": 234.186828,
+      "exit_price": 241.78163400000003,
+      "return_pct": 3.243054,
+      "exit_reason": "signal"
+    },
+    {
+      "symbol": "IWM",
+      "signal_date": "2025-10-16T00:00:00-04:00",
+      "entry_date": "2025-10-16T00:00:00-04:00",
+      "exit_date": "2025-10-20T00:00:00-04:00",
+      "entry_price": 251.020194,
+      "exit_price": 246.57067600000002,
+      "return_pct": -1.772574,
+      "exit_reason": "signal"
+    },
+    {
+      "symbol": "QQQ",
+      "signal_date": "2025-10-21T00:00:00-04:00",
+      "entry_date": "2025-10-21T00:00:00-04:00",
+      "exit_date": "2025-11-07T00:00:00-05:00",
+      "entry_price": 611.762328,
+      "exit_price": 608.1883379999999,
+      "return_pct": -0.584212,
+      "exit_reason": "signal"
+    },
+    {
+      "symbol": "SPY",
+      "signal_date": "2025-11-12T00:00:00-05:00",
+      "entry_date": "2025-11-12T00:00:00-05:00",
+      "exit_date": "2025-11-14T00:00:00-05:00",
+      "entry_price": 684.9269579999999,
+      "exit_price": 665.246924,
+      "return_pct": -2.873304,
+      "exit_reason": "signal"
+    },
+    {
+      "symbol": "IWM",
+      "signal_date": "2025-11-26T00:00:00-05:00",
+      "entry_date": "2025-11-26T00:00:00-05:00",
+      "exit_date": "2025-12-30T00:00:00-05:00",
+      "entry_price": 245.09901,
+      "exit_price": 249.920006,
+      "return_pct": 1.966959,
+      "exit_reason": "signal"
+    },
+    {
+      "symbol": "SPY",
+      "signal_date": "2025-12-31T00:00:00-05:00",
+      "entry_date": "2025-12-31T00:00:00-05:00",
+      "exit_date": "2026-01-02T00:00:00-05:00",
+      "entry_price": 687.277428,
+      "exit_price": 685.572858,
+      "return_pct": -0.248018,
+      "exit_reason": "signal"
+    },
+    {
+      "symbol": "IWM",
+      "signal_date": "2026-01-06T00:00:00-05:00",
+      "entry_date": "2026-01-06T00:00:00-05:00",
+      "exit_date": "2026-02-02T00:00:00-05:00",
+      "entry_price": 252.290448,
+      "exit_price": 258.428304,
+      "return_pct": 2.432853,
+      "exit_reason": "signal"
+    },
+    {
+      "symbol": "SPY",
+      "signal_date": "2026-02-03T00:00:00-05:00",
+      "entry_date": "2026-02-03T00:00:00-05:00",
+      "exit_date": "2026-02-04T00:00:00-05:00",
+      "entry_price": 696.349242,
+      "exit_price": 690.21193,
+      "return_pct": -0.881355,
+      "exit_reason": "signal"
+    },
+    {
+      "symbol": "IWM",
+      "signal_date": "2026-02-09T00:00:00-05:00",
+      "entry_date": "2026-02-09T00:00:00-05:00",
+      "exit_date": "2026-02-13T00:00:00-05:00",
+      "entry_price": 264.8929679989998,
+      "exit_price": 260.54788,
+      "return_pct": -1.640318,
+      "exit_reason": "signal"
+    },
+    {
+      "symbol": "IWM",
+      "signal_date": "2026-02-23T00:00:00-05:00",
+      "entry_date": "2026-02-23T00:00:00-05:00",
+      "exit_date": "2026-02-24T00:00:00-05:00",
+      "entry_price": 263.45267999899977,
+      "exit_price": 260.34791999900017,
+      "return_pct": -1.178489,
+      "exit_reason": "signal"
+    },
+    {
+      "symbol": "QQQ",
+      "signal_date": "2026-02-26T00:00:00-05:00",
+      "entry_date": "2026-02-26T00:00:00-05:00",
+      "exit_date": "2026-02-27T00:00:00-05:00",
+      "entry_price": 615.713118,
+      "exit_price": 602.859404,
+      "return_pct": -2.087614,
+      "exit_reason": "signal"
+    },
+    {
+      "symbol": "SPY",
+      "signal_date": "2026-04-07T00:00:00-04:00",
+      "entry_date": "2026-04-07T00:00:00-04:00",
+      "exit_date": "2026-06-08T00:00:00-04:00",
+      "entry_price": 656.7813299999999,
+      "exit_price": 743.211328,
+      "return_pct": 13.159631,
+      "exit_reason": "signal"
+    },
+    {
+      "symbol": "QQQ",
+      "signal_date": "2026-06-16T00:00:00-04:00",
+      "entry_date": "2026-06-16T00:00:00-04:00",
+      "exit_date": "2026-06-18T00:00:00-04:00",
+      "entry_price": 742.39845,
+      "exit_price": 737.0525600000001,
+      "return_pct": -0.720084,
+      "exit_reason": "signal"
+    },
+    {
+      "symbol": "QQQ",
+      "signal_date": "2026-07-01T00:00:00-04:00",
+      "entry_date": "2026-07-01T00:00:00-04:00",
+      "exit_date": "2026-07-06T00:00:00-04:00",
+      "entry_price": 729.3358380000001,
+      "exit_price": 719.7860139999999,
+      "return_pct": -1.309386,
+      "exit_reason": "signal"
+    },
+    {
+      "symbol": "SPY",
+      "signal_date": "2026-07-07T00:00:00-04:00",
+      "entry_date": "2026-07-07T00:00:00-04:00",
+      "exit_date": "2026-07-20T00:00:00-04:00",
+      "entry_price": 750.370044,
+      "exit_price": 746.910588,
+      "return_pct": -0.461033,
+      "exit_reason": "signal"
+    },
+    {
+      "symbol": "SPY",
+      "signal_date": "2026-08-03T00:00:00-04:00",
+      "entry_date": "2026-08-03T00:00:00-04:00",
+      "exit_date": "2026-08-25T00:00:00-04:00",
+      "entry_price": 749.5898880000001,
+      "exit_price": 766.006768,
+      "return_pct": 2.190115,
+      "exit_reason": "signal"
+    },
+    {
+      "symbol": "QQQ",
+      "signal_date": "2026-08-28T00:00:00-04:00",
+      "entry_date": "2026-08-28T00:00:00-04:00",
+      "exit_date": "2026-08-31T00:00:00-04:00",
+      "entry_price": 719.883948,
+      "exit_price": 715.026966,
+      "return_pct": -0.67469,
+      "exit_reason": "signal"
+    },
+    {
+      "symbol": "SPY",
+      "signal_date": "2026-09-04T00:00:00-04:00",
+      "entry_date": "2026-09-04T00:00:00-04:00",
+      "exit_date": "2026-09-09T00:00:00-04:00",
+      "entry_price": 772.164402,
+      "exit_price": 763.927184,
+      "return_pct": -1.06677,
+      "exit_reason": "signal"
+    },
+    {
+      "symbol": "QQQ",
+      "signal_date": "2026-09-22T00:00:00-04:00",
+      "entry_date": "2026-09-22T00:00:00-04:00",
+      "exit_date": "2026-10-15T00:00:00-04:00",
+      "entry_price": 741.128196,
+      "exit_price": 718.40629,
+      "return_pct": -3.065854,
+      "exit_reason": "signal"
+    },
+    {
+      "symbol": "SPY",
+      "signal_date": "2026-10-22T00:00:00-04:00",
+      "entry_date": "2026-10-22T00:00:00-04:00",
+      "exit_date": "2026-10-23T00:00:00-04:00",
+      "entry_price": 766.523274,
+      "exit_price": 759.7440207999999,
+      "return_pct": -0.884416,
+      "exit_reason": "signal"
+    },
+    {
+      "symbol": "IWM",
+      "signal_date": "2026-10-29T00:00:00-04:00",
+      "entry_date": "2026-10-29T00:00:00-04:00",
+      "exit_date": "2026-11-06T00:00:00-05:00",
+      "entry_price": 282.46648200000004,
+      "exit_price": 271.925604,
+      "return_pct": -3.731727,
+      "exit_reason": "signal"
+    }
+  ],
+  "mootrade_trades": [
+    {
+      "symbol": "QQQ",
+      "signal_date": "2025-06-27",
+      "entry_date": "2025-06-30",
+      "exit_date": "2025-08-04",
+      "entry_price": 551.370252,
+      "exit_price": 558.93819,
+      "return_pct": 1.372569,
+      "exit_reason": null
+    },
+    {
+      "symbol": "QQQ",
+      "signal_date": "2025-08-07",
+      "entry_date": "2025-08-08",
+      "exit_date": "2025-08-20",
+      "entry_price": 570.56409,
+      "exit_price": 568.216334,
+      "return_pct": -0.41148,
+      "exit_reason": null
+    },
+    {
+      "symbol": "IWM",
+      "signal_date": "2025-08-22",
+      "entry_date": "2025-08-25",
+      "exit_date": "2025-10-13",
+      "entry_price": 234.186828,
+      "exit_price": 241.781634,
+      "return_pct": 3.243054,
+      "exit_reason": null
+    },
+    {
+      "symbol": "IWM",
+      "signal_date": "2025-10-15",
+      "entry_date": "2025-10-16",
+      "exit_date": "2025-10-20",
+      "entry_price": 251.020194,
+      "exit_price": 246.570676,
+      "return_pct": -1.772574,
+      "exit_reason": null
+    },
+    {
+      "symbol": "QQQ",
+      "signal_date": "2025-10-20",
+      "entry_date": "2025-10-21",
+      "exit_date": "2025-11-07",
+      "entry_price": 611.762328,
+      "exit_price": 608.188338,
+      "return_pct": -0.584212,
+      "exit_reason": null
+    },
+    {
+      "symbol": "SPY",
+      "signal_date": "2025-11-11",
+      "entry_date": "2025-11-12",
+      "exit_date": "2025-11-14",
+      "entry_price": 684.926958,
+      "exit_price": 665.246924,
+      "return_pct": -2.873304,
+      "exit_reason": null
+    },
+    {
+      "symbol": "IWM",
+      "signal_date": "2025-11-25",
+      "entry_date": "2025-11-26",
+      "exit_date": "2025-12-30",
+      "entry_price": 245.09901,
+      "exit_price": 249.920006,
+      "return_pct": 1.966959,
+      "exit_reason": null
+    },
+    {
+      "symbol": "SPY",
+      "signal_date": "2025-12-30",
+      "entry_date": "2025-12-31",
+      "exit_date": "2026-01-02",
+      "entry_price": 687.277428,
+      "exit_price": 685.572858,
+      "return_pct": -0.248018,
+      "exit_reason": null
+    },
+    {
+      "symbol": "IWM",
+      "signal_date": "2026-01-05",
+      "entry_date": "2026-01-06",
+      "exit_date": "2026-02-02",
+      "entry_price": 252.290448,
+      "exit_price": 258.428304,
+      "return_pct": 2.432853,
+      "exit_reason": null
+    },
+    {
+      "symbol": "SPY",
+      "signal_date": "2026-02-02",
+      "entry_date": "2026-02-03",
+      "exit_date": "2026-02-04",
+      "entry_price": 696.349242,
+      "exit_price": 690.21193,
+      "return_pct": -0.881355,
+      "exit_reason": null
+    },
+    {
+      "symbol": "IWM",
+      "signal_date": "2026-02-06",
+      "entry_date": "2026-02-09",
+      "exit_date": "2026-02-13",
+      "entry_price": 264.8929679989998,
+      "exit_price": 260.54788,
+      "return_pct": -1.640318,
+      "exit_reason": null
+    },
+    {
+      "symbol": "IWM",
+      "signal_date": "2026-02-20",
+      "entry_date": "2026-02-23",
+      "exit_date": "2026-02-24",
+      "entry_price": 263.4526799989998,
+      "exit_price": 260.3479199990002,
+      "return_pct": -1.178489,
+      "exit_reason": null
+    },
+    {
+      "symbol": "QQQ",
+      "signal_date": "2026-02-25",
+      "entry_date": "2026-02-26",
+      "exit_date": "2026-02-27",
+      "entry_price": 615.713118,
+      "exit_price": 602.859404,
+      "return_pct": -2.087614,
+      "exit_reason": null
+    },
+    {
+      "symbol": "SPY",
+      "signal_date": "2026-04-06",
+      "entry_date": "2026-04-07",
+      "exit_date": "2026-06-08",
+      "entry_price": 656.78133,
+      "exit_price": 743.211328,
+      "return_pct": 13.159631,
+      "exit_reason": null
+    },
+    {
+      "symbol": "QQQ",
+      "signal_date": "2026-06-15",
+      "entry_date": "2026-06-16",
+      "exit_date": "2026-06-18",
+      "entry_price": 742.39845,
+      "exit_price": 737.05256,
+      "return_pct": -0.720084,
+      "exit_reason": null
+    },
+    {
+      "symbol": "QQQ",
+      "signal_date": "2026-06-30",
+      "entry_date": "2026-07-01",
+      "exit_date": "2026-07-06",
+      "entry_price": 729.335838,
+      "exit_price": 719.786014,
+      "return_pct": -1.309386,
+      "exit_reason": null
+    },
+    {
+      "symbol": "SPY",
+      "signal_date": "2026-07-06",
+      "entry_date": "2026-07-07",
+      "exit_date": "2026-07-20",
+      "entry_price": 750.370044,
+      "exit_price": 746.910588,
+      "return_pct": -0.461033,
+      "exit_reason": null
+    },
+    {
+      "symbol": "SPY",
+      "signal_date": "2026-07-31",
+      "entry_date": "2026-08-03",
+      "exit_date": "2026-08-25",
+      "entry_price": 749.589888,
+      "exit_price": 766.006768,
+      "return_pct": 2.190115,
+      "exit_reason": null
+    },
+    {
+      "symbol": "QQQ",
+      "signal_date": "2026-08-27",
+      "entry_date": "2026-08-28",
+      "exit_date": "2026-08-31",
+      "entry_price": 719.883948,
+      "exit_price": 715.026966,
+      "return_pct": -0.67469,
+      "exit_reason": null
+    },
+    {
+      "symbol": "SPY",
+      "signal_date": "2026-09-03",
+      "entry_date": "2026-09-04",
+      "exit_date": "2026-09-09",
+      "entry_price": 772.164402,
+      "exit_price": 763.927184,
+      "return_pct": -1.06677,
+      "exit_reason": null
+    },
+    {
+      "symbol": "QQQ",
+      "signal_date": "2026-09-21",
+      "entry_date": "2026-09-22",
+      "exit_date": "2026-10-15",
+      "entry_price": 741.128196,
+      "exit_price": 718.40629,
+      "return_pct": -3.065854,
+      "exit_reason": null
+    },
+    {
+      "symbol": "SPY",
+      "signal_date": "2026-10-21",
+      "entry_date": "2026-10-22",
+      "exit_date": "2026-10-23",
+      "entry_price": 766.523274,
+      "exit_price": 759.7440208,
+      "return_pct": -0.884416,
+      "exit_reason": null
+    },
+    {
+      "symbol": "IWM",
+      "signal_date": "2026-10-28",
+      "entry_date": "2026-10-29",
+      "exit_date": "2026-11-06",
+      "entry_price": 282.466482,
+      "exit_price": 271.925604,
+      "return_pct": -3.731727,
+      "exit_reason": null
+    }
+  ],
+  "limitations": [
+    "The full Vibe runner is not used; the real GlobalEquityEngine is invoked in-process.",
+    "The external benchmark resolver is stubbed to None, so Vibe reports its equal-weight basket benchmark and makes no network call.",
+    "US fractional-share sizing was overridden to whole shares to match MooTrade; this is a POC subclass, not upstream default behaviour.",
+    "Vibe force-liquidates the open position at the final bar; MooTrade marks it at the final close without an exit cost.",
+    "The fixture covers 370 sessions in one regime; this is not out-of-sample or deployment evidence.",
+    "No broker snapshot, order, RiskGate or scheduler path is used."
+  ]
+}

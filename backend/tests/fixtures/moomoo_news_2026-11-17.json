@@ -1,0 +1,1551 @@
+{
+  "schema_version": "1",
+  "source": {
+    "provider": "Moomoo MCP read-only session",
+    "tool": "news_search",
+    "queries": {
+      "SPY": [
+        "SPY ETF",
+        "S&P 500"
+      ],
+      "QQQ": [
+        "QQQ ETF",
+        "Nasdaq 100"
+      ],
+      "IWM": [
+        "IWM ETF",
+        "Russell 2000"
+      ]
+    },
+    "arguments": {
+      "lang": "en",
+      "news_type": "POST",
+      "page_size": 50,
+      "sort_type": "TIME"
+    },
+    "fetched_at_utc": "2026-11-17T06:35:00Z",
+    "note": "Relevant headlines only; provider content and account data intentionally omitted. Publish timestamps are the provider publish_time field."
+  },
+  "items": [
+    {
+      "symbol": "IWM",
+      "news_id": "post:68723430",
+      "published_at_utc": "2026-02-10T21:36:00Z",
+      "publish_time_ms": 1770759360000,
+      "title": "IWM ETF Falls 0.3%",
+      "abstract": "This article was automatically generated using Dow Jones technology. Shares of iShares Russell 2000 ETF slipped 0.3% to $266.16 Tuesday on what proved to be an overall poor trading session for the U.",
+      "source": "道琼斯",
+      "url": "https://news.futunn.com/post/68723430"
+    },
+    {
+      "symbol": "IWM",
+      "news_id": "post:68857785",
+      "published_at_utc": "2026-02-12T21:36:00Z",
+      "publish_time_ms": 1770932160000,
+      "title": "IWM ETF Declines 2.0%",
+      "abstract": "This article was automatically generated using Dow Jones technology. Shares of iShares Russell 2000 ETF dropped 2.0% to $259.54 Thursday on what proved to be an overall unfavorable trading session",
+      "source": "道琼斯",
+      "url": "https://news.futunn.com/post/68857785"
+    },
+    {
+      "symbol": "IWM",
+      "news_id": "post:69321659",
+      "published_at_utc": "2026-02-26T21:36:00Z",
+      "publish_time_ms": 1772141760000,
+      "title": "IWM ETF Climbs 0.5%",
+      "abstract": "This article was automatically generated using Dow Jones technology. Shares of iShares Russell 2000 ETF advanced 0.5% to $265.99 Thursday on what proved to be an overall poor trading session for the",
+      "source": "道琼斯",
+      "url": "https://news.futunn.com/post/69321659"
+    },
+    {
+      "symbol": "IWM",
+      "news_id": "post:69387911",
+      "published_at_utc": "2026-02-27T21:36:00Z",
+      "publish_time_ms": 1772228160000,
+      "title": "IWM ETF Falls 1.7%",
+      "abstract": "This article was automatically generated using Dow Jones technology. Shares of iShares Russell 2000 ETF dropped 1.7% to $261.41 Friday on what proved to be an overall negative trading session for",
+      "source": "道琼斯",
+      "url": "https://news.futunn.com/post/69387911"
+    },
+    {
+      "symbol": "IWM",
+      "news_id": "post:69683695",
+      "published_at_utc": "2026-03-05T21:36:00Z",
+      "publish_time_ms": 1772746560000,
+      "title": "IWM ETF Falls 1.9%",
+      "abstract": "This article was automatically generated using Dow Jones technology. Shares of iShares Russell 2000 ETF slid 1.9% to $256.76 Thursday on what proved to be an overall negative trading session for the",
+      "source": "道琼斯",
+      "url": "https://news.futunn.com/post/69683695"
+    },
+    {
+      "symbol": "IWM",
+      "news_id": "post:69743929",
+      "published_at_utc": "2026-03-06T21:37:00Z",
+      "publish_time_ms": 1772833020000,
+      "title": "IWM ETF Declines 2.3%",
+      "abstract": "This article was automatically generated using Dow Jones technology. Shares of iShares Russell 2000 ETF slipped 2.3% to $250.89 Friday on what proved to be an overall unfavorable trading session for",
+      "source": "道琼斯",
+      "url": "https://news.futunn.com/post/69743929"
+    },
+    {
+      "symbol": "IWM",
+      "news_id": "post:69822912",
+      "published_at_utc": "2026-03-09T20:37:00Z",
+      "publish_time_ms": 1773088620000,
+      "title": "IWM ETF Gains 1.1%",
+      "abstract": "This article was automatically generated using Dow Jones technology. Shares of iShares Russell 2000 ETF rose 1.1% to $253.62 Monday on what proved to be an overall positive trading session for the U.",
+      "source": "道琼斯",
+      "url": "https://news.futunn.com/post/69822912"
+    },
+    {
+      "symbol": "IWM",
+      "news_id": "post:69882119",
+      "published_at_utc": "2026-03-10T19:19:23Z",
+      "publish_time_ms": 1773170363000,
+      "title": "IWM ETF在关键交易信号后上涨2%",
+      "abstract": "iShares Russell 2000 ETF（纽约证券交易所代码：IWM）出现了一个显著的资金流入警报，这是一个被重视订单流分析的交易员密切追踪的关键看涨指标。",
+      "source": "Benzinga",
+      "url": "https://news.futunn.com/post/69882119"
+    },
+    {
+      "symbol": "IWM",
+      "news_id": "post:69944223",
+      "published_at_utc": "2026-03-11T20:36:00Z",
+      "publish_time_ms": 1773261360000,
+      "title": "IWM ETF Declines 0.2%",
+      "abstract": "This article was automatically generated using Dow Jones technology. Shares of iShares Russell 2000 ETF slipped 0.2% to $252.85 Wednesday on what proved to be an overall unfavorable trading session",
+      "source": "道琼斯",
+      "url": "https://news.futunn.com/post/69944223"
+    },
+    {
+      "symbol": "IWM",
+      "news_id": "post:70621885",
+      "published_at_utc": "2026-03-25T20:37:00Z",
+      "publish_time_ms": 1774471020000,
+      "title": "IWM ETF Rises 1.2%",
+      "abstract": "This article was automatically generated using Dow Jones technology. Shares of iShares Russell 2000 ETF advanced 1.2% to $251.82 Wednesday on what proved to be an overall favorable trading session",
+      "source": "道琼斯",
+      "url": "https://news.futunn.com/post/70621885"
+    },
+    {
+      "symbol": "IWM",
+      "news_id": "post:70691162",
+      "published_at_utc": "2026-03-26T20:37:00Z",
+      "publish_time_ms": 1774557420000,
+      "title": "IWM ETF Declines 1.7%",
+      "abstract": "This article was automatically generated using Dow Jones technology. Shares of iShares Russell 2000 ETF slid 1.7% to $247.44 Thursday on what proved to be an overall unfavorable trading session for",
+      "source": "道琼斯",
+      "url": "https://news.futunn.com/post/70691162"
+    },
+    {
+      "symbol": "IWM",
+      "news_id": "post:71134550",
+      "published_at_utc": "2026-04-06T20:36:00Z",
+      "publish_time_ms": 1775507760000,
+      "title": "IWM ETF Rises 0.4%",
+      "abstract": "This article was automatically generated using Dow Jones technology. Shares of iShares Russell 2000 ETF advanced 0.4% to $252.36 Monday on what proved to be an overall positive trading session for",
+      "source": "道琼斯",
+      "url": "https://news.futunn.com/post/71134550"
+    },
+    {
+      "symbol": "IWM",
+      "news_id": "post:71185284",
+      "published_at_utc": "2026-04-07T20:36:00Z",
+      "publish_time_ms": 1775594160000,
+      "title": "IWM ETF Climbs 0.2%",
+      "abstract": "This article was automatically generated using Dow Jones technology. Shares of iShares Russell 2000 ETF advanced 0.2% to $252.91 Tuesday on what proved to be an overall positive trading session for",
+      "source": "道琼斯",
+      "url": "https://news.futunn.com/post/71185284"
+    },
+    {
+      "symbol": "IWM",
+      "news_id": "post:71304763",
+      "published_at_utc": "2026-04-09T20:37:00Z",
+      "publish_time_ms": 1775767020000,
+      "title": "IWM ETF Gains 0.6%",
+      "abstract": "This article was automatically generated using Dow Jones technology. Shares of iShares Russell 2000 ETF advanced 0.6% to $261.96 Thursday on what proved to be an overall favorable trading session",
+      "source": "道琼斯",
+      "url": "https://news.futunn.com/post/71304763"
+    },
+    {
+      "symbol": "IWM",
+      "news_id": "post:71619627",
+      "published_at_utc": "2026-04-16T20:36:00Z",
+      "publish_time_ms": 1776371760000,
+      "title": "IWM ETF Gains 0.2%",
+      "abstract": "This article was automatically generated using Dow Jones technology. Shares of iShares Russell 2000 ETF rose 0.2% to $269.95 Thursday on what proved to be an overall positive trading session for the",
+      "source": "道琼斯",
+      "url": "https://news.futunn.com/post/71619627"
+    },
+    {
+      "symbol": "IWM",
+      "news_id": "post:71823064",
+      "published_at_utc": "2026-04-21T20:37:00Z",
+      "publish_time_ms": 1776803820000,
+      "title": "IWM ETF Declines 1.0%",
+      "abstract": "This article was automatically generated using Dow Jones technology. Shares of iShares Russell 2000 ETF shed 1.0% to $274.51 Tuesday on what proved to be an overall unfavorable trading session for",
+      "source": "道琼斯",
+      "url": "https://news.futunn.com/post/71823064"
+    },
+    {
+      "symbol": "IWM",
+      "news_id": "post:71895274",
+      "published_at_utc": "2026-04-22T21:41:00Z",
+      "publish_time_ms": 1776894060000,
+      "title": "IWM ETF Gains 0.7%",
+      "abstract": "This article was automatically generated using Dow Jones technology. Shares of iShares Russell 2000 ETF advanced 0.7% to $276.48 Wednesday on what proved to be an overall positive trading session",
+      "source": "道琼斯",
+      "url": "https://news.futunn.com/post/71895274"
+    },
+    {
+      "symbol": "IWM",
+      "news_id": "post:72227602",
+      "published_at_utc": "2026-04-28T20:36:00Z",
+      "publish_time_ms": 1777408560000,
+      "title": "IWM ETF Falls 1.2%",
+      "abstract": "This article was automatically generated using Dow Jones technology. Shares of iShares Russell 2000 ETF shed 1.2% to $273.91 Tuesday on what proved to be an overall poor trading session for the U.S.",
+      "source": "道琼斯",
+      "url": "https://news.futunn.com/post/72227602"
+    },
+    {
+      "symbol": "IWM",
+      "news_id": "post:72420412",
+      "published_at_utc": "2026-04-30T20:36:00Z",
+      "publish_time_ms": 1777581360000,
+      "title": "IWM ETF Rises 2.2%",
+      "abstract": "This article was automatically generated using Dow Jones technology. Shares of iShares Russell 2000 ETF advanced 2.2% to $277.97 Thursday on what proved to be an overall positive trading session for",
+      "source": "道琼斯",
+      "url": "https://news.futunn.com/post/72420412"
+    },
+    {
+      "symbol": "IWM",
+      "news_id": "post:72638186",
+      "published_at_utc": "2026-05-06T20:36:00Z",
+      "publish_time_ms": 1778099760000,
+      "title": "IWM ETF Climbs 1.5%",
+      "abstract": "This article was automatically generated using Dow Jones technology. Shares of iShares Russell 2000 ETF advanced 1.5% to $286.80 Wednesday on what proved to be an overall positive trading session",
+      "source": "道琼斯",
+      "url": "https://news.futunn.com/post/72638186"
+    },
+    {
+      "symbol": "IWM",
+      "news_id": "post:72724554",
+      "published_at_utc": "2026-05-07T20:36:00Z",
+      "publish_time_ms": 1778186160000,
+      "title": "IWM ETF Declines 1.6%",
+      "abstract": "This article was automatically generated using Dow Jones technology. Shares of iShares Russell 2000 ETF slid 1.6% to $282.26 Thursday on what proved to be an overall unfavorable trading session for",
+      "source": "道琼斯",
+      "url": "https://news.futunn.com/post/72724554"
+    },
+    {
+      "symbol": "IWM",
+      "news_id": "post:73201509",
+      "published_at_utc": "2026-05-15T20:36:00Z",
+      "publish_time_ms": 1778877360000,
+      "title": "IWM ETF Declines 2.4%",
+      "abstract": "This article was automatically generated using Dow Jones technology. Shares of iShares Russell 2000 ETF slid 2.4% to $277.60 Friday on what proved to be an overall negative trading session for the U.",
+      "source": "道琼斯",
+      "url": "https://news.futunn.com/post/73201509"
+    },
+    {
+      "symbol": "IWM",
+      "news_id": "post:73544466",
+      "published_at_utc": "2026-05-22T20:37:00Z",
+      "publish_time_ms": 1779482220000,
+      "title": "IWM ETF Rises 0.9%",
+      "abstract": "This article was automatically generated using Dow Jones technology. Shares of iShares Russell 2000 ETF rose 0.9% to $285.12 Friday on what proved to be an overall positive trading session for the U.",
+      "source": "道琼斯",
+      "url": "https://news.futunn.com/post/73544466"
+    },
+    {
+      "symbol": "IWM",
+      "news_id": "post:73735328",
+      "published_at_utc": "2026-05-27T20:36:00Z",
+      "publish_time_ms": 1779914160000,
+      "title": "IWM ETF Closes Flat",
+      "abstract": "This article was automatically generated using Dow Jones technology. Shares of iShares Russell 2000 ETF were flat  at $290.37 Wednesday on what proved to be an overall mediocre trading session for",
+      "source": "道琼斯",
+      "url": "https://news.futunn.com/post/73735328"
+    },
+    {
+      "symbol": "IWM",
+      "news_id": "post:73803228",
+      "published_at_utc": "2026-05-28T20:37:00Z",
+      "publish_time_ms": 1780000620000,
+      "title": "IWM ETF Climbs 0.6%",
+      "abstract": "This article was automatically generated using Dow Jones technology. Shares of iShares Russell 2000 ETF advanced 0.6% to $292.03 Thursday on what proved to be an overall positive trading session for",
+      "source": "道琼斯",
+      "url": "https://news.futunn.com/post/73803228"
+    },
+    {
+      "symbol": "IWM",
+      "news_id": "post:73954927",
+      "published_at_utc": "2026-06-01T20:37:00Z",
+      "publish_time_ms": 1780346220000,
+      "title": "IWM ETF Falls 0.5%",
+      "abstract": "This article was automatically generated using Dow Jones technology. Shares of iShares Russell 2000 ETF shed 0.5% to $288.98 Monday on what proved to be an overall favorable trading session for the U.",
+      "source": "道琼斯",
+      "url": "https://news.futunn.com/post/73954927"
+    },
+    {
+      "symbol": "IWM",
+      "news_id": "post:74022974",
+      "published_at_utc": "2026-06-02T20:36:00Z",
+      "publish_time_ms": 1780432560000,
+      "title": "IWM ETF Gains 0.9%",
+      "abstract": "This article was automatically generated using Dow Jones technology. Shares of iShares Russell 2000 ETF rose 0.9% to $291.66 Tuesday on what proved to be an overall positive trading session for the U.",
+      "source": "道琼斯",
+      "url": "https://news.futunn.com/post/74022974"
+    },
+    {
+      "symbol": "IWM",
+      "news_id": "post:74211910",
+      "published_at_utc": "2026-06-05T20:37:00Z",
+      "publish_time_ms": 1780691820000,
+      "title": "IWM ETF Falls 3.5%",
+      "abstract": "This article was automatically generated using Dow Jones technology. Shares of iShares Russell 2000 ETF slid 3.5% to $281.65 Friday on what proved to be an overall poor trading session for the U.S.",
+      "source": "道琼斯",
+      "url": "https://news.futunn.com/post/74211910"
+    },
+    {
+      "symbol": "IWM",
+      "news_id": "post:74480033",
+      "published_at_utc": "2026-06-11T20:37:00Z",
+      "publish_time_ms": 1781210220000,
+      "title": "IWM ETF Gains 3.0%",
+      "abstract": "This article was automatically generated using Dow Jones technology. Shares of iShares Russell 2000 ETF rose 3.0% to $290.41 Thursday on what proved to be an overall favorable trading session for",
+      "source": "道琼斯",
+      "url": "https://news.futunn.com/post/74480033"
+    },
+    {
+      "symbol": "IWM",
+      "news_id": "post:74978887",
+      "published_at_utc": "2026-06-23T20:36:00Z",
+      "publish_time_ms": 1782246960000,
+      "title": "IWM ETF Falls 1.0%",
+      "abstract": "This article was automatically generated using Dow Jones technology. Shares of iShares Russell 2000 ETF shed 1.0% to $295.32 Tuesday on what proved to be an overall negative trading session for the U.",
+      "source": "道琼斯",
+      "url": "https://news.futunn.com/post/74978887"
+    },
+    {
+      "symbol": "IWM",
+      "news_id": "post:75116394",
+      "published_at_utc": "2026-06-25T20:37:00Z",
+      "publish_time_ms": 1782419820000,
+      "title": "IWM ETF Climbs 0.7%",
+      "abstract": "This article was automatically generated using Dow Jones technology. Shares of iShares Russell 2000 ETF advanced 0.7% to $298.91 Thursday on what proved to be an overall mediocre trading session for",
+      "source": "道琼斯",
+      "url": "https://news.futunn.com/post/75116394"
+    },
+    {
+      "symbol": "IWM",
+      "news_id": "post:75346287",
+      "published_at_utc": "2026-06-30T20:37:00Z",
+      "publish_time_ms": 1782851820000,
+      "title": "IWM ETF Gains 0.5%",
+      "abstract": "This article was automatically generated using Dow Jones technology. Shares of iShares Russell 2000 ETF rose 0.5% to $300.45 Tuesday on what proved to be an overall favorable trading session for the",
+      "source": "道琼斯",
+      "url": "https://news.futunn.com/post/75346287"
+    },
+    {
+      "symbol": "IWM",
+      "news_id": "post:75409842",
+      "published_at_utc": "2026-07-01T20:37:00Z",
+      "publish_time_ms": 1782938220000,
+      "title": "IWM ETF Falls 0.4%",
+      "abstract": "This article was automatically generated using Dow Jones technology. Shares of iShares Russell 2000 ETF slipped 0.4% to $299.32 Wednesday on what proved to be an overall unfavorable trading session",
+      "source": "道琼斯",
+      "url": "https://news.futunn.com/post/75409842"
+    },
+    {
+      "symbol": "IWM",
+      "news_id": "post:75603579",
+      "published_at_utc": "2026-07-06T20:36:00Z",
+      "publish_time_ms": 1783370160000,
+      "title": "IWM ETF Gains 0.4%",
+      "abstract": "This article was automatically generated using Dow Jones technology. Shares of iShares Russell 2000 ETF advanced 0.4% to $298.90 Monday on what proved to be an overall positive trading session for",
+      "source": "道琼斯",
+      "url": "https://news.futunn.com/post/75603579"
+    },
+    {
+      "symbol": "IWM",
+      "news_id": "post:75668241",
+      "published_at_utc": "2026-07-07T20:37:00Z",
+      "publish_time_ms": 1783456620000,
+      "title": "IWM ETF Falls 0.9%",
+      "abstract": "This article was automatically generated using Dow Jones technology. Shares of iShares Russell 2000 ETF dropped 0.9% to $296.19 Tuesday on what proved to be an overall unfavorable trading session",
+      "source": "道琼斯",
+      "url": "https://news.futunn.com/post/75668241"
+    },
+    {
+      "symbol": "IWM",
+      "news_id": "post:75943934",
+      "published_at_utc": "2026-07-13T20:36:00Z",
+      "publish_time_ms": 1783974960000,
+      "title": "IWM ETF Falls 0.8%",
+      "abstract": "This article was automatically generated using Dow Jones technology. Shares of iShares Russell 2000 ETF dropped 0.8% to $293.48 Monday on what proved to be an overall poor trading session for the U.S.",
+      "source": "道琼斯",
+      "url": "https://news.futunn.com/post/75943934"
+    },
+    {
+      "symbol": "IWM",
+      "news_id": "post:76091280",
+      "published_at_utc": "2026-07-15T20:37:00Z",
+      "publish_time_ms": 1784147820000,
+      "title": "IWM ETF Climbs 0.4%",
+      "abstract": "This article was automatically generated using Dow Jones technology. Shares of iShares Russell 2000 ETF advanced 0.4% to $295.77 Wednesday on what proved to be an overall positive trading session",
+      "source": "道琼斯",
+      "url": "https://news.futunn.com/post/76091280"
+    },
+    {
+      "symbol": "IWM",
+      "news_id": "post:76156070",
+      "published_at_utc": "2026-07-16T20:36:00Z",
+      "publish_time_ms": 1784234160000,
+      "title": "IWM ETF Falls 0.1%",
+      "abstract": "This article was automatically generated using Dow Jones technology. Shares of iShares Russell 2000 ETF dropped 0.1% to $295.59 Thursday on what proved to be an overall poor trading session for the U.",
+      "source": "道琼斯",
+      "url": "https://news.futunn.com/post/76156070"
+    },
+    {
+      "symbol": "IWM",
+      "news_id": "post:76441594",
+      "published_at_utc": "2026-07-22T20:36:00Z",
+      "publish_time_ms": 1784752560000,
+      "title": "IWM ETF Declines 0.9%",
+      "abstract": "This article was automatically generated using Dow Jones technology. Shares of iShares Russell 2000 ETF slid 0.9% to $293.79 Wednesday on what proved to be an overall negative trading session for",
+      "source": "道琼斯",
+      "url": "https://news.futunn.com/post/76441594"
+    },
+    {
+      "symbol": "IWM",
+      "news_id": "post:77044788",
+      "published_at_utc": "2026-08-03T20:36:00Z",
+      "publish_time_ms": 1785789360000,
+      "title": "IWM ETF Climbs 1.7%",
+      "abstract": "This article was automatically generated using Dow Jones technology. Shares of iShares Russell 2000 ETF advanced 1.7% to $296.22 Monday on what proved to be an overall positive trading session for",
+      "source": "道琼斯",
+      "url": "https://news.futunn.com/post/77044788"
+    },
+    {
+      "symbol": "IWM",
+      "news_id": "post:77197701",
+      "published_at_utc": "2026-08-05T20:36:00Z",
+      "publish_time_ms": 1785962160000,
+      "title": "IWM ETF Declines 0.6%",
+      "abstract": "This article was automatically generated using Dow Jones technology. Shares of iShares Russell 2000 ETF shed 0.6% to $299.77 Wednesday on what proved to be an overall negative trading session for",
+      "source": "道琼斯",
+      "url": "https://news.futunn.com/post/77197701"
+    },
+    {
+      "symbol": "IWM",
+      "news_id": "post:77357916",
+      "published_at_utc": "2026-08-07T20:36:00Z",
+      "publish_time_ms": 1786134960000,
+      "title": "IWM ETF Rises 1.1%",
+      "abstract": "This article was automatically generated using Dow Jones technology. Shares of iShares Russell 2000 ETF rose 1.1% to $301.56 Friday on what proved to be an overall favorable trading session for the U.",
+      "source": "道琼斯",
+      "url": "https://news.futunn.com/post/77357916"
+    },
+    {
+      "symbol": "IWM",
+      "news_id": "post:77509518",
+      "published_at_utc": "2026-08-11T20:37:00Z",
+      "publish_time_ms": 1786480620000,
+      "title": "IWM ETF Climbs 0.3%",
+      "abstract": "This article was automatically generated using Dow Jones technology. Shares of iShares Russell 2000 ETF rose 0.3% to $300.99 Tuesday on what proved to be an overall unfavorable trading session for",
+      "source": "道琼斯",
+      "url": "https://news.futunn.com/post/77509518"
+    },
+    {
+      "symbol": "IWM",
+      "news_id": "post:77577331",
+      "published_at_utc": "2026-08-12T20:37:00Z",
+      "publish_time_ms": 1786567020000,
+      "title": "IWM ETF Rises 0.6%",
+      "abstract": "This article was automatically generated using Dow Jones technology. Shares of iShares Russell 2000 ETF rose 0.6% to $302.71 Wednesday on what proved to be an overall favorable trading session for",
+      "source": "道琼斯",
+      "url": "https://news.futunn.com/post/77577331"
+    },
+    {
+      "symbol": "IWM",
+      "news_id": "post:77716076",
+      "published_at_utc": "2026-08-14T20:36:00Z",
+      "publish_time_ms": 1786739760000,
+      "title": "IWM ETF Rises 0.5%",
+      "abstract": "This article was automatically generated using Dow Jones technology. Shares of iShares Russell 2000 ETF rose 0.5% to $305.09 Friday on what proved to be an overall unfavorable trading session for",
+      "source": "道琼斯",
+      "url": "https://news.futunn.com/post/77716076"
+    },
+    {
+      "symbol": "IWM",
+      "news_id": "post:77784880",
+      "published_at_utc": "2026-08-17T13:05:38Z",
+      "publish_time_ms": 1786971938000,
+      "title": "快讯：SGOV、IWM、SOXX引领$32亿 ETF单日资金流入潮，GLD居赎回榜首",
+      "abstract": "美国股票ETF以$19.3亿的净流入领跑当日资金流，而美国固定收益ETF在周五又吸引了$9.1159亿的资金流入。国际股票ETF增加了$4.3042亿，推动",
+      "source": "Benzinga",
+      "url": "https://news.futunn.com/post/77784880"
+    },
+    {
+      "symbol": "IWM",
+      "news_id": "post:77863396",
+      "published_at_utc": "2026-08-18T20:36:00Z",
+      "publish_time_ms": 1787085360000,
+      "title": "IWM ETF Declines 1.3%",
+      "abstract": "This article was automatically generated using Dow Jones technology. Shares of iShares Russell 2000 ETF dropped 1.3% to $300.23 Tuesday on what proved to be an overall poor trading session for the U.",
+      "source": "道琼斯",
+      "url": "https://news.futunn.com/post/77863396"
+    },
+    {
+      "symbol": "IWM",
+      "news_id": "1000291066",
+      "published_at_utc": "2026-09-28T10:40:01Z",
+      "publish_time_ms": 1790592001000,
+      "title": "Nvidia's $5.4 Trillion Market Cap 'Seems Crazy' Next to $3.5 Trillion Russell 2000 Total, Says Charlie Bilello",
+      "abstract": "Nvidia Corp.'s (NASDAQ:NVDA) total market capitalization reached $5.4 trillion on Sept. 25, surpassing the combined $3.5 trillion value of the entire Russell 2000 index. Charlie Bilello of Creative",
+      "source": "Benzinga",
+      "url": "https://news.futunn.com/post/1000291066"
+    },
+    {
+      "symbol": "IWM",
+      "news_id": "1000305715",
+      "published_at_utc": "2026-09-28T14:54:51Z",
+      "publish_time_ms": 1790607291000,
+      "title": "Nvidia Tops $5.4T, Outvalues Russell 2000: Michael Burry's AI Warning Raises ETF Questions",
+      "abstract": "Nvidia Corp.'s (NASDAQ:NVDA) market capitalization climbed to $5.4 trillion on Friday, putting the AI-chip leader's valuation nearly $2 trillion above the combined market value of the Russell 2000,",
+      "source": "Benzinga",
+      "url": "https://news.futunn.com/post/1000305715"
+    },
+    {
+      "symbol": "IWM",
+      "news_id": "1000666496",
+      "published_at_utc": "2026-10-07T16:53:37Z",
+      "publish_time_ms": 1791392017000,
+      "title": "Stock Market Today: S&P 500, Russell 2000 Fall as 30-Year Yield Hits 5.7%",
+      "abstract": "U.S. stocks slipped by midday Wednesday as a sharp selloff in industrials weighed on the Dow Jones and small caps, while healthcare provided a rare pocket of strength.The S&P 500 fell 0.4% to 7,788,",
+      "source": "Benzinga",
+      "url": "https://news.futunn.com/post/1000666496"
+    },
+    {
+      "symbol": "IWM",
+      "news_id": "1001160664",
+      "published_at_utc": "2026-10-14T17:33:26Z",
+      "publish_time_ms": 1791999206000,
+      "title": "Russell 2000 ETF Breaks Below Major Moving Averages and Tags a Near 5-month Low",
+      "abstract": "",
+      "source": "Seeking Alpha",
+      "url": "https://news.futunn.com/post/1001160664"
+    },
+    {
+      "symbol": "IWM",
+      "news_id": "1001174943",
+      "published_at_utc": "2026-10-14T23:05:33Z",
+      "publish_time_ms": 1792019133000,
+      "title": "通胀利率双杀，罗素2000较8月高点重挫11%，3月以来首度出现技术性回调",
+      "abstract": "通胀利率双升，罗素2000自8月高点跌11%破200日均线，录得3月以来首次技术性回调。",
+      "source": "智通财经",
+      "url": "https://news.futunn.com/post/1001174943"
+    },
+    {
+      "symbol": "IWM",
+      "news_id": "1001175511",
+      "published_at_utc": "2026-10-15T00:38:29Z",
+      "publish_time_ms": 1792024709000,
+      "title": "通胀超预期冲击小盘股，罗素2000跌近2%，确认技术性回调",
+      "abstract": "周三罗素2000指数内约五分之四的成分股录得跌幅，从8月高点计算，该指数累计跌幅已达11%，跌破200日均线，自今年3月以来首次进入技术性回调。分析指出，美国CPI超预期上行，加息概率上升，小盘股、消费类及运输类股票面临\"持续且长期的阻力\"。",
+      "source": "华尔街见闻",
+      "url": "https://news.futunn.com/post/1001175511"
+    },
+    {
+      "symbol": "IWM",
+      "news_id": "1003905648",
+      "published_at_utc": "2026-11-09T15:30:00Z",
+      "publish_time_ms": 1794238200000,
+      "title": "Cboe Expands Prediction Markets Suite to Small-Caps With Launch of Mini-Russell 2000 Index Binary Options",
+      "abstract": "CHICAGO, Nov. 9, 2026 /PRNewswire/ -- Cboe Global Markets, Inc. (Cboe: CBOE), a leading global markets operator and pioneer in equity and index derivatives, today announced the launch of mini-",
+      "source": "PR Newswire",
+      "url": "https://news.futunn.com/post/1003905648"
+    },
+    {
+      "symbol": "IWM",
+      "news_id": "1004621210",
+      "published_at_utc": "2026-11-16T13:03:44Z",
+      "publish_time_ms": 1794834224000,
+      "title": "Trulieve Cannabis Set to Join Russell 2000 and Russell 3000 Indices, Effective December 11, 2026",
+      "abstract": "Trulieve Cannabis Set to Join Russell 2000 and Russell 3000 Indices, Effective December 11, 2026",
+      "source": "Benzinga",
+      "url": "https://news.futunn.com/post/1004621210"
+    },
+    {
+      "symbol": "QQQ",
+      "news_id": "1000622916",
+      "published_at_utc": "2026-10-06T14:49:09Z",
+      "publish_time_ms": 1791298149000,
+      "title": "Invesco QQQ Trust ETF (QQQ) Is Up 23%+ YTD. What's Driving It Higher Today, Oct. 6?",
+      "abstract": "",
+      "source": "TipRanks",
+      "url": "https://news.futunn.com/post/1000622916"
+    },
+    {
+      "symbol": "QQQ",
+      "news_id": "1000915265",
+      "published_at_utc": "2026-10-12T18:57:41Z",
+      "publish_time_ms": 1791831461000,
+      "title": "Why Is Invesco QQQ Trust ETF (QQQ) Down Today, Oct. 12?",
+      "abstract": "",
+      "source": "TipRanks",
+      "url": "https://news.futunn.com/post/1000915265"
+    },
+    {
+      "symbol": "QQQ",
+      "news_id": "1001024629",
+      "published_at_utc": "2026-10-13T17:26:40Z",
+      "publish_time_ms": 1791912400000,
+      "title": "QQQ ETF Remains Under Pressure on Tuesday, October 13. Here's Why",
+      "abstract": "",
+      "source": "TipRanks",
+      "url": "https://news.futunn.com/post/1001024629"
+    },
+    {
+      "symbol": "QQQ",
+      "news_id": "1001129135",
+      "published_at_utc": "2026-10-14T12:24:05Z",
+      "publish_time_ms": 1791980645000,
+      "title": "Want To Own A Tech Stock ETF? There's More Than The QQQ",
+      "abstract": "When it comes to broad tech exposure, many investors have focused their attention on the QQQ ETF, which provides exposure to the 100 largest, non-financial, companies on the tech-heavy Nasdaq",
+      "source": "Simply Wall St",
+      "url": "https://news.futunn.com/post/1001129135"
+    },
+    {
+      "symbol": "QQQ",
+      "news_id": "1001295659",
+      "published_at_utc": "2026-10-15T18:49:07Z",
+      "publish_time_ms": 1792090147000,
+      "title": "Invesco QQQ Trust ETF: What's Dragging Down QQQ Today, October 15?",
+      "abstract": "",
+      "source": "TipRanks",
+      "url": "https://news.futunn.com/post/1001295659"
+    },
+    {
+      "symbol": "QQQ",
+      "news_id": "1002154915",
+      "published_at_utc": "2026-10-23T18:21:18Z",
+      "publish_time_ms": 1792779678000,
+      "title": "Here's Why the Invesco QQQ Trust ETF Is Inching Higher Today, October 23",
+      "abstract": "",
+      "source": "TipRanks",
+      "url": "https://news.futunn.com/post/1002154915"
+    },
+    {
+      "symbol": "QQQ",
+      "news_id": "1002489915",
+      "published_at_utc": "2026-10-28T00:00:00Z",
+      "publish_time_ms": 1793145600000,
+      "title": "NEXT FUNDS NASDAQ-100(R) (Yen-Hedged) Exchange Traded Fund：有價證券報告書（國內投資信託受益證券）－第9期（2026年2月11日至2026年8月10日）",
+      "abstract": "",
+      "source": "日本金融廳",
+      "url": "https://news.futunn.com/notice/1002489915"
+    },
+    {
+      "symbol": "QQQ",
+      "news_id": "1002489920",
+      "published_at_utc": "2026-10-28T00:00:00Z",
+      "publish_time_ms": 1793145600000,
+      "title": "NEXT FUNDS NASDAQ-100(R) (Unhedged) Exchange Traded Fund: รายงานหลักทรัพย์ (หน่วยลงทุนในกองทุนรวมภายในประเทศ) – งวดที่ 16 (11 สิงหาคม 2025 – 10 สิงหาคม 2026)",
+      "abstract": "",
+      "source": "EDINET",
+      "url": "https://news.futunn.com/notice/1002489920"
+    },
+    {
+      "symbol": "QQQ",
+      "news_id": "1002641907",
+      "published_at_utc": "2026-10-28T22:06:11Z",
+      "publish_time_ms": 1793225171000,
+      "title": "Nasdaq-100 Futures Dip as Alphabet Shares Sell off After Earnings Report",
+      "abstract": "Alphabet reported a disappointing third quarter, and shares tumbled after the results were released.",
+      "source": "CNBC",
+      "url": "https://news.futunn.com/post/1002641907"
+    },
+    {
+      "symbol": "QQQ",
+      "news_id": "1002970431",
+      "published_at_utc": "2026-10-30T19:13:52Z",
+      "publish_time_ms": 1793387632000,
+      "title": "AI投资回报担忧升温 纳指100今年第三次面临技术性回调",
+      "abstract": "纳指100指数美股周五盘中一度下跌4.5%，较近期高点回落超过10%，面临今年第三次技术性回调。本周指数累计下跌约3%，谷歌母公司Alphabet(GOOG.O)、亚马逊(AMZN.O)、英特尔(INTC.O)及ServiceNow财报表现不佳，引发科技股抛售。市场开始重新审视AI投资回报率，科技企业融资需求增加也加剧了板块波动。市场策略师指出，投资者不再默认AI投资必然带来丰厚回报，而是开始关注资本回报率及投资本金能否收回。上一次美国股市一年内出现三次或以上10%的波动是在2022年。",
+      "source": "快讯",
+      "url": "https://news.futunn.com/flash/1002970431"
+    },
+    {
+      "symbol": "QQQ",
+      "news_id": "1003048376",
+      "published_at_utc": "2026-11-01T16:25:27Z",
+      "publish_time_ms": 1793550327000,
+      "title": "杰富瑞ETF资金流向：大型核心与QQQ出现资金流出，小型股获得资金流入",
+      "abstract": "主要观点权益资金流整体疲弱，但小型股获得资金流入且分布均匀   报告中指出，上周整体权益资金流表现不佳，大型核心（Large Core）和纳斯达克100 ETF（QQQ）出现显著流出。然而，小型股类别吸引了约10亿美元的资金流入，并且更积极的是，这些流入资金均匀分布在被跟踪的多只ETF中。这显示部分投资者在大型股承压时，开始关注小型股机会。高收益债券在连续三周流出后重回流入，打破下行趋势   高收",
+      "source": "南方东英",
+      "url": "https://news.futunn.com/post/1003048376"
+    },
+    {
+      "symbol": "QQQ",
+      "news_id": "1003042780",
+      "published_at_utc": "2026-11-01T17:45:07Z",
+      "publish_time_ms": 1793555107000,
+      "title": "S&P 500, Dow Jones, and Nasdaq 100 Outlook: Top Drivers for US Stocks This Week",
+      "abstract": "The S&P 500, Dow Jones, and Nasdaq 100 have pulled back over the past few weeks as investors rotate out of their artificial intelligence (AI) bets. The Dow has dropped 5.35% from its year-to-date",
+      "source": "Benzinga",
+      "url": "https://news.futunn.com/post/1003042780"
+    },
+    {
+      "symbol": "QQQ",
+      "news_id": "1003152120",
+      "published_at_utc": "2026-11-02T22:03:00Z",
+      "publish_time_ms": 1793656980000,
+      "title": "Traders Rushing Into a Leveraged ETF to Make a Bullish Bet on the Nasdaq-100 Just Got Burned",
+      "abstract": "By Christine Idzelis Tech stocks continue to struggle to kick off November The Nasdaq-100 fell Monday, a punishing start to November for traders who piled into a risky leveraged ETF to bet on a",
+      "source": "MarketWatch",
+      "url": "https://news.futunn.com/post/1003152120"
+    },
+    {
+      "symbol": "QQQ",
+      "news_id": "1003153325",
+      "published_at_utc": "2026-11-02T22:19:00Z",
+      "publish_time_ms": 1793657940000,
+      "title": "美股收盘 | 纳指、标普现\"A杀\"，纳指100跌入技术调整；芯片指数跌超3%，美光跌6%；金龙指数涨超2%；原油重挫8%，黄金走强",
+      "abstract": "纳斯达克100指数较10月高点回落超过10%。Ciena跌11%，英特尔跌近9%，希捷科技跌8%。盘后绩后，苹果一度跌超1%。原油跌逾8%，WTI原油创5月20日以来最大单日跌幅。欧洲基准天然气期货单日下跌近11%，创7月27日以来最大单日跌幅。黄金涨近2%，但未能收复4000美元关口。比特币则下跌1.5%，回吐周末涨幅。",
+      "source": "华尔街见闻",
+      "url": "https://news.futunn.com/post/1003153325"
+    },
+    {
+      "symbol": "QQQ",
+      "news_id": "1003246787",
+      "published_at_utc": "2026-11-03T10:41:28Z",
+      "publish_time_ms": 1793702488000,
+      "title": "Nasdaq 100 Slips Into Correction as QQQ Tests 200-day Moving Average",
+      "abstract": "",
+      "source": "Seeking Alpha",
+      "url": "https://news.futunn.com/post/1003246787"
+    },
+    {
+      "symbol": "QQQ",
+      "news_id": "1003251167",
+      "published_at_utc": "2026-11-03T11:56:00Z",
+      "publish_time_ms": 1793706960000,
+      "title": "Nasdaq-100 Tumbles Into Its Third Correction This Year as AI Worries Mount",
+      "abstract": "By Joy Wiltermuth The 'tech wreck' from October continues. Is a bear market next? The Nasdaq-100 fell into a correction on Monday, as tech stocks continued to slide on AI concerns Another brutal day",
+      "source": "MarketWatch",
+      "url": "https://news.futunn.com/post/1003251167"
+    },
+    {
+      "symbol": "QQQ",
+      "news_id": "1003260451",
+      "published_at_utc": "2026-11-03T13:06:10Z",
+      "publish_time_ms": 1793711170000,
+      "title": "Here's Why the SCHD ETF Is Beating QQQ and VOO This Year: Can It Hit $40?",
+      "abstract": "",
+      "source": "InvestingCube",
+      "url": "https://news.futunn.com/post/1003260451"
+    },
+    {
+      "symbol": "QQQ",
+      "news_id": "1003286986",
+      "published_at_utc": "2026-11-03T17:24:36Z",
+      "publish_time_ms": 1793726676000,
+      "title": "Nasdaq 100 Gets a Lift As Nvidia Overtakes Apple: Stock Market Today",
+      "abstract": "The Nasdaq 100 gained 0.7% to 28,184 on Tuesday as chipmakers rebounded, while a profit-margin warning from Apple Inc. (NASDAQ:AAPL) dragged on the Dow. As a result, Nvidia Corp. (NASDAQ:NVDA)",
+      "source": "Benzinga",
+      "url": "https://news.futunn.com/post/1003286986"
+    },
+    {
+      "symbol": "QQQ",
+      "news_id": "1003623827",
+      "published_at_utc": "2026-11-05T22:45:00Z",
+      "publish_time_ms": 1793918700000,
+      "title": "美股收盘 | 6.4%！纳指100创6年来最大跌幅；科技股遭血洗，特斯拉跌10%；芯片指数狂泻12%；金龙指数收涨；恐慌指数飙升；比特币重挫",
+      "abstract": "标普500指数下跌4.4%。纳斯达克100重挫6.4%，创下2020年3月以来最大单日跌幅，单日市值蒸发约2.3万亿美元。“恐慌指数”飙升70%。西部数据跌17%。英伟达跌9%，年内涨幅悉数回吐。CoreWeave再跌10%。10年期美债收益率下行6个基点。现货黄金冲高回落，盘中一度涨逾2%。比特币跌5%，回吐前一日全部涨幅。",
+      "source": "华尔街见闻",
+      "url": "https://news.futunn.com/post/1003623827"
+    },
+    {
+      "symbol": "QQQ",
+      "news_id": "1003753999",
+      "published_at_utc": "2026-11-06T17:38:16Z",
+      "publish_time_ms": 1793986696000,
+      "title": "Nasdaq 100 Rebounds 2% After Worst Day Since 2020, Payrolls Smash Estimates: Stock Market Today",
+      "abstract": "Wall Street bounced back Friday, with the Nasdaq 100 heading for its best session since Sept. 21 as chipmakers recovered part of Thursday's historic AI rout. A blowout October jobs report added to",
+      "source": "Benzinga",
+      "url": "https://news.futunn.com/post/1003753999"
+    },
+    {
+      "symbol": "QQQ",
+      "news_id": "1003762133",
+      "published_at_utc": "2026-11-06T21:00:07Z",
+      "publish_time_ms": 1793998807000,
+      "title": "Nasdaq 100 Has Worst Day Since 2020, Jobs Beat Keeps Fed Hike Alive: This Week on Wall Street",
+      "abstract": "For a fourth straight week the artificial intelligence trade lost ground, and this time the blow came from the ballot box.Democrats won both chambers of Congress in Tuesday's midterm elections.",
+      "source": "Benzinga",
+      "url": "https://news.futunn.com/post/1003762133"
+    },
+    {
+      "symbol": "QQQ",
+      "news_id": "1004009072",
+      "published_at_utc": "2026-11-10T09:00:00Z",
+      "publish_time_ms": 1794301200000,
+      "title": "グローバルX NASDAQ100・デイリー・カバード・コール ETF：ETFの収益分配のお知らせ",
+      "abstract": "",
+      "source": "日本取引所",
+      "url": "https://news.futunn.com/notice/1004009072"
+    },
+    {
+      "symbol": "QQQ",
+      "news_id": "1004036830",
+      "published_at_utc": "2026-11-10T12:57:00Z",
+      "publish_time_ms": 1794315420000,
+      "title": "QUICK SPARK: SPY, QQQ Attract $9B as ETF Investors Shrug Off Volatility Worries",
+      "abstract": "Investors poured $14.1 billion into U.S.-listed ETFs in the week ended Nov. 6, bringing year-to-date inflows close to $1.8 trillion, even as stocks suffered their steepest weekly declines in months.U.",
+      "source": "Benzinga",
+      "url": "https://news.futunn.com/post/1004036830"
+    },
+    {
+      "symbol": "QQQ",
+      "news_id": "1004205017",
+      "published_at_utc": "2026-11-11T16:48:00Z",
+      "publish_time_ms": 1794415680000,
+      "title": "CoreWeave Up Nearly 25%, Best Performer in the Nasdaq 100 So Far Today -- Data Talk",
+      "abstract": "CoreWeave, Inc. Class A (CRWV) is currently at $60.89, up $12.16 or 24.95% --Would be highest close since Oct. 28, 2026, when it closed at $63.93 --On pace for largest percent increase since June 3, 2",
+      "source": "Dow Jones",
+      "url": "https://news.futunn.com/post/1004205017"
+    },
+    {
+      "symbol": "QQQ",
+      "news_id": "1004208833",
+      "published_at_utc": "2026-11-11T17:53:02Z",
+      "publish_time_ms": 1794419582000,
+      "title": "Nasdaq 100 Jumps 2.8% as CoreWeave, Nvidia Climb: Stock Market Today",
+      "abstract": "The Nasdaq 100 rose 2.8% to 28,509. Chipmakers did the heavy lifting. The VanEck Semiconductor ETF (NASDAQ:SMH) jumped 6.3%, and Micron Technology Inc. (NASDAQ:MU) rallied 13.2%.The S&P 500 rose 1.4%",
+      "source": "Benzinga",
+      "url": "https://news.futunn.com/post/1004208833"
+    },
+    {
+      "symbol": "QQQ",
+      "news_id": "1004217774",
+      "published_at_utc": "2026-11-11T21:49:00Z",
+      "publish_time_ms": 1794433740000,
+      "title": "AI交易热潮回归，CoreWeave单日暴涨24%，纳指100势将收复中选后失地",
+      "abstract": "CoreWeave业绩超预期、Anthropic IPO需求旺盛及OpenAI亮眼表现，数据中心与芯片板块全线走强。摩根士丹利策略师认为本轮调整已完成95%，AI基础设施建设将持续推进。但分析师提醒，投资者应更注重基本面，精选个股，科技板块外亦存在机会。",
+      "source": "华尔街见闻",
+      "url": "https://news.futunn.com/post/1004217774"
+    },
+    {
+      "symbol": "QQQ",
+      "news_id": "1004225027",
+      "published_at_utc": "2026-11-11T23:03:24Z",
+      "publish_time_ms": 1794438204000,
+      "title": "Nasdaq-100 Futures Slide, Dragged Lower as Nvidia Sell-off Resumes: Live Updates",
+      "abstract": "All three of the major averages rallied on Wednesday, driven by gains in CoreWeave and a rebound in Nvidia.",
+      "source": "CNBC",
+      "url": "https://news.futunn.com/post/1004225027"
+    },
+    {
+      "symbol": "QQQ",
+      "news_id": "1004370362",
+      "published_at_utc": "2026-11-12T22:56:23Z",
+      "publish_time_ms": 1794524183000,
+      "title": "TQQQ ETF Barely Outpaces QQQ Despite Its 3X Leverage",
+      "abstract": "ProShares is upfront about what its UltraPro QQQ (NASDAQ:TQQQ), the biggest leveraged Nasdaq ETF, does. It aims for three times the Nasdaq-100's return for a single day. Over any longer stretch, its",
+      "source": "Benzinga",
+      "url": "https://news.futunn.com/post/1004370362"
+    },
+    {
+      "symbol": "QQQ",
+      "news_id": "1004429187",
+      "published_at_utc": "2026-11-13T07:31:31Z",
+      "publish_time_ms": 1794555091000,
+      "title": "“大空头”伯里加大做空纳指100与半导体 称英伟达(NVDA.US)影响力或进入“新范式”",
+      "abstract": "“大空头”迈克尔·伯里加大了对纳斯达克100指数和半导体股的看跌押注。",
+      "source": "智通财经",
+      "url": "https://news.futunn.com/post/1004429187"
+    },
+    {
+      "symbol": "QQQ",
+      "news_id": "1004474868",
+      "published_at_utc": "2026-11-13T14:37:28Z",
+      "publish_time_ms": 1794580648000,
+      "title": "Nvidia Crisis Fails to Stop ETF Buying Frenzy: VOO, QQQ, SOXL Leads $37.5B ETF Inflow Surge",
+      "abstract": "Investors are pouring billions into U.S. equity ETFs despite a turbulent week on Wall Street, with leveraged products emerging as unexpected beneficiaries of the latest buying spree.The 10 largest U.",
+      "source": "Benzinga",
+      "url": "https://news.futunn.com/post/1004474868"
+    },
+    {
+      "symbol": "QQQ",
+      "news_id": "1004489372",
+      "published_at_utc": "2026-11-13T18:41:08Z",
+      "publish_time_ms": 1794595268000,
+      "title": "AMD Sinks 10.5% as Chip Rally Unwinds, Nasdaq 100 Falls 1.7%: Stock Market Today",
+      "abstract": "Wall Street fell Friday as traders unwound this week's rush out of Nvidia Corp. (NASDAQ:NVDA) and into rival chipmakers, sending Advanced Micro Devices Inc. (NASDAQ:AMD) down 10.5% and wiping out",
+      "source": "Benzinga",
+      "url": "https://news.futunn.com/post/1004489372"
+    },
+    {
+      "symbol": "QQQ",
+      "news_id": "1004558911",
+      "published_at_utc": "2026-11-15T14:04:31Z",
+      "publish_time_ms": 1794751471000,
+      "title": "杰富瑞ETF资金流：QQQ流入或为再平衡交易，高收益债流入下滑",
+      "abstract": "主要观点QQQ即将进行指数再平衡，近期大规模流入可能是提前布局报告指出，QQQ（PowerShares QQQ Trust）即将进行再平衡，因此该ETF一周内录得134.27亿美元的巨额流入，占其资产的3.0%，年初至今流入261.21亿美元。作者认为这些资金流入可能是投资者在再平衡交易前的预先配置。 这种前置交易通常利用再平衡带来的权重调整，试图捕捉价格变动。高收益债（HY）在连续三周受追捧后出",
+      "source": "南方东英",
+      "url": "https://news.futunn.com/post/1004558911"
+    },
+    {
+      "symbol": "QQQ",
+      "news_id": "1004650804",
+      "published_at_utc": "2026-11-16T19:32:57Z",
+      "publish_time_ms": 1794857577000,
+      "title": "BZ Analysis: The NASDAQ 100 Has Recorded An Average Daily Swing Of 2.4% So Far In November, Putting It On Track For Its Most Volatile Month Since April 2025",
+      "abstract": "BZ Analysis: The NASDAQ 100 Has Recorded An Average Daily Swing Of 2.4% So Far In November, Putting It On Track For Its Most Volatile Month Since April 2025",
+      "source": "Benzinga",
+      "url": "https://news.futunn.com/post/1004650804"
+    },
+    {
+      "symbol": "QQQ",
+      "news_id": "1004663766",
+      "published_at_utc": "2026-11-16T22:00:00Z",
+      "publish_time_ms": 1794866400000,
+      "title": "AI板块抛售潮持续！纳指100连续三日下跌 英伟达(NVDA.US)续跌超4%",
+      "abstract": "美股科技股周一延续跌势，投资者在英伟达即将公布财报、人工智能初创企业Anthropic计划本周上市之际，对AI相关投资保持谨慎",
+      "source": "智通财经",
+      "url": "https://news.futunn.com/post/1004663766"
+    },
+    {
+      "symbol": "SPY",
+      "news_id": "post:72109045",
+      "published_at_utc": "2026-04-27T10:31:18Z",
+      "publish_time_ms": 1777285878000,
+      "title": "$1,000亿 ETF海啸：SPY、VOO、IVV等推动自三月低点以来的历史性股市反弹，创纪录$75亿单日流入",
+      "abstract": "投资者正以空前的速度向美国股市注入资金，股票交易型开放式指数基金（ETF）自三月下旬触底以来屡创新高。",
+      "source": "Benzinga",
+      "url": "https://news.futunn.com/post/72109045"
+    },
+    {
+      "symbol": "SPY",
+      "news_id": "post:72418362",
+      "published_at_utc": "2026-04-30T20:12:42Z",
+      "publish_time_ms": 1777579962000,
+      "title": "为什么标普500ETF-SPDR（SPY）在2026年4月30日上涨？",
+      "abstract": "",
+      "source": "TipRanks",
+      "url": "https://news.futunn.com/post/72418362"
+    },
+    {
+      "symbol": "SPY",
+      "news_id": "post:72448402",
+      "published_at_utc": "2026-05-01T13:43:27Z",
+      "publish_time_ms": 1777643007000,
+      "title": "GraniteShares YieldBOOST SPY ETF 宣布了$0.1489的股息。",
+      "abstract": "",
+      "source": "Seeking Alpha",
+      "url": "https://news.futunn.com/post/72448402"
+    },
+    {
+      "symbol": "SPY",
+      "news_id": "post:72466138",
+      "published_at_utc": "2026-05-02T01:55:50Z",
+      "publish_time_ms": 1777686950000,
+      "title": "为什么标普500ETF-SPDR（SPY）在2026年5月1日上涨？",
+      "abstract": "",
+      "source": "TipRanks",
+      "url": "https://news.futunn.com/post/72466138"
+    },
+    {
+      "symbol": "SPY",
+      "news_id": "post:72514746",
+      "published_at_utc": "2026-05-04T22:42:32Z",
+      "publish_time_ms": 1777934552000,
+      "title": "为什么标普500ETF-SPDR（SPY）在2026年5月4日下跌？",
+      "abstract": "",
+      "source": "TipRanks",
+      "url": "https://news.futunn.com/post/72514746"
+    },
+    {
+      "symbol": "SPY",
+      "news_id": "post:72555332",
+      "published_at_utc": "2026-05-05T20:03:41Z",
+      "publish_time_ms": 1778011421000,
+      "title": "为什么标普500ETF-SPDR（SPY）在2026年5月5日上涨？",
+      "abstract": "",
+      "source": "TipRanks",
+      "url": "https://news.futunn.com/post/72555332"
+    },
+    {
+      "symbol": "SPY",
+      "news_id": "post:72642225",
+      "published_at_utc": "2026-05-06T22:27:51Z",
+      "publish_time_ms": 1778106471000,
+      "title": "为什么标普500ETF-SPDR（SPY）在2026年5月6日上涨？",
+      "abstract": "",
+      "source": "TipRanks",
+      "url": "https://news.futunn.com/post/72642225"
+    },
+    {
+      "symbol": "SPY",
+      "news_id": "post:72726800",
+      "published_at_utc": "2026-05-07T21:15:53Z",
+      "publish_time_ms": 1778188553000,
+      "title": "为什么标普500ETF-SPDR（SPY）在2026年5月7日下跌？",
+      "abstract": "",
+      "source": "TipRanks",
+      "url": "https://news.futunn.com/post/72726800"
+    },
+    {
+      "symbol": "SPY",
+      "news_id": "post:72803004",
+      "published_at_utc": "2026-05-08T23:13:23Z",
+      "publish_time_ms": 1778282003000,
+      "title": "为什么标普500ETF-SPDR（SPY）在2026年5月8日上涨？",
+      "abstract": "",
+      "source": "TipRanks",
+      "url": "https://news.futunn.com/post/72803004"
+    },
+    {
+      "symbol": "SPY",
+      "news_id": "post:72896926",
+      "published_at_utc": "2026-05-11T20:51:36Z",
+      "publish_time_ms": 1778532696000,
+      "title": "为什么标普500ETF-SPDR（SPY）在2026年5月11日上涨？",
+      "abstract": "",
+      "source": "TipRanks",
+      "url": "https://news.futunn.com/post/72896926"
+    },
+    {
+      "symbol": "SPY",
+      "news_id": "post:72969525",
+      "published_at_utc": "2026-05-12T20:46:38Z",
+      "publish_time_ms": 1778618798000,
+      "title": "为什么标普500ETF-SPDR（SPY）在2026年5月12日下跌？",
+      "abstract": "",
+      "source": "TipRanks",
+      "url": "https://news.futunn.com/post/72969525"
+    },
+    {
+      "symbol": "SPY",
+      "news_id": "post:73050762",
+      "published_at_utc": "2026-05-13T21:58:33Z",
+      "publish_time_ms": 1778709513000,
+      "title": "标普500ETF-SPDR (SPY) 每日更新，2026年5月13日",
+      "abstract": "",
+      "source": "TipRanks",
+      "url": "https://news.futunn.com/post/73050762"
+    },
+    {
+      "symbol": "SPY",
+      "news_id": "post:73130579",
+      "published_at_utc": "2026-05-14T22:43:43Z",
+      "publish_time_ms": 1778798623000,
+      "title": "标普500ETF-SPDR (SPY) 每日更新，2026年5月14日",
+      "abstract": "",
+      "source": "TipRanks",
+      "url": "https://news.futunn.com/post/73130579"
+    },
+    {
+      "symbol": "SPY",
+      "news_id": "post:73207052",
+      "published_at_utc": "2026-05-16T02:54:45Z",
+      "publish_time_ms": 1778900085000,
+      "title": "标普500ETF-SPDR (SPY) 每日更新，2026年5月15日",
+      "abstract": "",
+      "source": "TipRanks",
+      "url": "https://news.futunn.com/post/73207052"
+    },
+    {
+      "symbol": "SPY",
+      "news_id": "post:73286369",
+      "published_at_utc": "2026-05-18T23:00:54Z",
+      "publish_time_ms": 1779145254000,
+      "title": "标普500ETF-SPDR (SPY) 每日更新，2026年5月18日",
+      "abstract": "",
+      "source": "TipRanks",
+      "url": "https://news.futunn.com/post/73286369"
+    },
+    {
+      "symbol": "SPY",
+      "news_id": "post:73352468",
+      "published_at_utc": "2026-05-19T23:25:12Z",
+      "publish_time_ms": 1779233112000,
+      "title": "标普500ETF-SPDR（SPY）每日更新，2026年5月19日",
+      "abstract": "",
+      "source": "TipRanks",
+      "url": "https://news.futunn.com/post/73352468"
+    },
+    {
+      "symbol": "SPY",
+      "news_id": "post:73417347",
+      "published_at_utc": "2026-05-20T22:24:14Z",
+      "publish_time_ms": 1779315854000,
+      "title": "标普500ETF-SPDR（SPY）每日更新，2026年5月20日",
+      "abstract": "",
+      "source": "TipRanks",
+      "url": "https://news.futunn.com/post/73417347"
+    },
+    {
+      "symbol": "SPY",
+      "news_id": "post:73485102",
+      "published_at_utc": "2026-05-21T21:29:48Z",
+      "publish_time_ms": 1779398988000,
+      "title": "标普500ETF-SPDR（SPY）每日更新，2026年5月21日",
+      "abstract": "",
+      "source": "TipRanks",
+      "url": "https://news.futunn.com/post/73485102"
+    },
+    {
+      "symbol": "SPY",
+      "news_id": "post:73536233",
+      "published_at_utc": "2026-05-22T14:25:18Z",
+      "publish_time_ms": 1779459918000,
+      "title": "VOO、QQQ 和 SPY —— 哪只ETF现在值得买入？",
+      "abstract": "",
+      "source": "TipRanks",
+      "url": "https://news.futunn.com/post/73536233"
+    },
+    {
+      "symbol": "SPY",
+      "news_id": "post:73545686",
+      "published_at_utc": "2026-05-22T21:53:38Z",
+      "publish_time_ms": 1779486818000,
+      "title": "标普500ETF-SPDR（SPY）每日更新，2026年5月22日",
+      "abstract": "",
+      "source": "TipRanks",
+      "url": "https://news.futunn.com/post/73545686"
+    },
+    {
+      "symbol": "SPY",
+      "news_id": "post:73556838",
+      "published_at_utc": "2026-05-23T22:31:18Z",
+      "publish_time_ms": 1779575478000,
+      "title": "先锋领航的VOO ETF资金流入超过$590亿，因投资者纷纷撤离SPY",
+      "abstract": "跟踪蓝筹股标普500指数的交易所交易基金（ETF）正出现显著分化。标普500ETF-Vanguard（纽约证券交易所代码：VOO）持续获得创纪录的资金流入，而广受欢迎的SPDR标普500 ETF则……",
+      "source": "Benzinga",
+      "url": "https://news.futunn.com/post/73556838"
+    },
+    {
+      "symbol": "SPY",
+      "news_id": "post:73606479",
+      "published_at_utc": "2026-05-25T21:57:14Z",
+      "publish_time_ms": 1779746234000,
+      "title": "标普500ETF-SPDR（SPY）每日更新，2026年5月25日",
+      "abstract": "",
+      "source": "TipRanks",
+      "url": "https://news.futunn.com/post/73606479"
+    },
+    {
+      "symbol": "SPY",
+      "news_id": "post:73670559",
+      "published_at_utc": "2026-05-26T21:38:26Z",
+      "publish_time_ms": 1779831506000,
+      "title": "标普500ETF-SPDR（SPY）每日更新，2026年5月26日",
+      "abstract": "",
+      "source": "TipRanks",
+      "url": "https://news.futunn.com/post/73670559"
+    },
+    {
+      "symbol": "SPY",
+      "news_id": "post:73736741",
+      "published_at_utc": "2026-05-27T21:35:24Z",
+      "publish_time_ms": 1779917724000,
+      "title": "标普500ETF-SPDR（SPY）每日更新，2026年5月27日",
+      "abstract": "",
+      "source": "TipRanks",
+      "url": "https://news.futunn.com/post/73736741"
+    },
+    {
+      "symbol": "SPY",
+      "news_id": "post:73802306",
+      "published_at_utc": "2026-05-28T20:12:04Z",
+      "publish_time_ms": 1779999124000,
+      "title": "标普500ETF-SPDR（SPY）每日更新，2026年5月28日",
+      "abstract": "",
+      "source": "TipRanks",
+      "url": "https://news.futunn.com/post/73802306"
+    },
+    {
+      "symbol": "SPY",
+      "news_id": "post:74023411",
+      "published_at_utc": "2026-06-02T20:50:50Z",
+      "publish_time_ms": 1780433450000,
+      "title": "标普500ETF-SPDR（SPY）今日创下历史新高——原因如下",
+      "abstract": "",
+      "source": "TipRanks",
+      "url": "https://news.futunn.com/post/74023411"
+    },
+    {
+      "symbol": "SPY",
+      "news_id": "post:74151160",
+      "published_at_utc": "2026-06-04T21:54:35Z",
+      "publish_time_ms": 1780610075000,
+      "title": "SPY 与 RSP：哪只标普500 ETF 在2026年更值得买入？",
+      "abstract": "",
+      "source": "TipRanks",
+      "url": "https://news.futunn.com/post/74151160"
+    },
+    {
+      "symbol": "SPY",
+      "news_id": "post:74955761",
+      "published_at_utc": "2026-06-23T10:42:36Z",
+      "publish_time_ms": 1782211356000,
+      "title": "VOO 与 SPY —— 现在你应该买入哪只标普500 ETF？",
+      "abstract": "",
+      "source": "TipRanks",
+      "url": "https://news.futunn.com/post/74955761"
+    },
+    {
+      "symbol": "SPY",
+      "news_id": "post:76012965",
+      "published_at_utc": "2026-07-14T15:48:17Z",
+      "publish_time_ms": 1784044097000,
+      "title": "SPY 与 SPYM：哪只标普500 ETF 更值得投资者买入？",
+      "abstract": "",
+      "source": "TipRanks",
+      "url": "https://news.futunn.com/post/76012965"
+    },
+    {
+      "symbol": "SPY",
+      "news_id": "post:76981252",
+      "published_at_utc": "2026-08-02T22:25:14Z",
+      "publish_time_ms": 1785709514000,
+      "title": "RSP ETF跑赢VOO和SPY，标普500等权重基金即将达到$1,000亿里程碑",
+      "abstract": "景顺标普500等权重ETF（纽约证券交易所代码：RSP）今年表现优异，在吸引大量资金流入的同时，跑赢了包括标普500ETF-Vanguard（纽约证券交易所代码：VOO）和SPDR标普500 ETF在内的热门同类产品。",
+      "source": "Benzinga",
+      "url": "https://news.futunn.com/post/76981252"
+    },
+    {
+      "symbol": "SPY",
+      "news_id": "post:77369658",
+      "published_at_utc": "2026-08-08T17:44:30Z",
+      "publish_time_ms": 1786211070000,
+      "title": "VOO、SPY、SPYM ETF资金流入激增，因标普500指数第二季度盈利增长达50%",
+      "abstract": "今年，追踪标普500指数的顶级ETF表现强劲，在持续的人工智能热潮和强劲的企业盈利增长推动下吸引了大量资金流入。Vanguard标普",
+      "source": "Benzinga",
+      "url": "https://news.futunn.com/post/77369658"
+    },
+    {
+      "symbol": "SPY",
+      "news_id": "post:77635537",
+      "published_at_utc": "2026-08-13T14:07:19Z",
+      "publish_time_ms": 1786630039000,
+      "title": "快讯：$36亿资金一日流入SPY；QQQ和SOXX领跌ETF赎回",
+      "abstract": "周三，ETF投资者表现出对广泛市场敞口的显著偏好。标普500ETF-SPDR（NYSE:SPY）当日净流入资金达到$35.6亿。这是最大的资金流入",
+      "source": "Benzinga",
+      "url": "https://news.futunn.com/post/77635537"
+    },
+    {
+      "symbol": "SPY",
+      "news_id": "post:77706247",
+      "published_at_utc": "2026-08-14T14:07:23Z",
+      "publish_time_ms": 1786716443000,
+      "title": "VOO 与 SPY —— 哪只标普500指数ETF当前更具投资价值？",
+      "abstract": "",
+      "source": "TipRanks",
+      "url": "https://news.futunn.com/post/77706247"
+    },
+    {
+      "symbol": "SPY",
+      "news_id": "post:79064449",
+      "published_at_utc": "2026-09-10T05:31:14Z",
+      "publish_time_ms": 1789018274000,
+      "title": "ETF指南：美债回购推动TLT看涨期权激增，建议做多SPY做空XLU",
+      "abstract": "主要观点美债回购信号引发TLT看涨期权激增，投资者押注久期反弹美国财政部扩大长期债券回购计划的信号，导致TLT（20年期以上美国国债ETF）的看涨期权未平仓合约量激增，尽管现金交易活动有所下降。这表明投资者越来越认可久期反弹的风险，并倾向于通过期权保留上行空间。TLT目前在巴克莱的看涨情绪筛查中位居榜首。下调公用事业板块评级至中性，推荐SPY相对XLU的看涨价差策略巴克莱将标普500指数2026年",
+      "source": "南方东英",
+      "url": "https://news.futunn.com/post/79064449"
+    },
+    {
+      "symbol": "SPY",
+      "news_id": "post:79240245",
+      "published_at_utc": "2026-09-14T13:36:48Z",
+      "publish_time_ms": 1789393008000,
+      "title": "VOO 与 SPY — 长期投资应选择哪只标普500 ETF？",
+      "abstract": "",
+      "source": "TipRanks",
+      "url": "https://news.futunn.com/post/79240245"
+    },
+    {
+      "symbol": "SPY",
+      "news_id": "post:79518873",
+      "published_at_utc": "2026-09-20T17:31:05Z",
+      "publish_time_ms": 1789925465000,
+      "title": "VOO & Chill：为何先锋领航的标普500 ETF正在跑赢SPY和IVV",
+      "abstract": "标普500ETF-Vanguard（纽约证券交易所代码：VOO）今年吸引了大量投资者的关注，这得益于日益兴起的“VOO and Chill”投资风潮——投资者买入该基金并长期持有。这一策略依托于该基金优异的历史业绩及其低廉的管理费率。VOO ETF资金流入激增ETF DB的数据显示，该基金今年已累计获得超过1394亿美元的资金流入，远高于去年的1370亿美元。这一增长使其实现资产管理规模（AUM）",
+      "source": "Benzinga",
+      "url": "https://news.futunn.com/post/79518873"
+    },
+    {
+      "symbol": "SPY",
+      "news_id": "1000439492",
+      "published_at_utc": "2026-09-30T10:15:00Z",
+      "publish_time_ms": 1790763300000,
+      "title": "VOO Vs. SPY: Are You Picking the Right S&P 500 ETF for the Long Run?",
+      "abstract": "",
+      "source": "TipRanks",
+      "url": "https://news.futunn.com/post/1000439492"
+    },
+    {
+      "symbol": "SPY",
+      "news_id": "1004036830",
+      "published_at_utc": "2026-11-10T12:57:00Z",
+      "publish_time_ms": 1794315420000,
+      "title": "QUICK SPARK: SPY, QQQ Attract $9B as ETF Investors Shrug Off Volatility Worries",
+      "abstract": "Investors poured $14.1 billion into U.S.-listed ETFs in the week ended Nov. 6, bringing year-to-date inflows close to $1.8 trillion, even as stocks suffered their steepest weekly declines in months.U.",
+      "source": "Benzinga",
+      "url": "https://news.futunn.com/post/1004036830"
+    },
+    {
+      "symbol": "SPY",
+      "news_id": "1004305044",
+      "published_at_utc": "2026-11-12T10:27:00Z",
+      "publish_time_ms": 1794479220000,
+      "title": "Stock Market Today: NVDA Rout Drags Nasdaq, S&P 500 Futures Lower As Nvidia Board Weighs Jensen Huang's Future—CRWV, TTEK, FNV in Focus",
+      "abstract": "U.S. stock futures were mixed on Thursday, as the Dow Jones, S&P 500, and Nasdaq 100 indices diverged, following Wednesday's higher close.Iranian Security Chief Mohsen Rezaee warned on X that if",
+      "source": "Benzinga",
+      "url": "https://news.futunn.com/post/1004305044"
+    },
+    {
+      "symbol": "SPY",
+      "news_id": "1004308459",
+      "published_at_utc": "2026-11-12T11:00:00Z",
+      "publish_time_ms": 1794481200000,
+      "title": "These ETFs Cast a Wide Net-and Are Beating the S&P 500 -- Barrons.com",
+      "abstract": "By Paul R. La Monica Even as Claude developer Anthropic prepares to launch its massive initial public offering, technology stocks have been incredibly volatile -- reflecting the seemingly endless",
+      "source": "Barron's",
+      "url": "https://news.futunn.com/post/1004308459"
+    },
+    {
+      "symbol": "SPY",
+      "news_id": "1004319604",
+      "published_at_utc": "2026-11-12T12:30:00Z",
+      "publish_time_ms": 1794486600000,
+      "title": "S&P 500 Futures Fall In Premarket Trading; Brookfield Infrastructure, Corteva Lag",
+      "abstract": "This article was automatically generated by Barrons.com using technology from Automated Insights. With U.S. stock markets set to open in two hours, Figure Technology Solutions Inc. (FIGR) was up 10.4%",
+      "source": "Dow Jones",
+      "url": "https://news.futunn.com/post/1004319604"
+    },
+    {
+      "symbol": "SPY",
+      "news_id": "1004356407",
+      "published_at_utc": "2026-11-12T19:52:00Z",
+      "publish_time_ms": 1794513120000,
+      "title": "The S&P 500 Is Shrugging off Nvidia's Selloff. Here's What's Keeping the Rest of the Market Afloat.",
+      "abstract": "By Isabel Wang Is Wall Street finally outgrowing Nvidia? If Nvidia's problems have done anything good for the stock market, it's that investors have been forced to look up from the poster child of",
+      "source": "MarketWatch",
+      "url": "https://news.futunn.com/post/1004356407"
+    },
+    {
+      "symbol": "SPY",
+      "news_id": "1004363625",
+      "published_at_utc": "2026-11-12T21:28:00Z",
+      "publish_time_ms": 1794518880000,
+      "title": "You Don't Need Nvidia to Beat the S&P 500. These ETFs Prove It. -- Barrons.com",
+      "abstract": "By Paul R. La Monica Investors don't need Nvidia to beat the stock market. Two exchange-traded funds that don't own the chip giant are outperforming the S&P 500 this year, offering a way to sidestep",
+      "source": "Barron's",
+      "url": "https://news.futunn.com/post/1004363625"
+    },
+    {
+      "symbol": "SPY",
+      "news_id": "1004431023",
+      "published_at_utc": "2026-11-13T07:49:42Z",
+      "publish_time_ms": 1794556182000,
+      "title": "高盛：2027年末标普500指数看至8700点 看好美国、日本股市",
+      "abstract": "11月13日，高盛策略师认为，尽管盈利增速放缓，但随着估值回落、债券收益率、油价与通胀趋于缓和，美股牛市将延续至2027年。由彼得·奥本海默牵头的团队预测，未来12个月标普500指数将上涨至8700点，对应14%的价格收益率、16%的总收益率；同时预计2027年盈利增速将从2026年的36%放缓至11%。该团队看好成长股、精选防御板块，以及油价和债收益率下行的受益标的；在科技板块估值大幅回调后，看好美国大型云厂商，但同时提示，AI资本开支增速放缓、债市与油价波动、市场集中度问题都可能加剧行情震荡。团队对日本股市给予超配评级，东证指数目标位4500点，对应15%的价格收益率、17%的总收益率，预计2027年每股收益增速9%。",
+      "source": "快讯",
+      "url": "https://news.futunn.com/flash/1004431023"
+    },
+    {
+      "symbol": "SPY",
+      "news_id": "1004461623",
+      "published_at_utc": "2026-11-13T11:56:07Z",
+      "publish_time_ms": 1794570967000,
+      "title": "高盛：科技巨头估值跌至低位 看好明年标普500上涨14%",
+      "abstract": "高盛集团策略师对2027年美国股市持看多立场，预测标普500指数未来一年将上涨14%。",
+      "source": "智通财经",
+      "url": "https://news.futunn.com/post/1004461623"
+    },
+    {
+      "symbol": "SPY",
+      "news_id": "1004464546",
+      "published_at_utc": "2026-11-13T12:30:00Z",
+      "publish_time_ms": 1794573000000,
+      "title": "S&P 500 Futures Up In Premarket Trading; Modine Manufacturing, Cerebras Systems Lead",
+      "abstract": "This article was automatically generated by Barrons.com using technology from Automated Insights. With U.S. stock markets set to open in two hours, Modine Manufacturing Co. (MOD) was up 30.3% in pre-",
+      "source": "Dow Jones",
+      "url": "https://news.futunn.com/post/1004464546"
+    },
+    {
+      "symbol": "SPY",
+      "news_id": "1004467687",
+      "published_at_utc": "2026-11-13T13:09:33Z",
+      "publish_time_ms": 1794575373000,
+      "title": "高盛预计标普500指数未来一年上涨14%：超大规模云计算企业估值已跌至历史低位",
+      "abstract": "①高盛集团策略师看好2027年美国股市表现，预计未来一年标普500指数将上涨14%，升至8700点； ②明年将超配美国和日本股票，对欧洲股票持低配立场； ③此轮回调已使所谓的超大规模云计算企业估值显著低于历史水平。",
+      "source": "财联社",
+      "url": "https://news.futunn.com/post/1004467687"
+    },
+    {
+      "symbol": "SPY",
+      "news_id": "1004513786",
+      "published_at_utc": "2026-11-14T02:30:00Z",
+      "publish_time_ms": 1794623400000,
+      "title": "Funds: Meet the ETFs That Are Beating the S&P 500 -- Barron's",
+      "abstract": "By Paul R. La Monica Even as Claude developer Anthropic prepares to launch its massive initial public offering, technology stocks have been incredibly volatile -- reflecting the seemingly endless",
+      "source": "Barron's",
+      "url": "https://news.futunn.com/post/1004513786"
+    },
+    {
+      "symbol": "SPY",
+      "news_id": "1004562941",
+      "published_at_utc": "2026-11-16T01:46:11Z",
+      "publish_time_ms": 1794793571000,
+      "title": "高盛：美股科技股抛售潮或已接近尾声 标普500未来12个月剑指8700点",
+      "abstract": "高盛预计，未来12个月标普500指数将升至8700点。该行认为，近期抛售潮过后，股票估值有所下降，这应有助于推动市场继续取得正回报，即使企业利润增速有所放缓。",
+      "source": "智通财经",
+      "url": "https://news.futunn.com/post/1004562941"
+    },
+    {
+      "symbol": "SPY",
+      "news_id": "1004574838",
+      "published_at_utc": "2026-11-16T04:15:00Z",
+      "publish_time_ms": 1794802500000,
+      "title": "iShares S&P 500 Premium Income ETF：关于ETF预计收益分配金额的通知",
+      "abstract": "",
+      "source": "日本交易所",
+      "url": "https://news.futunn.com/notice/1004574838"
+    },
+    {
+      "symbol": "SPY",
+      "news_id": "1004578094",
+      "published_at_utc": "2026-11-16T05:53:35Z",
+      "publish_time_ms": 1794808415000,
+      "title": "海外研选日报1116 | 摩根士丹利：标普500指数明年底有望升至8700点",
+      "abstract": "①摩根士丹利：明年芯片融资规模或达3500亿美元，AI融资重心转向硬件； ②高盛：星舰首次实现飞船回收，完全复用取得关键突破； ③摩根士丹利：明年底金价或达5250美元，央行与ETF需求提供支撑； ④巴克莱：全球铜铝现货供应持续紧张，库存错配加剧市场波动。",
+      "source": "财联社",
+      "url": "https://news.futunn.com/post/1004578094"
+    },
+    {
+      "symbol": "SPY",
+      "news_id": "1004580201",
+      "published_at_utc": "2026-11-16T06:27:59Z",
+      "publish_time_ms": 1794810479000,
+      "title": "Stock Market: Will S&P 500 Open Up or Down Today?",
+      "abstract": "U.S. stock futures are sinking early Monday as Wall Street braces for continued geopolitical shockwaves, mounting uncertainty in the tech sector, and post-midterm congressional maneuvering.The",
+      "source": "Benzinga",
+      "url": "https://news.futunn.com/post/1004580201"
+    },
+    {
+      "symbol": "SPY",
+      "news_id": "1004590588",
+      "published_at_utc": "2026-11-16T08:09:38Z",
+      "publish_time_ms": 1794816578000,
+      "title": "巴克莱策略师预计标普500指数到2027年底有15%的上涨空间",
+      "abstract": "巴克莱称，坚持持有美国股票的投资者应能获得回报，预计标普500指数到2027年底将升至8700点，意味着较上周五收盘价有15%的上涨空间。以VenuKrishna为首的策略师们将此前设定的8800点目标略微下调，预计2027年和2028年，半导体和硬件行业将至少占标普500指数每股收益增长的50%，这可能构成系统性风险。建议继续做多人工智能(AI)股、高质量成长股和合理价格成长股(GARP)，策略性做多价值股。科技股当前估值水平是近十年来最具吸引力的，但同时承认随着融资和资本密集度的提高，短期风险也在增加。金融环境趋紧意味着估值可能进一步下跌，但当前仓位已更为合理，可用资金也更多。",
+      "source": "快讯",
+      "url": "https://news.futunn.com/flash/1004590588"
+    },
+    {
+      "symbol": "SPY",
+      "news_id": "1004592730",
+      "published_at_utc": "2026-11-16T08:29:04Z",
+      "publish_time_ms": 1794817744000,
+      "title": "摩根士丹利将全球股票配置提升至最高超配水平，预计标普500指数将升至8700点",
+      "abstract": "11月16日，摩根士丹利在《2027年全球策略展望》中将全球股票配置提升至最高超配水平。该行认为，人工智能资本开支周期仍将延续，全球经济及企业盈利有望保持强劲增长，而近期市场回调已显著改善股票估值，为增加风险资产配置创造了条件。摩根士丹利全面提高各地区股票配置，将日本和欧洲股市上调至“超配”，维持新兴市场股市“标配”，同时将企业信用债上调至“标配”，并削减其他固定收益资产、大宗商品及现金的配置。企",
+      "source": "环球市场播报",
+      "url": "https://news.futunn.com/post/1004592730"
+    },
+    {
+      "symbol": "SPY",
+      "news_id": "1004598111",
+      "published_at_utc": "2026-11-16T08:55:31Z",
+      "publish_time_ms": 1794819331000,
+      "title": "摩根士丹利上调标普500指数目标至8700点，预计仍有15%上涨空间",
+      "abstract": "11月16日，摩根士丹利将标普500指数未来12个月的目标点位上调至8700点，较上周五收盘水平高出约15%。该行认为，企业盈利强劲增长、油价回落、利率趋于稳定以及人工智能应用加速普及，将共同推动美股进一步上涨。摩根士丹利首席美股策略师迈克尔·威尔逊认为，近期市场回调为下一轮上涨创造了条件。标普500指数已接近7100至7300点的支撑区间，但仍可能再次下探该区间。企业盈利增长仍是美股上涨的主要动",
+      "source": "环球市场播报",
+      "url": "https://news.futunn.com/post/1004598111"
+    },
+    {
+      "symbol": "SPY",
+      "news_id": "1004604551",
+      "published_at_utc": "2026-11-16T09:57:55Z",
+      "publish_time_ms": 1794823075000,
+      "title": "Stock Market Today: Dow Jones, S&P 500 Futures Trade Mixed as Scott Bessent Presses Nvidia Over China Chips — BIDU, RKLB, MSTR in Focus",
+      "abstract": "U.S. stocks were mixed on Monday as Dow Jones, S&P 500, and Nasdaq 100 index futures moved in different directions, following Friday's mixed close.Treasury Secretary Scott Bessent pressed Nvidia Corp.",
+      "source": "Benzinga",
+      "url": "https://news.futunn.com/post/1004604551"
+    },
+    {
+      "symbol": "SPY",
+      "news_id": "1004618077",
+      "published_at_utc": "2026-11-16T12:30:00Z",
+      "publish_time_ms": 1794832200000,
+      "title": "S&P 500 Futures Fall In Premarket Trading; TELUS Corp., Vaxcyte Lead",
+      "abstract": "This article was automatically generated by Barrons.com using technology from Automated Insights. With U.S. stock markets set to open in two hours, TELUS Corp. (TU) was up 25.7% in pre-market trading,",
+      "source": "Dow Jones",
+      "url": "https://news.futunn.com/post/1004618077"
+    },
+    {
+      "symbol": "SPY",
+      "news_id": "1004637214",
+      "published_at_utc": "2026-11-16T15:47:00Z",
+      "publish_time_ms": 1794844020000,
+      "title": "These 13 S&P 500 Stocks Can Rise up to 70% Over the Next Year, According to Analysts",
+      "abstract": "By Philip van Doorn These companies are heavily favored by analysts polled by FactSet, with aggressive consensus 12-month price targets Consensus earnings estimates have continued to rise,",
+      "source": "MarketWatch",
+      "url": "https://news.futunn.com/post/1004637214"
+    },
+    {
+      "symbol": "SPY",
+      "news_id": "1004638336",
+      "published_at_utc": "2026-11-16T16:00:20Z",
+      "publish_time_ms": 1794844820000,
+      "title": "Here's How Much You Would Have Made Owning IShares S&P 500 Growth ETF Stock In The Last 15 Years",
+      "abstract": "iShares S&P 500 Growth ETF (NYSE:IVW) has outperformed the market over the past 15 years by 1.92% on an annualized basis producing an average annual return of 14.91%. Currently, iShares S&P 500",
+      "source": "Benzinga",
+      "url": "https://news.futunn.com/post/1004638336"
+    },
+    {
+      "symbol": "SPY",
+      "news_id": "1004641150",
+      "published_at_utc": "2026-11-16T16:49:13Z",
+      "publish_time_ms": 1794847753000,
+      "title": "Forget Nvidia—Wall Street Sees S&P 500 at 8,900, Putting These ETFs in Play",
+      "abstract": "Nvidia Corp (NASDAQ:NVDA) may be dominating the headlines after Jensen Huang's shock exit last week, but Wall Street's next big call is about something much broader: where the S&P 500 goes from here.",
+      "source": "Benzinga",
+      "url": "https://news.futunn.com/post/1004641150"
+    },
+    {
+      "symbol": "SPY",
+      "news_id": "1004664724",
+      "published_at_utc": "2026-11-16T22:48:10Z",
+      "publish_time_ms": 1794869290000,
+      "title": "富国银行：预计标普500指数2027年底将达8200点",
+      "abstract": "富国银行首席股票策略师Ohsung Kwon将标普500指数的2027年年底目标价定为8200点，在目前已发布预测的华尔街策略师中最低。该目标较周一收盘价有11%的上涨空间，较其2026年年底目标价7700点上涨6.5%。Kwon指出，利润增长放缓、中性利率、投资者情绪低迷以及充满挑战的经济环境是主要考量因素。针对2027年股市面临的最大不确定性，Kwon认为，市场对AI交易能否经受挑战的讨论最为激烈，但他表示，经过数月调整，许多风险已被计入股价——包括支撑AI支出的巨额收入需求、堪比90年代电信泡沫的杠杆水平，以及对数据中心的政治阻力。他看好超大规模云服务商，对AI基础设施股持中性态度。此外，他警告10年期美债收益率升破5.25%将构成风险，并将地缘政治视为2027年股市最大威胁。",
+      "source": "快讯",
+      "url": "https://news.futunn.com/flash/1004664724"
+    },
+    {
+      "symbol": "SPY",
+      "news_id": "1004666945",
+      "published_at_utc": "2026-11-16T23:04:54Z",
+      "publish_time_ms": 1794870294000,
+      "title": "桥水Q3大幅减持标普500ETF 加仓高通(QCOM.US)美光(MU.US)等半导体股",
+      "abstract": "桥水基金(Bridgewater Associates)递交了截至2026年9月30日的第三季度持仓报告(13F)。",
+      "source": "智通财经",
+      "url": "https://news.futunn.com/post/1004666945"
+    },
+    {
+      "symbol": "SPY",
+      "news_id": "1004669908",
+      "published_at_utc": "2026-11-17T00:00:03Z",
+      "publish_time_ms": 1794873603000,
+      "title": "前白宫经济顾问警告：若AI泡沫破裂，基准情形标普500或下跌25%",
+      "abstract": "格隆汇11月17日｜曾任美国白宫经济顾问委员会主席的杰森·福尔曼在一篇文章中写道，理解经济所面临风险的关键，是要对“如果AI是即将破裂的泡沫，股市可能跌多深”心里有数。福尔曼表示，如果AI是一个即将破裂的泡沫，基准情形下标普500指数或下跌25%；更悲观的情形是下跌35%，最坏但可能性极低的情形是下跌50%。不过他并不完全确认AI是泡沫，并举例说智能手机和喷气式飞机等技术发展，事后证明并非泡沫。",
+      "source": "格隆汇",
+      "url": "https://news.futunn.com/post/1004669908"
+    }
+  ]
+}

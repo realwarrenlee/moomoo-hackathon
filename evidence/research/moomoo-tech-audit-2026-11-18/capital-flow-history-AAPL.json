@@ -1,0 +1,131 @@
+{
+  "http_status": 200,
+  "path": "/api/v1.0/quote/US.AAPL/capital-flow/history",
+  "params": {
+    "period_type": "DAY",
+    "count": 10
+  },
+  "body": null,
+  "response": {
+    "ret_code": 0,
+    "ret_msg": "success",
+    "data": {
+      "flow_list": [
+        {
+          "acc_main_in_flow": -6539834.19,
+          "big_in_flow": -93264417.869,
+          "capital_flow_item_time": 1793768400000,
+          "in_flow": 152489248.994,
+          "main_deal_ratio": 0.355,
+          "main_in_flow": -6539834.19,
+          "mid_in_flow": 84296231.938,
+          "sml_in_flow": 74732851.246,
+          "super_in_flow": 86724583.679
+        },
+        {
+          "acc_main_in_flow": 123940662.339,
+          "big_in_flow": 121512765.977,
+          "capital_flow_item_time": 1793854800000,
+          "in_flow": 350222529.789,
+          "main_deal_ratio": 0.3242,
+          "main_in_flow": 130480496.529,
+          "mid_in_flow": -7048770.253,
+          "sml_in_flow": 226790803.513,
+          "super_in_flow": 8967730.552
+        },
+        {
+          "acc_main_in_flow": 51527222.854,
+          "big_in_flow": -38305394.139,
+          "capital_flow_item_time": 1793941200000,
+          "in_flow": -247444197.858,
+          "main_deal_ratio": 0.246,
+          "main_in_flow": -72413439.485,
+          "mid_in_flow": -67212000.73,
+          "sml_in_flow": -107818757.643,
+          "super_in_flow": -34108045.346
+        },
+        {
+          "acc_main_in_flow": -41157264.778,
+          "big_in_flow": -39998403.742,
+          "capital_flow_item_time": 1794200400000,
+          "in_flow": -240712103.395,
+          "main_deal_ratio": 0.2845,
+          "main_in_flow": -92684487.632,
+          "mid_in_flow": -66867072.238,
+          "sml_in_flow": -81160543.525,
+          "super_in_flow": -52686083.89
+        },
+        {
+          "acc_main_in_flow": -158885646.424,
+          "big_in_flow": -53233898.819,
+          "capital_flow_item_time": 1794286800000,
+          "in_flow": -319703781.91,
+          "main_deal_ratio": 0.266,
+          "main_in_flow": -117728381.646,
+          "mid_in_flow": -24811206.181,
+          "sml_in_flow": -177164194.083,
+          "super_in_flow": -64494482.827
+        },
+        {
+          "acc_main_in_flow": -138210332.949,
+          "big_in_flow": 15352476.124,
+          "capital_flow_item_time": 1794373200000,
+          "in_flow": -33909990.226,
+          "main_deal_ratio": 0.2876,
+          "main_in_flow": 20675313.475,
+          "mid_in_flow": 8457670.271,
+          "sml_in_flow": -63042973.972,
+          "super_in_flow": 5322837.351
+        },
+        {
+          "acc_main_in_flow": -178804864.155,
+          "big_in_flow": -7032481.891,
+          "capital_flow_item_time": 1794459600000,
+          "in_flow": -298422192.703,
+          "main_deal_ratio": 0.2629,
+          "main_in_flow": -40594531.206,
+          "mid_in_flow": -57594893.11,
+          "sml_in_flow": -200232768.387,
+          "super_in_flow": -33562049.315
+        },
+        {
+          "acc_main_in_flow": -136643924.783,
+          "big_in_flow": -9666588.815,
+          "capital_flow_item_time": 1794546000000,
+          "in_flow": -164740933.019,
+          "main_deal_ratio": 0.2785,
+          "main_in_flow": 42160939.372,
+          "mid_in_flow": -45179267.804,
+          "sml_in_flow": -161722604.587,
+          "super_in_flow": 51827528.187
+        },
+        {
+          "acc_main_in_flow": -165882291.149,
+          "big_in_flow": -29203072.174,
+          "capital_flow_item_time": 1794805200000,
+          "in_flow": -222444130.935,
+          "main_deal_ratio": 0.2499,
+          "main_in_flow": -29238366.366,
+          "mid_in_flow": -32561607.249,
+          "sml_in_flow": -160644157.32,
+          "super_in_flow": -35294.192
+        },
+        {
+          "acc_main_in_flow": -243592538.231,
+          "big_in_flow": -71133078.258,
+          "capital_flow_item_time": 1794891600000,
+          "in_flow": -266201956.114,
+          "main_deal_ratio": 0.2414,
+          "main_in_flow": -77710247.082,
+          "mid_in_flow": -26471123.477,
+          "sml_in_flow": -162020585.555,
+          "super_in_flow": -6577168.824
+        }
+      ],
+      "next_time": 1793768399000
+    },
+    "pagination": {
+      "has_more": true
+    }
+  }
+}

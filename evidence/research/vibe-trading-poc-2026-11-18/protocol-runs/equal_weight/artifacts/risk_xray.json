@@ -1,0 +1,101 @@
+{
+  "inputs": {
+    "symbols": [
+      "AAPL",
+      "AMD",
+      "AMZN",
+      "AVGO",
+      "COST",
+      "GOOGL",
+      "HD",
+      "JNJ",
+      "JPM",
+      "MA",
+      "META",
+      "MSFT",
+      "NFLX",
+      "NVDA",
+      "PG",
+      "TSLA",
+      "UNH",
+      "V",
+      "WMT",
+      "XOM"
+    ],
+    "weights": {
+      "AAPL": 0.05054076,
+      "AMD": 0.05102528,
+      "AMZN": 0.05030499,
+      "AVGO": 0.05106088,
+      "COST": 0.0477189,
+      "GOOGL": 0.05054724,
+      "HD": 0.04887864,
+      "JNJ": 0.04996162,
+      "JPM": 0.05024564,
+      "MA": 0.04834205,
+      "META": 0.04900502,
+      "MSFT": 0.04955917,
+      "NFLX": 0.051169,
+      "NVDA": 0.05158799,
+      "PG": 0.05026445,
+      "TSLA": 0.0503428,
+      "UNH": 0.04818866,
+      "V": 0.04947583,
+      "WMT": 0.05108598,
+      "XOM": 0.0506951
+    },
+    "aligned_days": 2264,
+    "return_observations": 2263,
+    "first_date": "2016-01-04 00:00:00-05:00",
+    "last_date": "2024-12-31 00:00:00-05:00"
+  },
+  "concentration": {
+    "hhi": 0.05002261132391084,
+    "effective_n": 19.99095955876257,
+    "top1_weight": 0.05158798671496292,
+    "top3_weight": 0.15384296878388148
+  },
+  "exposure": {
+    "gross": 0.9999999999999999,
+    "net": 0.9999999999999999,
+    "long_weight": 0.9999999999999999,
+    "short_weight": 0.0,
+    "long_count": 20,
+    "short_count": 0
+  },
+  "volatility": {
+    "daily_vol": 0.013163143092468453,
+    "annualized_vol": 0.20895841856777533,
+    "downside_deviation_annualized": 0.1464792629928729
+  },
+  "drawdown": {
+    "max_drawdown": -0.2987196418415943,
+    "max_drawdown_start": "2020-02-19 00:00:00-05:00",
+    "max_drawdown_trough": "2020-03-23 00:00:00-04:00"
+  },
+  "tail_risk": {
+    "var_95": 0.019739834434284002,
+    "expected_shortfall_95": 0.031665095615914664,
+    "var_99": 0.03812675488419809,
+    "expected_shortfall_99": 0.05106954774632189,
+    "method": "historical simulation (non-parametric)"
+  },
+  "diversification": {
+    "diversification_ratio": 1.5418524176980246
+  },
+  "correlation": {
+    "avg_pairwise_abs": 0.38673604565747066,
+    "max_pair": {
+      "symbols": [
+        "MA",
+        "V"
+      ],
+      "corr": 0.8999099353956296
+    },
+    "beta_to_equal_weight": 1.003338114830411
+  },
+  "skipped": [],
+  "warnings": [
+    "weights summed to 0.291696; renormalized to 1.0"
+  ]
+}

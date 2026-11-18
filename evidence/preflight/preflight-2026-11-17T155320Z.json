@@ -1,0 +1,78 @@
+{
+  "schema_version": "1",
+  "kind": "REAL_READ_ONLY_PREFLIGHT",
+  "mode": "PAPER",
+  "checked_at_utc": "2026-11-17T15:53:20.068000+00:00",
+  "account": {
+    "masked_id": "****0101",
+    "market_id": 100,
+    "account_type": 2,
+    "title": "Moomoo x Qoder AI Paper Trading Agent Challenge",
+    "fingerprint_matches": true,
+    "equity_usd": "100000",
+    "cash_usd": "100000",
+    "buying_power_usd": "100000",
+    "positions": 0,
+    "open_orders": 0,
+    "reconciled": true,
+    "unknown_orders": 0,
+    "snapshot_as_of_utc": "2026-11-17T15:53:19.671800+00:00",
+    "age_seconds": 0.3962
+  },
+  "quotes": {
+    "SPY": {
+      "last_price": 728.1,
+      "data_time_utc": "2026-11-17T15:53:19.838000+00:00",
+      "age_seconds": 0.0,
+      "sec_status": "NORMAL",
+      "suspension": false,
+      "market_state": "AFTERNOON"
+    },
+    "QQQ": {
+      "last_price": 647.85,
+      "data_time_utc": "2026-11-17T15:53:20.040000+00:00",
+      "age_seconds": 0.0,
+      "sec_status": "NORMAL",
+      "suspension": false,
+      "market_state": "AFTERNOON"
+    },
+    "IWM": {
+      "last_price": 268.33,
+      "data_time_utc": "2026-11-17T15:53:20.068000+00:00",
+      "age_seconds": 0.0,
+      "sec_status": "NORMAL",
+      "suspension": false,
+      "market_state": "AFTERNOON"
+    }
+  },
+  "diagnostic_preview": {
+    "submission_performed": false,
+    "order_transport_available": false,
+    "note": "No order endpoint is implemented or contacted by this collector."
+  },
+  "diagnostic_risk_evaluation": {
+    "note": "RiskGate evaluated a real diagnostic proposal to record deterministic rejection reasons. This is not an executable approval.",
+    "decision": "REJECT",
+    "approved_quantity": 0,
+    "rejection_rule_ids": [
+      "R010",
+      "R014"
+    ],
+    "reasons": [
+      "R010 Order writes are disabled by control state",
+      "R014 First paper order requires explicit owner approval"
+    ],
+    "quote_fresh": true,
+    "regular_session_open": true,
+    "trading_status_normal": true,
+    "suspended": false,
+    "account_fresh": true
+  },
+  "safety": {
+    "order_writes_enabled": false,
+    "submissions_in_ledger": 0,
+    "unknown_submissions": false,
+    "order_endpoint_contacted": false,
+    "oauth_scope_trade_write": false
+  }
+}

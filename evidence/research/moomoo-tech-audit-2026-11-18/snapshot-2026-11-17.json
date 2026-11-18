@@ -1,0 +1,1806 @@
+{
+  "observed_at_utc": "2026-11-18T00:45:47.797931+00:00",
+  "market_time_et": "2026-11-17T19:45:47.797944-05:00",
+  "symbols": {
+    "AAPL": {
+      "kline_shape": {
+        "backtest_statistic": null,
+        "direction": "NONE",
+        "forecast": null,
+        "kline_shape": 0,
+        "points": [],
+        "shape_name": "NONE"
+      },
+      "polarity": {
+        "overall_score": -0.333,
+        "update_time": 1794949200000,
+        "items": [
+          {
+            "indicator_id": 5,
+            "indicator_name": "KDJ_9_3_3",
+            "polarity": "SEVERELY_OVER_BOUGHT",
+            "values": [
+              0.718939993,
+              0.751843407,
+              0.653133165
+            ]
+          },
+          {
+            "indicator_id": 6,
+            "indicator_name": "OSC_20",
+            "polarity": "SEVERELY_OVER_BOUGHT",
+            "values": [
+              485.715129375
+            ]
+          },
+          {
+            "indicator_id": 12,
+            "indicator_name": "WMSR_13",
+            "polarity": "OVER_BOUGHT",
+            "values": [
+              0.249531456
+            ]
+          },
+          {
+            "indicator_id": 3,
+            "indicator_name": "BR_26",
+            "polarity": "OVER_BOUGHT",
+            "values": [
+              1.283146801
+            ]
+          },
+          {
+            "indicator_id": 1,
+            "indicator_name": "AR_26",
+            "polarity": "NEUTRAL",
+            "values": [
+              1.133239629
+            ]
+          },
+          {
+            "indicator_id": 10,
+            "indicator_name": "RSI_24",
+            "polarity": "NEUTRAL",
+            "values": [
+              0.56611378
+            ]
+          },
+          {
+            "indicator_id": 8,
+            "indicator_name": "RSI_6",
+            "polarity": "NEUTRAL",
+            "values": [
+              0.547454647
+            ]
+          },
+          {
+            "indicator_id": 2,
+            "indicator_name": "BIAS_24",
+            "polarity": "NEUTRAL",
+            "values": [
+              0.016601217
+            ]
+          },
+          {
+            "indicator_id": 4,
+            "indicator_name": "CCI_14",
+            "polarity": "NEUTRAL",
+            "values": [
+              54.842914705
+            ]
+          },
+          {
+            "indicator_id": 7,
+            "indicator_name": "PSY_12",
+            "polarity": "NEUTRAL",
+            "values": [
+              0.333333333
+            ]
+          },
+          {
+            "indicator_id": 9,
+            "indicator_name": "RSI_12",
+            "polarity": "NEUTRAL",
+            "values": [
+              0.561846563
+            ]
+          },
+          {
+            "indicator_id": 13,
+            "indicator_name": "MA_5_10_20_30_60",
+            "polarity": "NEUTRAL",
+            "values": [
+              354.239999931,
+              350.513256835,
+              347.052848706,
+              344.843348362,
+              336.583611617
+            ]
+          },
+          {
+            "indicator_id": 15,
+            "indicator_name": "MACD_12_26_9",
+            "polarity": "NEUTRAL",
+            "values": [
+              4.088503784,
+              3.596459122,
+              0.984089323
+            ]
+          },
+          {
+            "indicator_id": 14,
+            "indicator_name": "BOLL_20_2",
+            "polarity": "NEUTRAL",
+            "values": [
+              358.776281322,
+              347.052848706,
+              335.32941609
+            ]
+          },
+          {
+            "indicator_id": 11,
+            "indicator_name": "VR_26",
+            "polarity": "OVER_SOLD",
+            "values": [
+              0.759657844
+            ]
+          }
+        ]
+      },
+      "http": {
+        "shape": 200,
+        "polarity": 200
+      }
+    },
+    "MSFT": {
+      "kline_shape": {
+        "backtest_statistic": null,
+        "direction": "NONE",
+        "forecast": null,
+        "kline_shape": 0,
+        "points": [],
+        "shape_name": "NONE"
+      },
+      "polarity": {
+        "overall_score": 0.6,
+        "update_time": 1794949200000,
+        "items": [
+          {
+            "indicator_id": 6,
+            "indicator_name": "OSC_20",
+            "polarity": "SEVERELY_OVER_SOLD",
+            "values": [
+              -2108.775
+            ]
+          },
+          {
+            "indicator_id": 11,
+            "indicator_name": "VR_26",
+            "polarity": "OVER_SOLD",
+            "values": [
+              0.597399097
+            ]
+          },
+          {
+            "indicator_id": 12,
+            "indicator_name": "WMSR_13",
+            "polarity": "OVER_SOLD",
+            "values": [
+              0.844667943
+            ]
+          },
+          {
+            "indicator_id": 2,
+            "indicator_name": "BIAS_24",
+            "polarity": "OVER_SOLD",
+            "values": [
+              -0.041849904
+            ]
+          },
+          {
+            "indicator_id": 3,
+            "indicator_name": "BR_26",
+            "polarity": "OVER_SOLD",
+            "values": [
+              0.730276878
+            ]
+          },
+          {
+            "indicator_id": 8,
+            "indicator_name": "RSI_6",
+            "polarity": "OVER_SOLD",
+            "values": [
+              0.308152531
+            ]
+          },
+          {
+            "indicator_id": 1,
+            "indicator_name": "AR_26",
+            "polarity": "OVER_SOLD",
+            "values": [
+              0.558025592
+            ]
+          },
+          {
+            "indicator_id": 4,
+            "indicator_name": "CCI_14",
+            "polarity": "OVER_SOLD",
+            "values": [
+              -142.071843539
+            ]
+          },
+          {
+            "indicator_id": 14,
+            "indicator_name": "BOLL_20_2",
+            "polarity": "NEUTRAL",
+            "values": [
+              549.557795091,
+              527.32775,
+              505.097704908
+            ]
+          },
+          {
+            "indicator_id": 13,
+            "indicator_name": "MA_5_10_20_30_60",
+            "polarity": "NEUTRAL",
+            "values": [
+              518.447,
+              529.2915,
+              527.32775,
+              529.538833333,
+              516.600083333
+            ]
+          },
+          {
+            "indicator_id": 5,
+            "indicator_name": "KDJ_9_3_3",
+            "polarity": "NEUTRAL",
+            "values": [
+              0.247836898,
+              0.351560816,
+              0.040389063
+            ]
+          },
+          {
+            "indicator_id": 7,
+            "indicator_name": "PSY_12",
+            "polarity": "NEUTRAL",
+            "values": [
+              0.416666666
+            ]
+          },
+          {
+            "indicator_id": 9,
+            "indicator_name": "RSI_12",
+            "polarity": "NEUTRAL",
+            "values": [
+              0.402516085
+            ]
+          },
+          {
+            "indicator_id": 10,
+            "indicator_name": "RSI_24",
+            "polarity": "NEUTRAL",
+            "values": [
+              0.470349763
+            ]
+          },
+          {
+            "indicator_id": 15,
+            "indicator_name": "MACD_12_26_9",
+            "polarity": "NEUTRAL",
+            "values": [
+              -0.734967369,
+              2.481994296,
+              -6.433923331
+            ]
+          }
+        ]
+      },
+      "http": {
+        "shape": 200,
+        "polarity": 200
+      }
+    },
+    "NVDA": {
+      "kline_shape": {
+        "backtest_statistic": null,
+        "direction": "NONE",
+        "forecast": null,
+        "kline_shape": 0,
+        "points": [],
+        "shape_name": "NONE"
+      },
+      "polarity": {
+        "overall_score": 1.067,
+        "update_time": 1794950100000,
+        "items": [
+          {
+            "indicator_id": 11,
+            "indicator_name": "VR_26",
+            "polarity": "SEVERELY_OVER_SOLD",
+            "values": [
+              0.245153526
+            ]
+          },
+          {
+            "indicator_id": 5,
+            "indicator_name": "KDJ_9_3_3",
+            "polarity": "SEVERELY_OVER_SOLD",
+            "values": [
+              0.163887696,
+              0.169078025,
+              0.153507038
+            ]
+          },
+          {
+            "indicator_id": 8,
+            "indicator_name": "RSI_6",
+            "polarity": "SEVERELY_OVER_SOLD",
+            "values": [
+              0.158517149
+            ]
+          },
+          {
+            "indicator_id": 6,
+            "indicator_name": "OSC_20",
+            "polarity": "SEVERELY_OVER_SOLD",
+            "values": [
+              -3713.05
+            ]
+          },
+          {
+            "indicator_id": 2,
+            "indicator_name": "BIAS_24",
+            "polarity": "SEVERELY_OVER_SOLD",
+            "values": [
+              -0.208977405
+            ]
+          },
+          {
+            "indicator_id": 3,
+            "indicator_name": "BR_26",
+            "polarity": "OVER_SOLD",
+            "values": [
+              0.426452933
+            ]
+          },
+          {
+            "indicator_id": 10,
+            "indicator_name": "RSI_24",
+            "polarity": "OVER_SOLD",
+            "values": [
+              0.287673878
+            ]
+          },
+          {
+            "indicator_id": 4,
+            "indicator_name": "CCI_14",
+            "polarity": "OVER_SOLD",
+            "values": [
+              -106.42675227
+            ]
+          },
+          {
+            "indicator_id": 9,
+            "indicator_name": "RSI_12",
+            "polarity": "OVER_SOLD",
+            "values": [
+              0.21041262
+            ]
+          },
+          {
+            "indicator_id": 1,
+            "indicator_name": "AR_26",
+            "polarity": "OVER_SOLD",
+            "values": [
+              0.606517678
+            ]
+          },
+          {
+            "indicator_id": 7,
+            "indicator_name": "PSY_12",
+            "polarity": "OVER_SOLD",
+            "values": [
+              0.25
+            ]
+          },
+          {
+            "indicator_id": 12,
+            "indicator_name": "WMSR_13",
+            "polarity": "OVER_SOLD",
+            "values": [
+              0.891135379
+            ]
+          },
+          {
+            "indicator_id": 15,
+            "indicator_name": "MACD_12_26_9",
+            "polarity": "NEUTRAL",
+            "values": [
+              -16.152546938,
+              -12.15465325,
+              -7.995787375
+            ]
+          },
+          {
+            "indicator_id": 14,
+            "indicator_name": "BOLL_20_2",
+            "polarity": "NEUTRAL",
+            "values": [
+              236.83101513,
+              192.5905,
+              148.349984869
+            ]
+          },
+          {
+            "indicator_id": 13,
+            "indicator_name": "MA_5_10_20_30_60",
+            "polarity": "OVER_BOUGHT",
+            "values": [
+              162.874,
+              173.03,
+              192.5905,
+              203.003333333,
+              213.342563232
+            ]
+          }
+        ]
+      },
+      "http": {
+        "shape": 200,
+        "polarity": 200
+      }
+    },
+    "AMZN": {
+      "kline_shape": {
+        "backtest_statistic": null,
+        "direction": "NONE",
+        "forecast": null,
+        "kline_shape": 0,
+        "points": [],
+        "shape_name": "NONE"
+      },
+      "polarity": {
+        "overall_score": -0.2,
+        "update_time": 1794949200000,
+        "items": [
+          {
+            "indicator_id": 6,
+            "indicator_name": "OSC_20",
+            "polarity": "SEVERELY_OVER_BOUGHT",
+            "values": [
+              102.75
+            ]
+          },
+          {
+            "indicator_id": 7,
+            "indicator_name": "PSY_12",
+            "polarity": "OVER_BOUGHT",
+            "values": [
+              0.583333333
+            ]
+          },
+          {
+            "indicator_id": 3,
+            "indicator_name": "BR_26",
+            "polarity": "NEUTRAL",
+            "values": [
+              1.135047279
+            ]
+          },
+          {
+            "indicator_id": 4,
+            "indicator_name": "CCI_14",
+            "polarity": "NEUTRAL",
+            "values": [
+              -15.423470618
+            ]
+          },
+          {
+            "indicator_id": 9,
+            "indicator_name": "RSI_12",
+            "polarity": "NEUTRAL",
+            "values": [
+              0.49200483
+            ]
+          },
+          {
+            "indicator_id": 2,
+            "indicator_name": "BIAS_24",
+            "polarity": "NEUTRAL",
+            "values": [
+              0.003611103
+            ]
+          },
+          {
+            "indicator_id": 10,
+            "indicator_name": "RSI_24",
+            "polarity": "NEUTRAL",
+            "values": [
+              0.505700228
+            ]
+          },
+          {
+            "indicator_id": 13,
+            "indicator_name": "MA_5_10_20_30_60",
+            "polarity": "NEUTRAL",
+            "values": [
+              263.182,
+              263.925,
+              256.8625,
+              257.189666666,
+              255.480333333
+            ]
+          },
+          {
+            "indicator_id": 15,
+            "indicator_name": "MACD_12_26_9",
+            "polarity": "NEUTRAL",
+            "values": [
+              2.431449335,
+              2.104294452,
+              0.654309765
+            ]
+          },
+          {
+            "indicator_id": 14,
+            "indicator_name": "BOLL_20_2",
+            "polarity": "NEUTRAL",
+            "values": [
+              274.375411665,
+              256.8625,
+              239.349588334
+            ]
+          },
+          {
+            "indicator_id": 5,
+            "indicator_name": "KDJ_9_3_3",
+            "polarity": "NEUTRAL",
+            "values": [
+              0.468120426,
+              0.611920002,
+              0.180521274
+            ]
+          },
+          {
+            "indicator_id": 1,
+            "indicator_name": "AR_26",
+            "polarity": "NEUTRAL",
+            "values": [
+              0.93166213
+            ]
+          },
+          {
+            "indicator_id": 12,
+            "indicator_name": "WMSR_13",
+            "polarity": "NEUTRAL",
+            "values": [
+              0.379539245
+            ]
+          },
+          {
+            "indicator_id": 8,
+            "indicator_name": "RSI_6",
+            "polarity": "NEUTRAL",
+            "values": [
+              0.424656862
+            ]
+          },
+          {
+            "indicator_id": 11,
+            "indicator_name": "VR_26",
+            "polarity": "NEUTRAL",
+            "values": [
+              0.904957506
+            ]
+          }
+        ]
+      },
+      "http": {
+        "shape": 200,
+        "polarity": 200
+      }
+    },
+    "GOOGL": {
+      "kline_shape": {
+        "backtest_statistic": null,
+        "direction": "NONE",
+        "forecast": null,
+        "kline_shape": 0,
+        "points": [],
+        "shape_name": "NONE"
+      },
+      "polarity": {
+        "overall_score": 0.6,
+        "update_time": 1794949200000,
+        "items": [
+          {
+            "indicator_id": 6,
+            "indicator_name": "OSC_20",
+            "polarity": "SEVERELY_OVER_SOLD",
+            "values": [
+              -1718.95
+            ]
+          },
+          {
+            "indicator_id": 9,
+            "indicator_name": "RSI_12",
+            "polarity": "OVER_SOLD",
+            "values": [
+              0.32557226
+            ]
+          },
+          {
+            "indicator_id": 12,
+            "indicator_name": "WMSR_13",
+            "polarity": "OVER_SOLD",
+            "values": [
+              0.883065536
+            ]
+          },
+          {
+            "indicator_id": 2,
+            "indicator_name": "BIAS_24",
+            "polarity": "OVER_SOLD",
+            "values": [
+              -0.081569313
+            ]
+          },
+          {
+            "indicator_id": 10,
+            "indicator_name": "RSI_24",
+            "polarity": "OVER_SOLD",
+            "values": [
+              0.352706851
+            ]
+          },
+          {
+            "indicator_id": 1,
+            "indicator_name": "AR_26",
+            "polarity": "OVER_SOLD",
+            "values": [
+              0.719687412
+            ]
+          },
+          {
+            "indicator_id": 8,
+            "indicator_name": "RSI_6",
+            "polarity": "OVER_SOLD",
+            "values": [
+              0.310418212
+            ]
+          },
+          {
+            "indicator_id": 11,
+            "indicator_name": "VR_26",
+            "polarity": "OVER_SOLD",
+            "values": [
+              0.621350264
+            ]
+          },
+          {
+            "indicator_id": 4,
+            "indicator_name": "CCI_14",
+            "polarity": "OVER_SOLD",
+            "values": [
+              -88.532409188
+            ]
+          },
+          {
+            "indicator_id": 14,
+            "indicator_name": "BOLL_20_2",
+            "polarity": "NEUTRAL",
+            "values": [
+              333.660679454,
+              297.3895,
+              261.118320545
+            ]
+          },
+          {
+            "indicator_id": 5,
+            "indicator_name": "KDJ_9_3_3",
+            "polarity": "NEUTRAL",
+            "values": [
+              0.367018063,
+              0.439041027,
+              0.222972136
+            ]
+          },
+          {
+            "indicator_id": 15,
+            "indicator_name": "MACD_12_26_9",
+            "polarity": "NEUTRAL",
+            "values": [
+              -12.457529123,
+              -13.137618565,
+              1.360178885
+            ]
+          },
+          {
+            "indicator_id": 13,
+            "indicator_name": "MA_5_10_20_30_60",
+            "polarity": "NEUTRAL",
+            "values": [
+              290.368,
+              288.365,
+              297.3895,
+              314.2215,
+              328.360353496
+            ]
+          },
+          {
+            "indicator_id": 3,
+            "indicator_name": "BR_26",
+            "polarity": "NEUTRAL",
+            "values": [
+              0.772854347
+            ]
+          },
+          {
+            "indicator_id": 7,
+            "indicator_name": "PSY_12",
+            "polarity": "OVER_BOUGHT",
+            "values": [
+              0.5
+            ]
+          }
+        ]
+      },
+      "http": {
+        "shape": 200,
+        "polarity": 200
+      }
+    },
+    "META": {
+      "kline_shape": {
+        "backtest_statistic": null,
+        "direction": "NONE",
+        "forecast": null,
+        "kline_shape": 0,
+        "points": [],
+        "shape_name": "NONE"
+      },
+      "polarity": {
+        "overall_score": 0.333,
+        "update_time": 1794949200000,
+        "items": [
+          {
+            "indicator_id": 7,
+            "indicator_name": "PSY_12",
+            "polarity": "OVER_BOUGHT",
+            "values": [
+              0.5
+            ]
+          },
+          {
+            "indicator_id": 13,
+            "indicator_name": "MA_5_10_20_30_60",
+            "polarity": "NEUTRAL",
+            "values": [
+              627.87,
+              626.734,
+              629.342,
+              661.214833333,
+              664.607933885
+            ]
+          },
+          {
+            "indicator_id": 4,
+            "indicator_name": "CCI_14",
+            "polarity": "NEUTRAL",
+            "values": [
+              -39.239700797
+            ]
+          },
+          {
+            "indicator_id": 15,
+            "indicator_name": "MACD_12_26_9",
+            "polarity": "NEUTRAL",
+            "values": [
+              -14.618207163,
+              -16.513081863,
+              3.789749399
+            ]
+          },
+          {
+            "indicator_id": 9,
+            "indicator_name": "RSI_12",
+            "polarity": "NEUTRAL",
+            "values": [
+              0.417028897
+            ]
+          },
+          {
+            "indicator_id": 10,
+            "indicator_name": "RSI_24",
+            "polarity": "NEUTRAL",
+            "values": [
+              0.446047279
+            ]
+          },
+          {
+            "indicator_id": 14,
+            "indicator_name": "BOLL_20_2",
+            "polarity": "NEUTRAL",
+            "values": [
+              669.179460059,
+              629.342,
+              589.50453994
+            ]
+          },
+          {
+            "indicator_id": 8,
+            "indicator_name": "RSI_6",
+            "polarity": "NEUTRAL",
+            "values": [
+              0.414704376
+            ]
+          },
+          {
+            "indicator_id": 5,
+            "indicator_name": "KDJ_9_3_3",
+            "polarity": "NEUTRAL",
+            "values": [
+              0.652585603,
+              0.649378467,
+              0.658999874
+            ]
+          },
+          {
+            "indicator_id": 12,
+            "indicator_name": "WMSR_13",
+            "polarity": "NEUTRAL",
+            "values": [
+              0.457539764
+            ]
+          },
+          {
+            "indicator_id": 2,
+            "indicator_name": "BIAS_24",
+            "polarity": "OVER_SOLD",
+            "values": [
+              -0.037563076
+            ]
+          },
+          {
+            "indicator_id": 3,
+            "indicator_name": "BR_26",
+            "polarity": "OVER_SOLD",
+            "values": [
+              0.615856905
+            ]
+          },
+          {
+            "indicator_id": 1,
+            "indicator_name": "AR_26",
+            "polarity": "OVER_SOLD",
+            "values": [
+              0.688770428
+            ]
+          },
+          {
+            "indicator_id": 11,
+            "indicator_name": "VR_26",
+            "polarity": "OVER_SOLD",
+            "values": [
+              0.501201569
+            ]
+          },
+          {
+            "indicator_id": 6,
+            "indicator_name": "OSC_20",
+            "polarity": "SEVERELY_OVER_SOLD",
+            "values": [
+              -1047.2
+            ]
+          }
+        ]
+      },
+      "http": {
+        "shape": 200,
+        "polarity": 200
+      }
+    },
+    "TSLA": {
+      "kline_shape": {
+        "backtest_statistic": null,
+        "direction": "NONE",
+        "forecast": null,
+        "kline_shape": 0,
+        "points": [],
+        "shape_name": "NONE"
+      },
+      "polarity": {
+        "overall_score": 0.067,
+        "update_time": 1794949200000,
+        "items": [
+          {
+            "indicator_id": 7,
+            "indicator_name": "PSY_12",
+            "polarity": "OVER_BOUGHT",
+            "values": [
+              0.583333333
+            ]
+          },
+          {
+            "indicator_id": 14,
+            "indicator_name": "BOLL_20_2",
+            "polarity": "NEUTRAL",
+            "values": [
+              417.943032462,
+              386.2645,
+              354.585967537
+            ]
+          },
+          {
+            "indicator_id": 4,
+            "indicator_name": "CCI_14",
+            "polarity": "NEUTRAL",
+            "values": [
+              -30.39340205
+            ]
+          },
+          {
+            "indicator_id": 5,
+            "indicator_name": "KDJ_9_3_3",
+            "polarity": "NEUTRAL",
+            "values": [
+              0.648302548,
+              0.624757515,
+              0.695392616
+            ]
+          },
+          {
+            "indicator_id": 9,
+            "indicator_name": "RSI_12",
+            "polarity": "NEUTRAL",
+            "values": [
+              0.491144001
+            ]
+          },
+          {
+            "indicator_id": 15,
+            "indicator_name": "MACD_12_26_9",
+            "polarity": "NEUTRAL",
+            "values": [
+              2.179490719,
+              3.098041643,
+              -1.837101846
+            ]
+          },
+          {
+            "indicator_id": 3,
+            "indicator_name": "BR_26",
+            "polarity": "NEUTRAL",
+            "values": [
+              0.895619455
+            ]
+          },
+          {
+            "indicator_id": 1,
+            "indicator_name": "AR_26",
+            "polarity": "NEUTRAL",
+            "values": [
+              1.089379757
+            ]
+          },
+          {
+            "indicator_id": 13,
+            "indicator_name": "MA_5_10_20_30_60",
+            "polarity": "NEUTRAL",
+            "values": [
+              387.672,
+              378.329,
+              386.2645,
+              381.338333333,
+              372.565416666
+            ]
+          },
+          {
+            "indicator_id": 12,
+            "indicator_name": "WMSR_13",
+            "polarity": "NEUTRAL",
+            "values": [
+              0.448475289
+            ]
+          },
+          {
+            "indicator_id": 11,
+            "indicator_name": "VR_26",
+            "polarity": "NEUTRAL",
+            "values": [
+              0.808419561
+            ]
+          },
+          {
+            "indicator_id": 8,
+            "indicator_name": "RSI_6",
+            "polarity": "NEUTRAL",
+            "values": [
+              0.461880745
+            ]
+          },
+          {
+            "indicator_id": 10,
+            "indicator_name": "RSI_24",
+            "polarity": "NEUTRAL",
+            "values": [
+              0.507471583
+            ]
+          },
+          {
+            "indicator_id": 2,
+            "indicator_name": "BIAS_24",
+            "polarity": "NEUTRAL",
+            "values": [
+              -0.006704978
+            ]
+          },
+          {
+            "indicator_id": 6,
+            "indicator_name": "OSC_20",
+            "polarity": "SEVERELY_OVER_SOLD",
+            "values": [
+              -615.45
+            ]
+          }
+        ]
+      },
+      "http": {
+        "shape": 200,
+        "polarity": 200
+      }
+    },
+    "AVGO": {
+      "kline_shape": {
+        "backtest_statistic": null,
+        "direction": "NONE",
+        "forecast": null,
+        "kline_shape": 0,
+        "points": [],
+        "shape_name": "NONE"
+      },
+      "polarity": {
+        "overall_score": -0.267,
+        "update_time": 1794949200000,
+        "items": [
+          {
+            "indicator_id": 6,
+            "indicator_name": "OSC_20",
+            "polarity": "SEVERELY_OVER_BOUGHT",
+            "values": [
+              1033.9
+            ]
+          },
+          {
+            "indicator_id": 2,
+            "indicator_name": "BIAS_24",
+            "polarity": "OVER_BOUGHT",
+            "values": [
+              0.029011228
+            ]
+          },
+          {
+            "indicator_id": 7,
+            "indicator_name": "PSY_12",
+            "polarity": "OVER_BOUGHT",
+            "values": [
+              0.583333333
+            ]
+          },
+          {
+            "indicator_id": 15,
+            "indicator_name": "MACD_12_26_9",
+            "polarity": "NEUTRAL",
+            "values": [
+              -1.421219892,
+              -4.816303998,
+              6.790168212
+            ]
+          },
+          {
+            "indicator_id": 3,
+            "indicator_name": "BR_26",
+            "polarity": "NEUTRAL",
+            "values": [
+              0.999312423
+            ]
+          },
+          {
+            "indicator_id": 4,
+            "indicator_name": "CCI_14",
+            "polarity": "NEUTRAL",
+            "values": [
+              41.110071335
+            ]
+          },
+          {
+            "indicator_id": 5,
+            "indicator_name": "KDJ_9_3_3",
+            "polarity": "NEUTRAL",
+            "values": [
+              0.645676698,
+              0.608393181,
+              0.720243732
+            ]
+          },
+          {
+            "indicator_id": 8,
+            "indicator_name": "RSI_6",
+            "polarity": "NEUTRAL",
+            "values": [
+              0.541960319
+            ]
+          },
+          {
+            "indicator_id": 1,
+            "indicator_name": "AR_26",
+            "polarity": "NEUTRAL",
+            "values": [
+              0.942030462
+            ]
+          },
+          {
+            "indicator_id": 13,
+            "indicator_name": "MA_5_10_20_30_60",
+            "polarity": "NEUTRAL",
+            "values": [
+              346.318,
+              329.375,
+              331.261,
+              337.458,
+              347.491078491
+            ]
+          },
+          {
+            "indicator_id": 10,
+            "indicator_name": "RSI_24",
+            "polarity": "NEUTRAL",
+            "values": [
+              0.495083269
+            ]
+          },
+          {
+            "indicator_id": 11,
+            "indicator_name": "VR_26",
+            "polarity": "NEUTRAL",
+            "values": [
+              0.95872211
+            ]
+          },
+          {
+            "indicator_id": 9,
+            "indicator_name": "RSI_12",
+            "polarity": "NEUTRAL",
+            "values": [
+              0.520166369
+            ]
+          },
+          {
+            "indicator_id": 12,
+            "indicator_name": "WMSR_13",
+            "polarity": "NEUTRAL",
+            "values": [
+              0.352516457
+            ]
+          },
+          {
+            "indicator_id": 14,
+            "indicator_name": "BOLL_20_2",
+            "polarity": "NEUTRAL",
+            "values": [
+              365.49175804,
+              331.261,
+              297.030241959
+            ]
+          }
+        ]
+      },
+      "http": {
+        "shape": 200,
+        "polarity": 200
+      }
+    },
+    "JPM": {
+      "kline_shape": {
+        "backtest_statistic": null,
+        "direction": "NONE",
+        "forecast": null,
+        "kline_shape": 0,
+        "points": [],
+        "shape_name": "NONE"
+      },
+      "polarity": {
+        "overall_score": 0.333,
+        "update_time": 1794949202000,
+        "items": [
+          {
+            "indicator_id": 3,
+            "indicator_name": "BR_26",
+            "polarity": "OVER_BOUGHT",
+            "values": [
+              1.304045627
+            ]
+          },
+          {
+            "indicator_id": 15,
+            "indicator_name": "MACD_12_26_9",
+            "polarity": "OVER_BOUGHT",
+            "values": [
+              0.207110343,
+              0.663025828,
+              -0.91183097
+            ]
+          },
+          {
+            "indicator_id": 11,
+            "indicator_name": "VR_26",
+            "polarity": "NEUTRAL",
+            "values": [
+              1.027119732
+            ]
+          },
+          {
+            "indicator_id": 2,
+            "indicator_name": "BIAS_24",
+            "polarity": "NEUTRAL",
+            "values": [
+              -0.025267345
+            ]
+          },
+          {
+            "indicator_id": 5,
+            "indicator_name": "KDJ_9_3_3",
+            "polarity": "NEUTRAL",
+            "values": [
+              0.237088206,
+              0.329243437,
+              0.052777744
+            ]
+          },
+          {
+            "indicator_id": 10,
+            "indicator_name": "RSI_24",
+            "polarity": "NEUTRAL",
+            "values": [
+              0.447276669
+            ]
+          },
+          {
+            "indicator_id": 13,
+            "indicator_name": "MA_5_10_20_30_60",
+            "polarity": "NEUTRAL",
+            "values": [
+              340.114,
+              340.866,
+              339.014,
+              337.310666666,
+              341.557940814
+            ]
+          },
+          {
+            "indicator_id": 9,
+            "indicator_name": "RSI_12",
+            "polarity": "NEUTRAL",
+            "values": [
+              0.410029169
+            ]
+          },
+          {
+            "indicator_id": 14,
+            "indicator_name": "BOLL_20_2",
+            "polarity": "NEUTRAL",
+            "values": [
+              349.219450308,
+              339.014,
+              328.808549691
+            ]
+          },
+          {
+            "indicator_id": 7,
+            "indicator_name": "PSY_12",
+            "polarity": "NEUTRAL",
+            "values": [
+              0.416666666
+            ]
+          },
+          {
+            "indicator_id": 8,
+            "indicator_name": "RSI_6",
+            "polarity": "OVER_SOLD",
+            "values": [
+              0.320489029
+            ]
+          },
+          {
+            "indicator_id": 1,
+            "indicator_name": "AR_26",
+            "polarity": "OVER_SOLD",
+            "values": [
+              0.652256263
+            ]
+          },
+          {
+            "indicator_id": 12,
+            "indicator_name": "WMSR_13",
+            "polarity": "OVER_SOLD",
+            "values": [
+              0.960721184
+            ]
+          },
+          {
+            "indicator_id": 4,
+            "indicator_name": "CCI_14",
+            "polarity": "SEVERELY_OVER_SOLD",
+            "values": [
+              -197.847109516
+            ]
+          },
+          {
+            "indicator_id": 6,
+            "indicator_name": "OSC_20",
+            "polarity": "SEVERELY_OVER_SOLD",
+            "values": [
+              -905.4
+            ]
+          }
+        ]
+      },
+      "http": {
+        "shape": 200,
+        "polarity": 200
+      }
+    },
+    "XOM": {
+      "kline_shape": {
+        "backtest_statistic": null,
+        "direction": "NONE",
+        "forecast": null,
+        "kline_shape": 0,
+        "points": [],
+        "shape_name": "NONE"
+      },
+      "polarity": {
+        "overall_score": 0.333,
+        "update_time": 1794949411000,
+        "items": [
+          {
+            "indicator_id": 13,
+            "indicator_name": "MA_5_10_20_30_60",
+            "polarity": "NEUTRAL",
+            "values": [
+              167.595883453,
+              166.241562564,
+              173.235482721,
+              172.945335896,
+              167.09462038
+            ]
+          },
+          {
+            "indicator_id": 10,
+            "indicator_name": "RSI_24",
+            "polarity": "NEUTRAL",
+            "values": [
+              0.488095081
+            ]
+          },
+          {
+            "indicator_id": 5,
+            "indicator_name": "KDJ_9_3_3",
+            "polarity": "NEUTRAL",
+            "values": [
+              0.472051703,
+              0.369328439,
+              0.67749823
+            ]
+          },
+          {
+            "indicator_id": 9,
+            "indicator_name": "RSI_12",
+            "polarity": "NEUTRAL",
+            "values": [
+              0.440252429
+            ]
+          },
+          {
+            "indicator_id": 3,
+            "indicator_name": "BR_26",
+            "polarity": "NEUTRAL",
+            "values": [
+              0.931702731
+            ]
+          },
+          {
+            "indicator_id": 8,
+            "indicator_name": "RSI_6",
+            "polarity": "NEUTRAL",
+            "values": [
+              0.425702637
+            ]
+          },
+          {
+            "indicator_id": 4,
+            "indicator_name": "CCI_14",
+            "polarity": "NEUTRAL",
+            "values": [
+              -33.340202507
+            ]
+          },
+          {
+            "indicator_id": 11,
+            "indicator_name": "VR_26",
+            "polarity": "NEUTRAL",
+            "values": [
+              1.171807123
+            ]
+          },
+          {
+            "indicator_id": 15,
+            "indicator_name": "MACD_12_26_9",
+            "polarity": "NEUTRAL",
+            "values": [
+              -1.20073927,
+              -0.098344506,
+              -2.204789526
+            ]
+          },
+          {
+            "indicator_id": 7,
+            "indicator_name": "PSY_12",
+            "polarity": "NEUTRAL",
+            "values": [
+              0.416666666
+            ]
+          },
+          {
+            "indicator_id": 14,
+            "indicator_name": "BOLL_20_2",
+            "polarity": "NEUTRAL",
+            "values": [
+              188.154075774,
+              173.235482721,
+              158.316889668
+            ]
+          },
+          {
+            "indicator_id": 12,
+            "indicator_name": "WMSR_13",
+            "polarity": "OVER_SOLD",
+            "values": [
+              0.712738705
+            ]
+          },
+          {
+            "indicator_id": 1,
+            "indicator_name": "AR_26",
+            "polarity": "OVER_SOLD",
+            "values": [
+              0.752255645
+            ]
+          },
+          {
+            "indicator_id": 2,
+            "indicator_name": "BIAS_24",
+            "polarity": "OVER_SOLD",
+            "values": [
+              -0.037653567
+            ]
+          },
+          {
+            "indicator_id": 6,
+            "indicator_name": "OSC_20",
+            "polarity": "SEVERELY_OVER_SOLD",
+            "values": [
+              -602.548272125
+            ]
+          }
+        ]
+      },
+      "http": {
+        "shape": 200,
+        "polarity": 200
+      }
+    },
+    "SPY": {
+      "kline_shape": {
+        "backtest_statistic": null,
+        "direction": "NONE",
+        "forecast": null,
+        "kline_shape": 0,
+        "points": [],
+        "shape_name": "NONE"
+      },
+      "polarity": {
+        "overall_score": 0.6,
+        "update_time": 1794949200000,
+        "items": [
+          {
+            "indicator_id": 6,
+            "indicator_name": "OSC_20",
+            "polarity": "SEVERELY_OVER_SOLD",
+            "values": [
+              -2342.45
+            ]
+          },
+          {
+            "indicator_id": 3,
+            "indicator_name": "BR_26",
+            "polarity": "OVER_SOLD",
+            "values": [
+              0.745335786
+            ]
+          },
+          {
+            "indicator_id": 12,
+            "indicator_name": "WMSR_13",
+            "polarity": "OVER_SOLD",
+            "values": [
+              0.888157894
+            ]
+          },
+          {
+            "indicator_id": 8,
+            "indicator_name": "RSI_6",
+            "polarity": "OVER_SOLD",
+            "values": [
+              0.302096616
+            ]
+          },
+          {
+            "indicator_id": 1,
+            "indicator_name": "AR_26",
+            "polarity": "OVER_SOLD",
+            "values": [
+              0.756715374
+            ]
+          },
+          {
+            "indicator_id": 11,
+            "indicator_name": "VR_26",
+            "polarity": "OVER_SOLD",
+            "values": [
+              0.614425471
+            ]
+          },
+          {
+            "indicator_id": 4,
+            "indicator_name": "CCI_14",
+            "polarity": "OVER_SOLD",
+            "values": [
+              -155.330844278
+            ]
+          },
+          {
+            "indicator_id": 9,
+            "indicator_name": "RSI_12",
+            "polarity": "OVER_SOLD",
+            "values": [
+              0.364955892
+            ]
+          },
+          {
+            "indicator_id": 2,
+            "indicator_name": "BIAS_24",
+            "polarity": "NEUTRAL",
+            "values": [
+              -0.033500367
+            ]
+          },
+          {
+            "indicator_id": 5,
+            "indicator_name": "KDJ_9_3_3",
+            "polarity": "NEUTRAL",
+            "values": [
+              0.299602336,
+              0.372093185,
+              0.154620637
+            ]
+          },
+          {
+            "indicator_id": 7,
+            "indicator_name": "PSY_12",
+            "polarity": "NEUTRAL",
+            "values": [
+              0.416666666
+            ]
+          },
+          {
+            "indicator_id": 13,
+            "indicator_name": "MA_5_10_20_30_60",
+            "polarity": "NEUTRAL",
+            "values": [
+              748.738,
+              748.14,
+              755.8645,
+              761.443,
+              763.353218725
+            ]
+          },
+          {
+            "indicator_id": 15,
+            "indicator_name": "MACD_12_26_9",
+            "polarity": "NEUTRAL",
+            "values": [
+              -6.215826475,
+              -4.583239986,
+              -3.265172978
+            ]
+          },
+          {
+            "indicator_id": 14,
+            "indicator_name": "BOLL_20_2",
+            "polarity": "NEUTRAL",
+            "values": [
+              780.609271952,
+              755.8645,
+              731.119728047
+            ]
+          },
+          {
+            "indicator_id": 10,
+            "indicator_name": "RSI_24",
+            "polarity": "NEUTRAL",
+            "values": [
+              0.40967062
+            ]
+          }
+        ]
+      },
+      "http": {
+        "shape": 200,
+        "polarity": 200
+      }
+    },
+    "QQQ": {
+      "kline_shape": {
+        "backtest_statistic": null,
+        "direction": "NONE",
+        "forecast": null,
+        "kline_shape": 0,
+        "points": [],
+        "shape_name": "NONE"
+      },
+      "polarity": {
+        "overall_score": 0.733,
+        "update_time": 1794949200000,
+        "items": [
+          {
+            "indicator_id": 6,
+            "indicator_name": "OSC_20",
+            "polarity": "SEVERELY_OVER_SOLD",
+            "values": [
+              -3263.4
+            ]
+          },
+          {
+            "indicator_id": 4,
+            "indicator_name": "CCI_14",
+            "polarity": "OVER_SOLD",
+            "values": [
+              -122.597374833
+            ]
+          },
+          {
+            "indicator_id": 1,
+            "indicator_name": "AR_26",
+            "polarity": "OVER_SOLD",
+            "values": [
+              0.759526983
+            ]
+          },
+          {
+            "indicator_id": 11,
+            "indicator_name": "VR_26",
+            "polarity": "OVER_SOLD",
+            "values": [
+              0.511605942
+            ]
+          },
+          {
+            "indicator_id": 12,
+            "indicator_name": "WMSR_13",
+            "polarity": "OVER_SOLD",
+            "values": [
+              0.811895639
+            ]
+          },
+          {
+            "indicator_id": 3,
+            "indicator_name": "BR_26",
+            "polarity": "OVER_SOLD",
+            "values": [
+              0.619010728
+            ]
+          },
+          {
+            "indicator_id": 2,
+            "indicator_name": "BIAS_24",
+            "polarity": "OVER_SOLD",
+            "values": [
+              -0.053924071
+            ]
+          },
+          {
+            "indicator_id": 10,
+            "indicator_name": "RSI_24",
+            "polarity": "OVER_SOLD",
+            "values": [
+              0.39278769
+            ]
+          },
+          {
+            "indicator_id": 9,
+            "indicator_name": "RSI_12",
+            "polarity": "OVER_SOLD",
+            "values": [
+              0.359123673
+            ]
+          },
+          {
+            "indicator_id": 8,
+            "indicator_name": "RSI_6",
+            "polarity": "OVER_SOLD",
+            "values": [
+              0.321918581
+            ]
+          },
+          {
+            "indicator_id": 15,
+            "indicator_name": "MACD_12_26_9",
+            "polarity": "NEUTRAL",
+            "values": [
+              -14.831041075,
+              -13.362682078,
+              -2.936717993
+            ]
+          },
+          {
+            "indicator_id": 14,
+            "indicator_name": "BOLL_20_2",
+            "polarity": "NEUTRAL",
+            "values": [
+              735.351416531,
+              689.584,
+              643.816583468
+            ]
+          },
+          {
+            "indicator_id": 7,
+            "indicator_name": "PSY_12",
+            "polarity": "NEUTRAL",
+            "values": [
+              0.416666666
+            ]
+          },
+          {
+            "indicator_id": 13,
+            "indicator_name": "MA_5_10_20_30_60",
+            "polarity": "NEUTRAL",
+            "values": [
+              675.428,
+              672.635,
+              689.584,
+              704.687,
+              715.16035442
+            ]
+          },
+          {
+            "indicator_id": 5,
+            "indicator_name": "KDJ_9_3_3",
+            "polarity": "NEUTRAL",
+            "values": [
+              0.384215699,
+              0.433830481,
+              0.284986135
+            ]
+          }
+        ]
+      },
+      "http": {
+        "shape": 200,
+        "polarity": 200
+      }
+    }
+  }
+}

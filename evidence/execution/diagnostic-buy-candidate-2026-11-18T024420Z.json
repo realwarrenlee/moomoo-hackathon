@@ -1,0 +1,54 @@
+{
+  "mode": "PAPER",
+  "purpose": "DIAGNOSTIC_BROKER_CONNECTIVITY_TEST",
+  "not_a_strategy_signal": true,
+  "not_an_ai_investment_decision": true,
+  "strategy_version": "diagnostic-connectivity-v1",
+  "proposal_id": "diagnostic-connectivity-2026-11-18-qqq-buy",
+  "client_order_key": "mootrade-a33298d06d53fc9366998d16d60c4f3bf1a29a373ba7c2356682a72bd82b68ec",
+  "symbol": "QQQ",
+  "side": "BUY",
+  "quantity": 1,
+  "order_type": "MARKET",
+  "time_in_force": "DAY",
+  "last_completed_session": "2026-11-17",
+  "last_close_reference_usd": "656.95",
+  "provisional_notional_usd": "656.95",
+  "provisional_single_exposure_fraction": "0.0065695",
+  "provisional_total_exposure_fraction": "0.0065695",
+  "account": {
+    "masked_id": "****0101",
+    "market_id": 100,
+    "account_type": 2,
+    "account_title": "Moomoo x Qoder AI Paper Trading Agent Challenge",
+    "equity_usd": "100000",
+    "cash_usd": "100000",
+    "buying_power_usd": "100000",
+    "positions": 0,
+    "open_orders": 0,
+    "reconciled": true,
+    "unknown_orders": 0,
+    "fingerprint_matches": true
+  },
+  "execution_authorization": {
+    "quote_read": true,
+    "trade_read": true,
+    "trade_write": true,
+    "account_scope": true,
+    "account_exclusive_write_scope_verified": false
+  },
+  "risk_gate": {
+    "status": "NOT_REACHED",
+    "reason": "supervised preview failed closed on a 20586-second-old quote before policy evaluation",
+    "prior_readonly_preflight_rules": ["R007", "R012", "R010", "R014"]
+  },
+  "durable_approval": false,
+  "submission_performed": false,
+  "order_endpoint_contacted": false,
+  "recorded_at_utc": "2026-11-18T02:44:20Z",
+  "notes": [
+    "The next executable window is the provider AFTERNOON state, defined as the regular US session, 09:30-16:00 ET.",
+    "A fresh quote, account snapshot, reconciliation, exact durable approval and separate owner approval are still required before submission.",
+    "No strategy signal was fabricated and momentum-v1 was not changed."
+  ]
+}

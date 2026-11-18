@@ -1,0 +1,117 @@
+{
+  "schema_version": "1",
+  "run_id": "qoder-5abed69d-8fbc-4342-a51f-e46814f3941c",
+  "mode": "HISTORICAL_DRY_RUN",
+  "strategy_version": "momentum-v1",
+  "status": "COMPLETED",
+  "outcome": "NO_TRADE",
+  "session_ids": {
+    "coordinator": "sess_00vrjkuvor0n5z2xowpc",
+    "researcher": "sess_00vrjkz4rxkaolrwifgl",
+    "auditor": "sess_00vrjl9k6r08wt8i5u0z"
+  },
+  "notice": "Historical evidence only. No current broker snapshot, owner approval or order submission.",
+  "research": {
+    "ok": true,
+    "mode": "HISTORICAL_DRY_RUN",
+    "run_id": "qoder-5abed69d-8fbc-4342-a51f-e46814f3941c",
+    "snapshot": {
+      "strategy_version": "momentum-v1",
+      "decision_time_utc": "2026-11-16T21:00:00+00:00",
+      "data_as_of_utc": "2026-11-16T21:00:00+00:00",
+      "regime_ok": false,
+      "regime_reason": "SPY close 739.95 below 20-session SMA 757.6950",
+      "candidates": [
+        {
+          "symbol": "IWM",
+          "close": "272.94",
+          "sma20": "278.459",
+          "return_5d": "-0.0338749070829351173409790804",
+          "regime_ok": false,
+          "above_sma": false,
+          "news_count": 1,
+          "positive_news_count": 0,
+          "news_score": "0E-16",
+          "news_ids": [
+            "news:1004621210"
+          ],
+          "eligible": false,
+          "selected": false,
+          "reasons": [
+            "Broad-market regime negative (SPY below its 20-session SMA)",
+            "Close 272.94 is not above its 20-session SMA 278.4590",
+            "5-session return -3.3875% is not positive"
+          ]
+        },
+        {
+          "symbol": "QQQ",
+          "close": "661.75",
+          "sma20": "692.618",
+          "return_5d": "-0.0259071170972252888790755870",
+          "regime_ok": false,
+          "above_sma": false,
+          "news_count": 2,
+          "positive_news_count": 1,
+          "news_score": "0.4093679063481789",
+          "news_ids": [
+            "news:1004558911",
+            "news:1004650804"
+          ],
+          "eligible": false,
+          "selected": false,
+          "reasons": [
+            "Broad-market regime negative (SPY below its 20-session SMA)",
+            "Close 661.75 is not above its 20-session SMA 692.6180",
+            "5-session return -2.5907% is not positive"
+          ]
+        },
+        {
+          "symbol": "SPY",
+          "close": "739.95",
+          "sma20": "757.695",
+          "return_5d": "-0.0169259588940998286147019357",
+          "regime_ok": false,
+          "above_sma": false,
+          "news_count": 13,
+          "positive_news_count": 4,
+          "news_score": "1.0817129797124080",
+          "news_ids": [
+            "news:1004513786",
+            "news:1004562941",
+            "news:1004574838",
+            "news:1004578094",
+            "news:1004580201",
+            "news:1004590588",
+            "news:1004592730",
+            "news:1004598111",
+            "news:1004604551",
+            "news:1004618077",
+            "news:1004637214",
+            "news:1004638336",
+            "news:1004641150"
+          ],
+          "eligible": false,
+          "selected": false,
+          "reasons": [
+            "Broad-market regime negative (SPY below its 20-session SMA)",
+            "Close 739.95 is not above its 20-session SMA 757.6950",
+            "5-session return -1.6926% is not positive"
+          ]
+        }
+      ],
+      "selected_symbol": null,
+      "no_trade_reason": "Broad-market regime filter is negative; abstain from new entries"
+    },
+    "proposal": null,
+    "notice": "Historical Moomoo evidence only; not a current broker snapshot or order authorization."
+  },
+  "risk": null,
+  "agent_summaries": {
+    "coordinator_ready": "READY qoder-5abed69d-8fbc-4342-a51f-e46814f3941c\n\nBoundary confirmed: HISTORICAL_DRY_RUN. Read-only, no tools. Strategy allowlist noted (momentum-v1, news-catalyst-v1) with momentum-v1 selected. Outcome remains NO_TRADE. I will not discuss or place any order.",
+    "researcher": "**Historical dry-run evidence — not current market or account state.**\n\nRun `qoder-5abed69d-8fbc-4342-a51f-e46814f3941c`, strategy `momentum-v1`, mode `HISTORICAL_DRY_RUN`.\n\n- Decision time / data as of: `2026-11-16T21:00:00+00:00`\n- Regime: **not OK** — SPY close 739.95 below 20-session SMA 757.6950\n- Decision: **NO_TRADE** — \"Broad-market regime filter is negative; abstain from new entries\"; `selected_symbol: null`, `proposal: null`\n\nCandidates (all ineligible, none selected):\n\n| Symbol | Close | SMA20 | 5d return | News (count / positive / score) | Evidence IDs |\n|---|---|---|---|---|---|\n| IWM | 272.94 | 278.459 | -3.3875% | 1 / 0 / 0E-16 | news:1004621210 |\n| QQQ | 661.75 | 692.618 | -2.5907% | 2 / 1 / 0.4093679063481789 | news:1004558911, news:1004650804 |\n| SPY | 739.95 | 757.695 | -1.6926% | 13 / 4 / 1.0817129797124080 | news:1004513786, news:1004562941, news:1004574838, news:1004578094, news:1004580201, news:1004590588, news:1004592730, news:1004598111, news:1004604551, news:1004618077, news:1004637214, news:1004638336, news:1004641150 |\n\nEach candidate failed all three momentum-v1 checks: negative broad-market regime, close not above its 20-session SMA, and non-positive 5-session return.\n\nNotice from the artifact: \"Historical Moomoo evidence only; not a current broker snapshot or order authorization.\" I cannot evaluate risk or execute orders.",
+    "auditor": "NO TRADE — confirmed.\n\n- Artifact `run_id`: qoder-5abed69d-8fbc-4342-a51f-e46814f3941c, mode HISTORICAL_DRY_RUN, no proposal present (`proposal: null`), `selected_symbol: null`.\n- I did not call `evaluate_proposal`, and no proposal was created.\n- `no_trade_reason`: broad-market regime filter negative (SPY 739.95 below 20-session SMA 757.695), so abstain from new entries.\n\nConsistency check — no material inconsistency found:\n- Regime flag `regime_ok:false` agrees with the SPY-below-SMA reason and with all three candidates carrying `regime_ok:false`.\n- Each candidate's stated `reasons` match its own fields (close below SMA20, negative 5-day return): IWM -3.3875%, QQQ -2.5907%, SPY -1.6926% all corroborated by the `return_5d` values.\n- All candidates `eligible:false`/`selected:false`, consistent with the abstain decision and null selection.\n\nOnly cosmetic note (not an evidence conflict): IWM's `news_score` is serialized as `\"0E-16\"`, which is effectively zero and consistent with `positive_news_count: 0`.",
+    "coordinator_final": "Run closed: qoder-5abed69d-8fbc-4342-a51f-e46814f3941c\n\nOutcome: NO_TRADE (confirmed)\n- Mode: HISTORICAL_DRY_RUN; proposal null; selected_symbol null.\n- Reason: broad-market regime filter negative (SPY 739.95 below 20-session SMA 757.695) \u2014 abstain from new entries.\n- All candidates eligible:false / selected:false, consistent with the abstain decision.\n- Auditor found no material inconsistency; only a cosmetic note that IWM's news_score serialized as \"0E-16\", effectively zero and consistent with positive_news_count: 0.\n\nLimitations:\n- Based solely on this sanitized deterministic artifact; no other evidence considered.\n- No broker fill, submission, current owner approval, or live account state is claimed or implied.\n- Not a current broker snapshot; no proposal was created or evaluated, and no order was discussed, approved, or placed."
+  },
+  "collection_note": "coordinator_final was recovered read-only from the completed session after the runner cursor fix; no agent turn was rerun.",
+  "completed_at_utc": "2026-11-17T11:32:11.017474+00:00"
+}

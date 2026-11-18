@@ -1,0 +1,183 @@
+{
+  "schema_version": "1",
+  "baseline_version": "etf-trend-baseline-v1",
+  "generated_at_utc": "2026-11-17T11:41:40.688857+00:00",
+  "data": {
+    "provider": "Moomoo MCP read-only session",
+    "tool": "quote_cur_kline",
+    "arguments": {
+      "ktype": 2,
+      "autype": 1,
+      "extended_time": 0,
+      "num": 370
+    },
+    "fetched_at_utc": "2026-11-17T06:30:00Z",
+    "file": "moomoo_daily_bars_2026-11-16.json",
+    "sha256": "e92006dbd3ba07944a831ad154aa84b505407b4bfc53290c2ba80ea38509de98",
+    "first_session": "2025-05-29",
+    "last_session": "2026-11-16"
+  },
+  "period": {
+    "start": "2026-04-01",
+    "end": "2026-11-16"
+  },
+  "parameters": {
+    "symbol": "SPY",
+    "sma_window_sessions": 200,
+    "decision_cadence": "completed month-end close",
+    "execution": "next session open",
+    "allocation_pct_of_equity": 10.0,
+    "policy_single_instrument_cap": true,
+    "cost_bps_per_side": 2.0,
+    "initial_equity_usd": "100000",
+    "fractional_shares": true
+  },
+  "results": {
+    "trend_baseline": {
+      "metrics": {
+        "name": "etf-trend-baseline-v1-SPY",
+        "start_date": "2026-04-01",
+        "end_date": "2026-11-16",
+        "sessions": 159,
+        "initial_equity_usd": "100000.00",
+        "final_equity_usd": "100257.22",
+        "total_return_pct": 0.2572,
+        "cagr_pct": 0.408,
+        "annualized_volatility_pct": 1.3664,
+        "sharpe_descriptive": 0.3048,
+        "max_drawdown_pct": 0.6338,
+        "average_exposure_pct": 9.0425,
+        "maximum_exposure_pct": 10.7141,
+        "monthly_checks": 7,
+        "turnover_gross_notional_over_average_equity": 0.099576,
+        "modelled_costs_usd": 1.9996,
+        "entries": 1,
+        "open_position": "SPY"
+      },
+      "trades": [
+        {
+          "strategy": "etf-trend-baseline-v1-SPY",
+          "symbol": "SPY",
+          "signal_date": "2026-04-30",
+          "entry_date": "2026-05-01",
+          "exit_date": null,
+          "entry_price": "721.394250",
+          "exit_price": "739.95",
+          "entry_notional_usd": "9998.00",
+          "exit_notional_usd": "10257.22",
+          "return_pct": 2.5722
+        }
+      ]
+    },
+    "spy_hold_10pct": {
+      "metrics": {
+        "name": "SPY-buy-hold-0.10",
+        "start_date": "2026-04-01",
+        "end_date": "2026-11-16",
+        "sessions": 159,
+        "initial_equity_usd": "100000.00",
+        "final_equity_usd": "101313.69",
+        "total_return_pct": 1.3137,
+        "cagr_pct": 2.0901,
+        "annualized_volatility_pct": 1.5712,
+        "sharpe_descriptive": 1.3244,
+        "max_drawdown_pct": 0.6915,
+        "average_exposure_pct": 11.2596,
+        "maximum_exposure_pct": 11.6886,
+        "monthly_checks": 0,
+        "turnover_gross_notional_over_average_equity": 0.098579,
+        "modelled_costs_usd": 1.9996,
+        "entries": 1,
+        "open_position": "SPY"
+      },
+      "trades": [
+        {
+          "strategy": "SPY-buy-hold-0.10",
+          "symbol": "SPY",
+          "signal_date": "2026-04-01",
+          "entry_date": "2026-04-01",
+          "exit_date": null,
+          "entry_price": "654.03078",
+          "exit_price": "739.95",
+          "entry_notional_usd": "9998.00",
+          "exit_notional_usd": "11313.69",
+          "return_pct": 13.1369
+        }
+      ]
+    },
+    "spy_hold_100pct": {
+      "metrics": {
+        "name": "SPY-buy-hold-1",
+        "start_date": "2026-04-01",
+        "end_date": "2026-11-16",
+        "sessions": 159,
+        "initial_equity_usd": "100000.00",
+        "final_equity_usd": "113136.88",
+        "total_return_pct": 13.1369,
+        "cagr_pct": 21.6067,
+        "annualized_volatility_pct": 13.9844,
+        "sharpe_descriptive": 1.4691,
+        "max_drawdown_pct": 5.9159,
+        "average_exposure_pct": 100.0,
+        "maximum_exposure_pct": 100.0,
+        "monthly_checks": 0,
+        "turnover_gross_notional_over_average_equity": 0.875407,
+        "modelled_costs_usd": 19.996,
+        "entries": 1,
+        "open_position": "SPY"
+      },
+      "trades": [
+        {
+          "strategy": "SPY-buy-hold-1",
+          "symbol": "SPY",
+          "signal_date": "2026-04-01",
+          "entry_date": "2026-04-01",
+          "exit_date": null,
+          "entry_price": "654.03078",
+          "exit_price": "739.95",
+          "entry_notional_usd": "99980.00",
+          "exit_notional_usd": "113136.88",
+          "return_pct": 13.1369
+        }
+      ]
+    },
+    "cash": {
+      "metrics": {
+        "name": "cash",
+        "start_date": "2026-04-01",
+        "end_date": "2026-11-16",
+        "sessions": 159,
+        "initial_equity_usd": "100000.00",
+        "final_equity_usd": "100000.00",
+        "total_return_pct": 0.0,
+        "cagr_pct": 0.0,
+        "annualized_volatility_pct": 0.0,
+        "sharpe_descriptive": null,
+        "max_drawdown_pct": 0.0,
+        "average_exposure_pct": 0.0,
+        "maximum_exposure_pct": 0.0,
+        "monthly_checks": 0,
+        "turnover_gross_notional_over_average_equity": 0.0,
+        "modelled_costs_usd": 0.0,
+        "entries": 0,
+        "open_position": null
+      },
+      "trades": []
+    }
+  },
+  "comparison": {
+    "trend_total_return_pct": 0.2572,
+    "spy_10pct_total_return_pct": 1.3137,
+    "spy_full_total_return_pct": 13.1369,
+    "excess_return_vs_spy_10pct_pct": -1.0565,
+    "drawdown_difference_vs_spy_10pct_pct": 0.0577
+  },
+  "limitations": [
+    "Historical signal study, not a broker or paper-account result.",
+    "Short post-warmup sample with one entry.",
+    "Policy cap applied at entry; mark-to-market exposure can drift.",
+    "Monthly timing lag between signal close and next-open execution.",
+    "Dividend, tax and corporate-action modelling depends on adjusted fixture bars.",
+    "Not registered as an executable strategy or linked to RiskGate order flow."
+  ]
+}

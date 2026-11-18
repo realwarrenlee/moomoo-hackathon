@@ -1,0 +1,86 @@
+{
+    "captured_at_utc":  "2026-11-18T01:16:59.7474485Z",
+    "source":  "System / Microsoft-Windows-Kernel-Power",
+    "events":  [
+                   {
+                       "time_created":  "2026-11-17T18:12:57.7960210+08:00",
+                       "id":  506,
+                       "message":  "The system is entering Modern Standby Reason: Idle Timeout."
+                   },
+                   {
+                       "time_created":  "2026-11-17T18:19:34.1539137+08:00",
+                       "id":  507,
+                       "message":  "The system is exiting Modern Standby Reason: Input Keyboard."
+                   },
+                   {
+                       "time_created":  "2026-11-17T18:30:14.5020103+08:00",
+                       "id":  506,
+                       "message":  "The system is entering Modern Standby Reason: Idle Timeout."
+                   },
+                   {
+                       "time_created":  "2026-11-17T18:52:37.6283590+08:00",
+                       "id":  507,
+                       "message":  "The system is exiting Modern Standby Reason: Input Keyboard."
+                   },
+                   {
+                       "time_created":  "2026-11-17T20:16:19.4646870+08:00",
+                       "id":  506,
+                       "message":  "The system is entering Modern Standby Reason: Power Button."
+                   },
+                   {
+                       "time_created":  "2026-11-17T20:16:25.9132116+08:00",
+                       "id":  507,
+                       "message":  "The system is exiting Modern Standby Reason: Austerity Battery Drain Budget Exceeded."
+                   },
+                   {
+                       "time_created":  "2026-11-17T20:16:25.9148336+08:00",
+                       "id":  506,
+                       "message":  "The system is entering Modern Standby Reason: Austerity Battery Drain Budget Exceeded."
+                   },
+                   {
+                       "time_created":  "2026-11-17T20:38:22.4807085+08:00",
+                       "id":  507,
+                       "message":  "The system is exiting Modern Standby Reason: Lid."
+                   },
+                   {
+                       "time_created":  "2026-11-17T21:20:53.1433731+08:00",
+                       "id":  506,
+                       "message":  "The system is entering Modern Standby Reason: Power Button."
+                   },
+                   {
+                       "time_created":  "2026-11-17T21:35:30.8466976+08:00",
+                       "id":  507,
+                       "message":  "The system is exiting Modern Standby Reason: Lid."
+                   },
+                   {
+                       "time_created":  "2026-11-17T21:50:03.0101519+08:00",
+                       "id":  506,
+                       "message":  "The system is entering Modern Standby Reason: Power Button."
+                   },
+                   {
+                       "time_created":  "2026-11-17T22:01:42.8192122+08:00",
+                       "id":  507,
+                       "message":  "The system is exiting Modern Standby Reason: Input Keyboard."
+                   },
+                   {
+                       "time_created":  "2026-11-18T00:23:59.1620587+08:00",
+                       "id":  506,
+                       "message":  "The system is entering Modern Standby Reason: Power Button."
+                   },
+                   {
+                       "time_created":  "2026-11-18T03:27:29.8293105+08:00",
+                       "id":  507,
+                       "message":  "The system is exiting Modern Standby Reason: 16777220."
+                   },
+                   {
+                       "time_created":  "2026-11-18T03:27:29.8301323+08:00",
+                       "id":  506,
+                       "message":  "The system is entering Modern Standby Reason: 16777220."
+                   },
+                   {
+                       "time_created":  "2026-11-18T08:39:40.1264883+08:00",
+                       "id":  507,
+                       "message":  "The system is exiting Modern Standby Reason: Lid."
+                   }
+               ]
+}

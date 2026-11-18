@@ -1,0 +1,106 @@
+{
+  "AAPL": {
+    "1": {
+      "http": 200,
+      "ret": -3,
+      "shape": null,
+      "direction": null,
+      "kline_shape": null,
+      "points": 0
+    },
+    "2": {
+      "http": 200,
+      "ret": 0,
+      "shape": "NONE",
+      "direction": "NONE",
+      "kline_shape": 0,
+      "points": 0
+    },
+    "9": {
+      "http": 200,
+      "ret": 0,
+      "shape": "NONE",
+      "direction": "NONE",
+      "kline_shape": 0,
+      "points": 0
+    }
+  },
+  "NVDA": {
+    "1": {
+      "http": 200,
+      "ret": -3,
+      "shape": null,
+      "direction": null,
+      "kline_shape": null,
+      "points": 0
+    },
+    "2": {
+      "http": 200,
+      "ret": 0,
+      "shape": "NONE",
+      "direction": "NONE",
+      "kline_shape": 0,
+      "points": 0
+    },
+    "9": {
+      "http": 200,
+      "ret": 0,
+      "shape": "NONE",
+      "direction": "NONE",
+      "kline_shape": 0,
+      "points": 0
+    }
+  },
+  "TSLA": {
+    "1": {
+      "http": 200,
+      "ret": -3,
+      "shape": null,
+      "direction": null,
+      "kline_shape": null,
+      "points": 0
+    },
+    "2": {
+      "http": 200,
+      "ret": 0,
+      "shape": "NONE",
+      "direction": "NONE",
+      "kline_shape": 0,
+      "points": 0
+    },
+    "9": {
+      "http": 200,
+      "ret": 0,
+      "shape": "NONE",
+      "direction": "NONE",
+      "kline_shape": 0,
+      "points": 0
+    }
+  },
+  "SPY": {
+    "1": {
+      "http": 200,
+      "ret": -3,
+      "shape": null,
+      "direction": null,
+      "kline_shape": null,
+      "points": 0
+    },
+    "2": {
+      "http": 200,
+      "ret": 0,
+      "shape": "NONE",
+      "direction": "NONE",
+      "kline_shape": 0,
+      "points": 0
+    },
+    "9": {
+      "http": 200,
+      "ret": 0,
+      "shape": "NONE",
+      "direction": "NONE",
+      "kline_shape": 0,
+      "points": 0
+    }
+  }
+}

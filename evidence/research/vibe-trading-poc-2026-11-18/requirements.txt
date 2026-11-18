@@ -1,0 +1,7 @@
+# Isolated research environment for the pinned Vibe-Trading harness.
+# Do not install this file into the MooTrade production environment.
+# Vibe-Trading declares pandas<3.0.0; use Python 3.11-3.13 for a supported run.
+numpy>=1.26,<3
+pandas>=2.2,<3
+PyYAML>=6.0,<7
+defusedxml>=0.7.1,<1

@@ -1,0 +1,99 @@
+{
+  "mode": "session",
+  "provenance": "CURRENT_MARKET_READ_ONLY",
+  "collected_at_utc": "2026-11-17T15:53:51.398183+00:00",
+  "us_eastern_time": "2026-11-17T10:53:51.398183-05:00",
+  "quotes": [
+    {
+      "symbol": "IWM",
+      "price": "268.16",
+      "data_time_utc": "2026-11-17T15:53:50.567000+00:00",
+      "age_seconds": 0.8,
+      "sec_status": "NORMAL",
+      "suspended": false,
+      "market_state": "AFTERNOON",
+      "regular_session_open": true,
+      "provenance": "LIVE_BROKER_READ"
+    },
+    {
+      "symbol": "QQQ",
+      "price": "647.65",
+      "data_time_utc": "2026-11-17T15:53:51.650000+00:00",
+      "age_seconds": 0.0,
+      "sec_status": "NORMAL",
+      "suspended": false,
+      "market_state": "AFTERNOON",
+      "regular_session_open": true,
+      "provenance": "LIVE_BROKER_READ"
+    },
+    {
+      "symbol": "SPY",
+      "price": "727.71",
+      "data_time_utc": "2026-11-17T15:53:51.727000+00:00",
+      "age_seconds": 0.0,
+      "sec_status": "NORMAL",
+      "suspended": false,
+      "market_state": "AFTERNOON",
+      "regular_session_open": true,
+      "provenance": "LIVE_BROKER_READ"
+    }
+  ],
+  "account": {
+    "masked_id": "****0101",
+    "equity": "100000",
+    "cash": "100000",
+    "buying_power": "100000",
+    "day_start_equity": "100000",
+    "positions_count": 0,
+    "open_orders_count": 0,
+    "reconciled": true,
+    "unknown_orders": 0,
+    "as_of_utc": "2026-11-17T15:53:52.700085+00:00",
+    "age_seconds": 0.0,
+    "provenance": "LIVE_BROKER_READ"
+  },
+  "positions": [],
+  "orders": {
+    "today_count": 0,
+    "history_count": 0,
+    "open_count": 0
+  },
+  "history": {
+    "path": "evidence\\current-market\\2026-11-17\\daily-bars.json",
+    "source": {
+      "provider": "Moomoo MCP read-only session",
+      "tool": "quote_cur_kline",
+      "arguments": {
+        "ktype": 2,
+        "autype": 1,
+        "extended_time": 0,
+        "num": 370
+      },
+      "fetched_at_utc": "2026-11-17T14:11:12.277989+00:00",
+      "note": "Daily completed bars for US.SPY, US.QQQ and US.IWM fetched during the 2026-11-17 US regular session. Bars dated on or after the current America/New_York date were excluded. No account identifiers or credentials are included.",
+      "last_completed_session": "20261116",
+      "excluded_session_date_et": "20261117"
+    },
+    "window": "session",
+    "today_session_et": "2026-11-17",
+    "last_completed_session": "2026-11-16",
+    "today_bar_available": false,
+    "expected_previous_session": "2026-11-16",
+    "bars_per_symbol": {
+      "IWM": 370,
+      "QQQ": 370,
+      "SPY": 370
+    },
+    "fetch_age_hours": 1.71,
+    "complete": true
+  },
+  "validations": {
+    "account_verified_paper": true,
+    "account_reconciled": true,
+    "account_age_seconds": 0.0,
+    "regular_session_required": true,
+    "quotes_collected": 3,
+    "history_complete": true,
+    "order_writes_enabled": false
+  }
+}

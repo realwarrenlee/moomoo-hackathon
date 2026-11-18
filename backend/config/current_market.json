@@ -1,0 +1,8 @@
+{
+  "workspace_id": "ws_00vqsm8knwsn4vwh144t",
+  "environment_id": "env_00vqwmcgs42692rq038t",
+  "coordinator_agent_id": "agent_00vrjhiwlq1ogbqanz3r",
+  "researcher_agent_id": "agent_00vrjhj3vxatck183443",
+  "auditor_agent_id": "agent_00vrjhjcf6ewxeuxalqu",
+  "strategy": "momentum-v1"
+}

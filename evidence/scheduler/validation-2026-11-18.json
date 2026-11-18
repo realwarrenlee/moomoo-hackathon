@@ -1,0 +1,36 @@
+{
+  "captured_at_utc": "2026-11-18T01:12:47.4907471Z",
+  "note": "Captured after the genuine timer-triggered catch-up run and before the one-time validation trigger was removed.",
+  "task_name": "MooTrade Read-Only Scheduler",
+  "state": "Ready",
+  "last_run_time": "2026-11-18T01:10:52Z",
+  "last_task_result": 0,
+  "next_run_time": "2026-11-19T04:20:00+08:00",
+  "number_of_missed_runs": 0,
+  "wake_to_run": true,
+  "start_when_available": true,
+  "multiple_instances": "IgnoreNew",
+  "stop_on_idle_end": false,
+  "logon_type": "Interactive",
+  "run_level": "Limited",
+  "triggers": [
+    {
+      "class": "MSFT_TaskDailyTrigger",
+      "start_boundary": "2026-11-19T04:20:00+08:00",
+      "enabled": true
+    },
+    {
+      "class": "MSFT_TaskDailyTrigger",
+      "start_boundary": "2026-11-19T05:20:00+08:00",
+      "enabled": true
+    },
+    {
+      "class": "MSFT_TaskTimeTrigger",
+      "start_boundary": "2026-11-18T09:10:52+08:00",
+      "enabled": true
+    }
+  ],
+  "action_execute": "C:\\WINDOWS\\system32\\cmd.exe",
+  "action_arguments": "/d /c \"\"C:\\Users\\Warren\\Downloads\\qoder trading challenge\\backend\\scripts\\run_readonly_schedule.cmd\"\"",
+  "action_working_directory": "C:\\Users\\Warren\\Downloads\\qoder trading challenge"
+}

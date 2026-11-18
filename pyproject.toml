@@ -1,0 +1,30 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "mootrade"
+version = "0.1.0"
+description = "Paper-only autonomous trading controls for the Moomoo x Qoder challenge"
+requires-python = ">=3.11"
+dependencies = [
+    "pydantic>=2.10,<3",
+    "qca-sdk==0.15.0",
+    "httpx>=0.28,<0.29",
+    "fastapi>=0.115,<1",
+    "uvicorn>=0.34,<1",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8,<9",
+]
+
+[tool.setuptools.packages.find]
+where = ["backend"]
+include = ["app*"]
+
+[tool.pytest.ini_options]
+pythonpath = ["backend"]
+testpaths = ["backend/tests"]
+addopts = "-q"

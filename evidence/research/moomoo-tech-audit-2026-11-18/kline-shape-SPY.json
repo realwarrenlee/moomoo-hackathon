@@ -1,0 +1,20 @@
+{
+  "http_status": 200,
+  "path": "/api/v1.0/quote/US.SPY/kline-shape",
+  "params": {
+    "ktype": 2
+  },
+  "body": null,
+  "response": {
+    "ret_code": 0,
+    "ret_msg": "success",
+    "data": {
+      "backtest_statistic": null,
+      "direction": "NONE",
+      "forecast": null,
+      "kline_shape": 0,
+      "points": [],
+      "shape_name": "NONE"
+    }
+  }
+}

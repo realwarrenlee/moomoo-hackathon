@@ -1,0 +1,148 @@
+{
+  "http_status": 200,
+  "path": "/api/v1.0/quote/US.SPY/indicator-polarity",
+  "params": {
+    "period": "DAY_1"
+  },
+  "body": null,
+  "response": {
+    "ret_code": 0,
+    "ret_msg": "success",
+    "data": {
+      "items": [
+        {
+          "indicator_id": 6,
+          "indicator_name": "OSC_20",
+          "polarity": "SEVERELY_OVER_SOLD",
+          "values": [
+            -2342.45
+          ]
+        },
+        {
+          "indicator_id": 4,
+          "indicator_name": "CCI_14",
+          "polarity": "OVER_SOLD",
+          "values": [
+            -155.330844278
+          ]
+        },
+        {
+          "indicator_id": 11,
+          "indicator_name": "VR_26",
+          "polarity": "OVER_SOLD",
+          "values": [
+            0.614426525
+          ]
+        },
+        {
+          "indicator_id": 1,
+          "indicator_name": "AR_26",
+          "polarity": "OVER_SOLD",
+          "values": [
+            0.756715374
+          ]
+        },
+        {
+          "indicator_id": 8,
+          "indicator_name": "RSI_6",
+          "polarity": "OVER_SOLD",
+          "values": [
+            0.302096616
+          ]
+        },
+        {
+          "indicator_id": 3,
+          "indicator_name": "BR_26",
+          "polarity": "OVER_SOLD",
+          "values": [
+            0.745335786
+          ]
+        },
+        {
+          "indicator_id": 12,
+          "indicator_name": "WMSR_13",
+          "polarity": "OVER_SOLD",
+          "values": [
+            0.888157894
+          ]
+        },
+        {
+          "indicator_id": 9,
+          "indicator_name": "RSI_12",
+          "polarity": "OVER_SOLD",
+          "values": [
+            0.364955892
+          ]
+        },
+        {
+          "indicator_id": 10,
+          "indicator_name": "RSI_24",
+          "polarity": "NEUTRAL",
+          "values": [
+            0.40967062
+          ]
+        },
+        {
+          "indicator_id": 15,
+          "indicator_name": "MACD_12_26_9",
+          "polarity": "NEUTRAL",
+          "values": [
+            -6.215826475,
+            -4.583239986,
+            -3.265172978
+          ]
+        },
+        {
+          "indicator_id": 2,
+          "indicator_name": "BIAS_24",
+          "polarity": "NEUTRAL",
+          "values": [
+            -0.033500367
+          ]
+        },
+        {
+          "indicator_id": 7,
+          "indicator_name": "PSY_12",
+          "polarity": "NEUTRAL",
+          "values": [
+            0.416666666
+          ]
+        },
+        {
+          "indicator_id": 13,
+          "indicator_name": "MA_5_10_20_30_60",
+          "polarity": "NEUTRAL",
+          "values": [
+            748.738,
+            748.14,
+            755.8645,
+            761.443,
+            763.353218725
+          ]
+        },
+        {
+          "indicator_id": 5,
+          "indicator_name": "KDJ_9_3_3",
+          "polarity": "NEUTRAL",
+          "values": [
+            0.299602336,
+            0.372093185,
+            0.154620637
+          ]
+        },
+        {
+          "indicator_id": 14,
+          "indicator_name": "BOLL_20_2",
+          "polarity": "NEUTRAL",
+          "values": [
+            780.609271952,
+            755.8645,
+            731.119728047
+          ]
+        }
+      ],
+      "overall_score": 0.6,
+      "update_time": 1794949200000
+    }
+  }
+}

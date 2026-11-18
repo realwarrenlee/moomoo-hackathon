@@ -1,0 +1,355 @@
+{
+  "generated_at_utc": "2026-11-18T00:46:57.189894+00:00",
+  "capabilities": {
+    "accessible_quote_read": [
+      "kline-shape",
+      "indicator-polarity",
+      "indicator-backtest",
+      "capital-flow/history"
+    ],
+    "inaccessible": {
+      "unusual/technical POST": "HTTP 403, code -12006"
+    },
+    "scope": {
+      "quote:read": true,
+      "trade:read": false,
+      "trade:write": false
+    }
+  },
+  "snapshot_2026_11_17": {
+    "patterns_non_none": 0,
+    "pattern_directions": {
+      "AAPL": "NONE",
+      "MSFT": "NONE",
+      "NVDA": "NONE",
+      "AMZN": "NONE",
+      "GOOGL": "NONE",
+      "META": "NONE",
+      "TSLA": "NONE",
+      "AVGO": "NONE",
+      "JPM": "NONE",
+      "XOM": "NONE",
+      "SPY": "NONE",
+      "QQQ": "NONE"
+    },
+    "polarity": {
+      "AAPL": {
+        "overall": -0.333,
+        "rsi6": "NEUTRAL",
+        "overbought": 4,
+        "oversold": 1,
+        "update": 1794949200000
+      },
+      "MSFT": {
+        "overall": 0.6,
+        "rsi6": "OVER_SOLD",
+        "overbought": 0,
+        "oversold": 8,
+        "update": 1794949200000
+      },
+      "NVDA": {
+        "overall": 1.067,
+        "rsi6": "SEVERELY_OVER_SOLD",
+        "overbought": 1,
+        "oversold": 12,
+        "update": 1794950100000
+      },
+      "AMZN": {
+        "overall": -0.2,
+        "rsi6": "NEUTRAL",
+        "overbought": 2,
+        "oversold": 0,
+        "update": 1794949200000
+      },
+      "GOOGL": {
+        "overall": 0.6,
+        "rsi6": "OVER_SOLD",
+        "overbought": 1,
+        "oversold": 9,
+        "update": 1794949200000
+      },
+      "META": {
+        "overall": 0.333,
+        "rsi6": "NEUTRAL",
+        "overbought": 1,
+        "oversold": 5,
+        "update": 1794949200000
+      },
+      "TSLA": {
+        "overall": 0.067,
+        "rsi6": "NEUTRAL",
+        "overbought": 1,
+        "oversold": 1,
+        "update": 1794949200000
+      },
+      "AVGO": {
+        "overall": -0.267,
+        "rsi6": "NEUTRAL",
+        "overbought": 3,
+        "oversold": 0,
+        "update": 1794949200000
+      },
+      "JPM": {
+        "overall": 0.333,
+        "rsi6": "OVER_SOLD",
+        "overbought": 2,
+        "oversold": 5,
+        "update": 1794949202000
+      },
+      "XOM": {
+        "overall": 0.333,
+        "rsi6": "NEUTRAL",
+        "overbought": 0,
+        "oversold": 4,
+        "update": 1794949411000
+      },
+      "SPY": {
+        "overall": 0.6,
+        "rsi6": "OVER_SOLD",
+        "overbought": 0,
+        "oversold": 8,
+        "update": 1794949200000
+      },
+      "QQQ": {
+        "overall": 0.733,
+        "rsi6": "OVER_SOLD",
+        "overbought": 0,
+        "oversold": 10,
+        "update": 1794949200000
+      }
+    }
+  },
+  "provider_backtest_stats_AAPL_OVER_SOLD": {
+    "rows": [
+      {
+        "id": 1,
+        "name": "AR_26",
+        "avg_change_pct": -0.019,
+        "max_down_pct": -3.456,
+        "max_up_pct": 2.971,
+        "occurs_down": 10,
+        "occurs_total": 22,
+        "occurs_up": 12,
+        "probability_down": 45.455,
+        "probability_up": 54.545
+      },
+      {
+        "id": 2,
+        "name": "BIAS_24",
+        "avg_change_pct": 0.34,
+        "max_down_pct": -3.456,
+        "max_up_pct": 3.136,
+        "occurs_down": 15,
+        "occurs_total": 36,
+        "occurs_up": 21,
+        "probability_down": 41.667,
+        "probability_up": 58.333
+      },
+      {
+        "id": 3,
+        "name": "BR_26",
+        "avg_change_pct": 0.144,
+        "max_down_pct": -3.456,
+        "max_up_pct": 2.971,
+        "occurs_down": 12,
+        "occurs_total": 29,
+        "occurs_up": 17,
+        "probability_down": 41.379,
+        "probability_up": 58.621
+      },
+      {
+        "id": 4,
+        "name": "CCI_14",
+        "avg_change_pct": 0.248,
+        "max_down_pct": -3.456,
+        "max_up_pct": 3.167,
+        "occurs_down": 14,
+        "occurs_total": 39,
+        "occurs_up": 25,
+        "probability_down": 35.897,
+        "probability_up": 64.103
+      },
+      {
+        "id": 5,
+        "name": "KDJ_9_3_3",
+        "avg_change_pct": 0.083,
+        "max_down_pct": -0.987,
+        "max_up_pct": 1.12,
+        "occurs_down": 2,
+        "occurs_total": 5,
+        "occurs_up": 3,
+        "probability_down": 40,
+        "probability_up": 60
+      },
+      {
+        "id": 6,
+        "name": "OSC_20",
+        "avg_change_pct": 0.975,
+        "max_down_pct": -2.273,
+        "max_up_pct": 4.841,
+        "occurs_down": 1,
+        "occurs_total": 4,
+        "occurs_up": 3,
+        "probability_down": 25,
+        "probability_up": 75
+      },
+      {
+        "id": 7,
+        "name": "PSY_12",
+        "avg_change_pct": -0.581,
+        "max_down_pct": -3.456,
+        "max_up_pct": 1.079,
+        "occurs_down": 2,
+        "occurs_total": 5,
+        "occurs_up": 3,
+        "probability_down": 40,
+        "probability_up": 60
+      },
+      {
+        "id": 8,
+        "name": "RSI_6",
+        "avg_change_pct": 0.038,
+        "max_down_pct": -6.118,
+        "max_up_pct": 5.306,
+        "occurs_down": 23,
+        "occurs_total": 50,
+        "occurs_up": 27,
+        "probability_down": 46,
+        "probability_up": 54
+      },
+      {
+        "id": 9,
+        "name": "RSI_12",
+        "avg_change_pct": 0.44,
+        "max_down_pct": -3.456,
+        "max_up_pct": 5.306,
+        "occurs_down": 14,
+        "occurs_total": 30,
+        "occurs_up": 16,
+        "probability_down": 46.667,
+        "probability_up": 53.333
+      },
+      {
+        "id": 10,
+        "name": "RSI_24",
+        "avg_change_pct": 0.3,
+        "max_down_pct": -3.456,
+        "max_up_pct": 2.971,
+        "occurs_down": 4,
+        "occurs_total": 11,
+        "occurs_up": 7,
+        "probability_down": 36.364,
+        "probability_up": 63.636
+      },
+      {
+        "id": 11,
+        "name": "VR_26",
+        "avg_change_pct": 0.433,
+        "max_down_pct": -1.687,
+        "max_up_pct": 2.971,
+        "occurs_down": 6,
+        "occurs_total": 22,
+        "occurs_up": 15,
+        "probability_down": 27.273,
+        "probability_up": 68.182
+      },
+      {
+        "id": 12,
+        "name": "WMSR_13",
+        "avg_change_pct": 0.144,
+        "max_down_pct": -6.118,
+        "max_up_pct": 5.306,
+        "occurs_down": 23,
+        "occurs_total": 55,
+        "occurs_up": 32,
+        "probability_down": 41.818,
+        "probability_up": 58.182
+      },
+      {
+        "id": 13,
+        "name": "MA_5_10_20_30_60",
+        "avg_change_pct": 0.023,
+        "max_down_pct": -2.142,
+        "max_up_pct": 1.524,
+        "occurs_down": 21,
+        "occurs_total": 36,
+        "occurs_up": 15,
+        "probability_down": 58.333,
+        "probability_up": 41.667
+      },
+      {
+        "id": 14,
+        "name": "BOLL_20_2",
+        "avg_change_pct": 0.112,
+        "max_down_pct": -1.745,
+        "max_up_pct": 2.239,
+        "occurs_down": 5,
+        "occurs_total": 12,
+        "occurs_up": 7,
+        "probability_down": 41.667,
+        "probability_up": 58.333
+      },
+      {
+        "id": 15,
+        "name": "MACD_12_26_9",
+        "avg_change_pct": 0.778,
+        "max_down_pct": 0,
+        "max_up_pct": 1.306,
+        "occurs_down": 0,
+        "occurs_total": 4,
+        "occurs_up": 4,
+        "probability_down": 5,
+        "probability_up": 95
+      }
+    ],
+    "occurs_total_min": 4,
+    "occurs_total_max": 55,
+    "occurs_total_median": 22,
+    "probability_up_range": [
+      41.667,
+      95
+    ],
+    "window_documented": false
+  },
+  "capital_flow_independence": {
+    "observations": 4730,
+    "unique_dates": 473,
+    "pearson_flow5_vs_past5": 0.255,
+    "spearman_flow5_vs_past5": 0.344,
+    "pearson_flow5_vs_mom20": 0.16,
+    "spearman_flow5_vs_mom20": 0.215,
+    "pearson_flow5_vs_fwd5": -0.034,
+    "spearman_flow5_vs_fwd5": -0.06,
+    "unconditional": {
+      "n": 4730,
+      "mean_pct": 0.408,
+      "hit_pct": 54.2
+    },
+    "flow_positive": {
+      "n": 1572,
+      "mean_pct": 0.177,
+      "hit_pct": 51.1
+    },
+    "flow_nonpositive": {
+      "n": 3158,
+      "mean_pct": 0.523,
+      "hit_pct": 55.8
+    },
+    "momentum_positive": {
+      "n": 2664,
+      "mean_pct": 0.255,
+      "hit_pct": 53.3
+    },
+    "flow_pos_and_momentum_pos": {
+      "n": 1085,
+      "mean_pct": 0.161,
+      "hit_pct": 51.1
+    },
+    "flow_pos_and_momentum_nonpos": {
+      "n": 487,
+      "mean_pct": 0.214,
+      "hit_pct": 51.3
+    },
+    "warning": "overlapping 5-session windows; descriptive only; no significance claim"
+  }
+}

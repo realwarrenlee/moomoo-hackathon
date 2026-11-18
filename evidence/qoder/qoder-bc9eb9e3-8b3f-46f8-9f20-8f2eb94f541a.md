@@ -1,0 +1,272 @@
+# Qoder read-only decision report
+
+**PAPER / READ-ONLY — NO ORDER SUBMITTED OR APPROVED**
+
+- Run ID: `qoder-bc9eb9e3-8b3f-46f8-9f20-8f2eb94f541a`
+- Mode: `CURRENT_MARKET_READ_ONLY`
+- Status: `COMPLETED`
+- Outcome: `NO_TRADE`
+- Strategy: `momentum-v1`
+- Evidence: current read-only Moomoo REST quotes/account plus a completed daily-bar snapshot.
+- Authority: deterministic Python research and `RiskGate`; agent prose is non-authoritative.
+
+## Genuine Cloud Agent sessions
+
+- coordinator: `sess_00vs6xyic7j0gnvperh9`
+- researcher: `sess_00vs6y0slum0wt2mb59f`
+- auditor: `sess_00vs6yaonuy9s8foi6rr`
+
+## Deterministic artifacts
+
+### Data collection
+
+```json
+{
+  "mode": "session",
+  "provenance": "CURRENT_MARKET_READ_ONLY",
+  "collected_at_utc": "2026-11-17T15:53:51.398183+00:00",
+  "us_eastern_time": "2026-11-17T10:53:51.398183-05:00",
+  "quotes": [
+    {
+      "symbol": "IWM",
+      "price": "268.16",
+      "data_time_utc": "2026-11-17T15:53:50.567000+00:00",
+      "age_seconds": 0.8,
+      "sec_status": "NORMAL",
+      "suspended": false,
+      "market_state": "AFTERNOON",
+      "regular_session_open": true,
+      "provenance": "LIVE_BROKER_READ"
+    },
+    {
+      "symbol": "QQQ",
+      "price": "647.65",
+      "data_time_utc": "2026-11-17T15:53:51.650000+00:00",
+      "age_seconds": 0.0,
+      "sec_status": "NORMAL",
+      "suspended": false,
+      "market_state": "AFTERNOON",
+      "regular_session_open": true,
+      "provenance": "LIVE_BROKER_READ"
+    },
+    {
+      "symbol": "SPY",
+      "price": "727.71",
+      "data_time_utc": "2026-11-17T15:53:51.727000+00:00",
+      "age_seconds": 0.0,
+      "sec_status": "NORMAL",
+      "suspended": false,
+      "market_state": "AFTERNOON",
+      "regular_session_open": true,
+      "provenance": "LIVE_BROKER_READ"
+    }
+  ],
+  "account": {
+    "masked_id": "****0101",
+    "equity": "100000",
+    "cash": "100000",
+    "buying_power": "100000",
+    "day_start_equity": "100000",
+    "positions_count": 0,
+    "open_orders_count": 0,
+    "reconciled": true,
+    "unknown_orders": 0,
+    "as_of_utc": "2026-11-17T15:53:52.700085+00:00",
+    "age_seconds": 0.0,
+    "provenance": "LIVE_BROKER_READ"
+  },
+  "positions": [],
+  "orders": {
+    "today_count": 0,
+    "history_count": 0,
+    "open_count": 0
+  },
+  "history": {
+    "path": "evidence\\current-market\\2026-11-17\\daily-bars.json",
+    "source": {
+      "provider": "Moomoo MCP read-only session",
+      "tool": "quote_cur_kline",
+      "arguments": {
+        "ktype": 2,
+        "autype": 1,
+        "extended_time": 0,
+        "num": 370
+      },
+      "fetched_at_utc": "2026-11-17T14:11:12.277989+00:00",
+      "note": "Daily completed bars for US.SPY, US.QQQ and US.IWM fetched during the 2026-11-17 US regular session. Bars dated on or after the current America/New_York date were excluded. No account identifiers or credentials are included.",
+      "last_completed_session": "20261116",
+      "excluded_session_date_et": "20261117"
+    },
+    "window": "session",
+    "today_session_et": "2026-11-17",
+    "last_completed_session": "2026-11-16",
+    "today_bar_available": false,
+    "expected_previous_session": "2026-11-16",
+    "bars_per_symbol": {
+      "IWM": 370,
+      "QQQ": 370,
+      "SPY": 370
+    },
+    "fetch_age_hours": 1.71,
+    "complete": true
+  },
+  "validations": {
+    "account_verified_paper": true,
+    "account_reconciled": true,
+    "account_age_seconds": 0.0,
+    "regular_session_required": true,
+    "quotes_collected": 3,
+    "history_complete": true,
+    "order_writes_enabled": false
+  }
+}
+```
+
+### Research
+
+```json
+{
+  "ok": true,
+  "mode": "CURRENT_MARKET_READ_ONLY",
+  "run_id": "qoder-bc9eb9e3-8b3f-46f8-9f20-8f2eb94f541a",
+  "snapshot": {
+    "strategy_version": "momentum-v1",
+    "decision_time_utc": "2026-11-17T15:53:51.398183+00:00",
+    "data_as_of_utc": "2026-11-16T21:00:00+00:00",
+    "regime_ok": false,
+    "regime_reason": "SPY close 739.95 below 20-session SMA 757.6950",
+    "candidates": [
+      {
+        "symbol": "IWM",
+        "close": "272.94",
+        "sma20": "278.459",
+        "return_5d": "-0.0338749070829351173409790804",
+        "regime_ok": false,
+        "above_sma": false,
+        "news_count": 0,
+        "positive_news_count": 0,
+        "news_score": "0",
+        "news_ids": [],
+        "eligible": false,
+        "selected": false,
+        "reasons": [
+          "Broad-market regime negative (SPY below its 20-session SMA)",
+          "Close 272.94 is not above its 20-session SMA 278.4590",
+          "5-session return -3.3875% is not positive"
+        ]
+      },
+      {
+        "symbol": "QQQ",
+        "close": "661.75",
+        "sma20": "692.618",
+        "return_5d": "-0.0259071170972252888790755870",
+        "regime_ok": false,
+        "above_sma": false,
+        "news_count": 0,
+        "positive_news_count": 0,
+        "news_score": "0",
+        "news_ids": [],
+        "eligible": false,
+        "selected": false,
+        "reasons": [
+          "Broad-market regime negative (SPY below its 20-session SMA)",
+          "Close 661.75 is not above its 20-session SMA 692.6180",
+          "5-session return -2.5907% is not positive"
+        ]
+      },
+      {
+        "symbol": "SPY",
+        "close": "739.95",
+        "sma20": "757.695",
+        "return_5d": "-0.0169259588940998286147019357",
+        "regime_ok": false,
+        "above_sma": false,
+        "news_count": 0,
+        "positive_news_count": 0,
+        "news_score": "0",
+        "news_ids": [],
+        "eligible": false,
+        "selected": false,
+        "reasons": [
+          "Broad-market regime negative (SPY below its 20-session SMA)",
+          "Close 739.95 is not above its 20-session SMA 757.6950",
+          "5-session return -1.6926% is not positive"
+        ]
+      }
+    ],
+    "selected_symbol": null,
+    "no_trade_reason": "Broad-market regime filter is negative; abstain from new entries"
+  },
+  "proposal": null,
+  "notice": "Current read-only Moomoo evidence captured during the regular session; not an order, owner approval or fill."
+}
+```
+
+## Sanitized agent summaries
+
+### coordinator_ready
+
+READY qoder-bc9eb9e3-8b3f-46f8-9f20-8f2eb94f541a
+
+Mode: CURRENT_MARKET_READ_ONLY
+
+Boundary: read-only coordination only. No order, no fill, no owner approval, no live-account claim. NO_TRADE preserved.
+
+### researcher
+
+**Mode: CURRENT_MARKET_READ_ONLY** (run_id `qoder-bc9eb9e3-8b3f-46f8-9f20-8f2eb94f541a`, strategy `momentum-v1`)
+
+**Verdict: NO_TRADE** — `"Broad-market regime filter is negative; abstain from new entries"`. `selected_symbol: null`, `proposal: null`.
+
+**Evidence timing**
+- Decision time: 2026-11-17T15:53:51.398183+00:00
+- Data as of: 2026-11-16T21:00:00+00:00
+- `regime_ok: false` — SPY close 739.95 vs 20-session SMA 757.695
+
+**Candidates (all ineligible, none selected)**
+
+| Symbol | Close | SMA20 | 5d return | Above SMA | News (count / positive / score / IDs) |
+|---|---|---|---|---|---|
+| IWM | 272.94 | 278.4590 | -3.3875% | no | 0 / 0 / 0 / [] |
+| QQQ | 661.75 | 692.6180 | -2.5907% | no | 0 / 0 / 0 / [] |
+| SPY | 739.95 | 757.6950 | -1.6926% | no | 0 / 0 / 0 / [] |
+
+Each failed all three gates: negative broad-market regime, close below its 20-session SMA, and non-positive 5-session return.
+
+**Notice (verbatim):** "Current read-only Moomoo evidence captured during the regular session; not an order, owner approval or fill."
+
+Scope limits: this is research only — no risk evaluation, no order authorization or execution, and no broker/credential access. Nothing here reflects account state, which was not provided.
+
+### auditor
+
+NO TRADE — confirmed, no proposal evaluated.
+
+Consistency check (all pass):
+- `proposal: null`, `selected_symbol: null`, all three candidates `eligible: false`, `selected: false`.
+- `no_trade_reason` ("broad-market regime filter negative") matches `regime_ok: false` and reason "SPY close 739.95 below 20-session SMA 757.6950".
+- Arithmetic verified: SPY 739.95 < 757.695; QQQ 661.75 < 692.618; IWM 272.94 < 278.459. All `above_sma: false` correct.
+- 5d returns consistent with decimals: IWM −3.3875%, QQQ −2.5907%, SPY −1.6926%, none positive.
+- Timestamps coherent: `decision_time_utc` 2026-11-17T15:53:51Z after `data_as_of_utc` 2026-11-16T21:00:00Z.
+
+No evidence inconsistency found. Nothing to audit for risk gating since no trade was proposed; this is not owner authorization or an order instruction.
+
+### coordinator_final
+
+Run closed: qoder-bc9eb9e3-8b3f-46f8-9f20-8f2eb94f541a (CURRENT_MARKET_READ_ONLY)
+
+Outcome: NO_TRADE (deterministic artifact)
+- selected_symbol: null; proposal: null; risk_decision: null
+- Reason: broad-market regime filter negative — SPY 739.95 below 20-session SMA 757.6950; all three candidates ineligible, none selected
+- Auditor consistency check: all pass (e.g., SPY, QQQ, IWM all below their SMAs; 5d returns negative; timestamps coherent; no inconsistency found)
+
+Limitations:
+- Read-only coordination only. This is not an order, fill, or execution instruction.
+- No proposal existed, so nothing was risk-gated — the null risk_decision reflects absence of a proposal, not a risk evaluation.
+- Not owner approval or authorization; no live-account state, holdings, or broker status is claimed or verified.
+- Based solely on the supplied sanitized artifact; no market data was independently fetched.
+
+NO_TRADE preserved.
+
+## Limitations
+
+A current read-only policy evaluation is not owner authorization. It does not submit, approve or fill an order. Supervised paper execution remains blocked by disabled writes, missing first-order approval and the unimplemented order transport.

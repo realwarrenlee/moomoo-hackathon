@@ -1,0 +1,662 @@
+{
+  "schema_version": "1",
+  "strategy_version": "sec-earnings-relative-momentum-v1",
+  "protocol_sha256": "737fff9b0c0bedfda9a20518e888622ace61b37feec335482070a75006cdf427",
+  "price_data_sha256": "0276731f3f6b5831226777a4f8d955d6f7941681b8fb33fa7d91e7e11cb624fe",
+  "event_data_sha256": "7d83bd716b326f6390ef99400484fa3d9db78b24ed90dca03647441e5c91feed",
+  "data_quality": {
+    "sec": {
+      "coverage": {
+        "AAPL": {
+          "cik": "0000320193",
+          "earliest_filing_date_observed": "2015-10-07",
+          "latest_filing_date_observed": "2026-11-16",
+          "original_item_2_02_events": 6,
+          "item_2_02_amendments": 0,
+          "sources": [
+            {
+              "file": "webfetch-56a09b29-a2b5-49b8-92ae-f4540a12786c.md",
+              "sha256": "b65b1dc29464fe1d6829cc2b20c5781fb8ae44b5b46d243de84e22dd41c80707",
+              "rows": 1003
+            }
+          ]
+        },
+        "MSFT": {
+          "cik": "0000789019",
+          "earliest_filing_date_observed": "2020-09-09",
+          "latest_filing_date_observed": "2026-11-16",
+          "original_item_2_02_events": 6,
+          "item_2_02_amendments": 0,
+          "sources": [
+            {
+              "file": "webfetch-f9ee4644-fa72-4ef1-a833-c9014ced2f32.md",
+              "sha256": "0c7415804bdda6f5daea74122223596eecc02ee5fe23de8e83cf4e2630ff03e0",
+              "rows": 1010
+            }
+          ]
+        },
+        "NVDA": {
+          "cik": "0001045810",
+          "earliest_filing_date_observed": "2020-09-18",
+          "latest_filing_date_observed": "2026-11-16",
+          "original_item_2_02_events": 6,
+          "item_2_02_amendments": 0,
+          "sources": [
+            {
+              "file": "webfetch-a5ae6e32-15de-4874-bf58-4caa02fce5f7.md",
+              "sha256": "84d40a550596382bc042628d4fa11620b6feec9f588003ac1b4ec2307b97e3fc",
+              "rows": 1001
+            }
+          ]
+        },
+        "AMZN": {
+          "cik": "0001018724",
+          "earliest_filing_date_observed": "2020-11-04",
+          "latest_filing_date_observed": "2026-11-16",
+          "original_item_2_02_events": 6,
+          "item_2_02_amendments": 0,
+          "sources": [
+            {
+              "file": "webfetch-70374b43-f492-4cd2-a77e-18f842598820.md",
+              "sha256": "e2b203de152a69f8ecaf158473e6aaac763f2ace46b9f83f269d16ba3a8dfc08",
+              "rows": 1006
+            }
+          ]
+        },
+        "GOOGL": {
+          "cik": "0001652044",
+          "earliest_filing_date_observed": "2023-09-05",
+          "latest_filing_date_observed": "2026-11-16",
+          "original_item_2_02_events": 6,
+          "item_2_02_amendments": 0,
+          "sources": [
+            {
+              "file": "webfetch-285489ec-9e06-49ff-a7c6-9b68fd3ce629.md",
+              "sha256": "790a73a46054350b1c9e9b433a68ced09efdf4e7499ecb1b7155ec6879306f79",
+              "rows": 1002
+            }
+          ]
+        },
+        "META": {
+          "cik": "0001326801",
+          "earliest_filing_date_observed": "2024-07-03",
+          "latest_filing_date_observed": "2026-11-16",
+          "original_item_2_02_events": 6,
+          "item_2_02_amendments": 0,
+          "sources": [
+            {
+              "file": "webfetch-740e685a-a6b5-44b3-8e28-fc4191f1af66.md",
+              "sha256": "bf44c79857da625fe54030680bbf1800016b47ed60fa7b7bfd1f0d29ce364e95",
+              "rows": 1005
+            }
+          ]
+        },
+        "AVGO": {
+          "cik": "0001730168",
+          "earliest_filing_date_observed": "2018-02-06",
+          "latest_filing_date_observed": "2026-10-27",
+          "original_item_2_02_events": 6,
+          "item_2_02_amendments": 0,
+          "sources": [
+            {
+              "file": "webfetch-a19b800f-66ef-429b-b826-7c4633aab8b5.md",
+              "sha256": "41ec85346d2b5ffbd8358ab2d3ef9400598660be94281edacf784da984097866",
+              "rows": 999
+            }
+          ]
+        },
+        "TSLA": {
+          "cik": "0001318605",
+          "earliest_filing_date_observed": "2018-06-18",
+          "latest_filing_date_observed": "2026-11-16",
+          "original_item_2_02_events": 12,
+          "item_2_02_amendments": 0,
+          "sources": [
+            {
+              "file": "webfetch-752b592b-2f36-49f3-844f-bcb061434bf9.md",
+              "sha256": "5ac4219ed1b698f5381501bea9987cf3cd0cb75d0ae4066359db28b6be717e65",
+              "rows": 1001
+            }
+          ]
+        },
+        "JPM": {
+          "cik": "0000019617",
+          "earliest_filing_date_observed": "2025-04-22",
+          "latest_filing_date_observed": "2026-11-16",
+          "original_item_2_02_events": 6,
+          "item_2_02_amendments": 0,
+          "sources": [
+            {
+              "file": "webfetch-310af6fe-f06d-4c8e-b125-818fc5a64197.md",
+              "sha256": "58a5fb71a627d8d605ce629934096f3d1840be8d3dde59355751184e40142358",
+              "rows": 26528
+            },
+            {
+              "file": "webfetch-1aec301f-44a5-4c6c-8aeb-c8065c87f7fe.md",
+              "sha256": "f01a2c5411f8b93e44fde45538bacf260f4fcba59f694aff73029bc9b2316677",
+              "rows": 2019
+            },
+            {
+              "file": "webfetch-570f69a8-f9c5-489b-907f-a600f6ddc50d.md",
+              "sha256": "faaac9e450d25d1bf6c6e7a19c6010bdec0ba2eb1ad15d057f1db64535e94f68",
+              "rows": 2047
+            },
+            {
+              "file": "webfetch-6bb38ff4-bd84-48cd-8451-338ca869181e.md",
+              "sha256": "9b6085fb93394b1d4ed1e738da0bf7775cd5932b1cab4e07988031e096447c35",
+              "rows": 2061
+            },
+            {
+              "file": "webfetch-4085fed0-6b0c-406f-aae4-ffae73692fb6.md",
+              "sha256": "ed3dc1cb3e71684419dafc354e03aedd05adaee87d8700f1fd8fa29875afe911",
+              "rows": 2037
+            },
+            {
+              "file": "webfetch-caab13ac-19d7-4f5c-9c67-23d1c80d1483.md",
+              "sha256": "c2a691358384528128fe16bc03721f6f15a1e619683c17efe2a5bb1b5d2e5ac6",
+              "rows": 2089
+            },
+            {
+              "file": "webfetch-593dfbf7-dea3-4088-8a63-4970533def84.md",
+              "sha256": "7fe039df30a8e2fd844a5f9eb014eaf6e217700a89bd0fda9e723870c4ed992f",
+              "rows": 2009
+            }
+          ]
+        },
+        "XOM": {
+          "cik": "0000034088",
+          "earliest_filing_date_observed": "2020-01-03",
+          "latest_filing_date_observed": "2026-10-27",
+          "original_item_2_02_events": 4,
+          "item_2_02_amendments": 0,
+          "sources": [
+            {
+              "file": "webfetch-cdb69bf4-04f9-472b-ac2a-655ba2026214.md",
+              "sha256": "79aacad669ef044bf654934b659b9fda89514e0ba5514838dbfb787d53e48773",
+              "rows": 1005
+            }
+          ]
+        },
+        "LLY": {
+          "cik": "0000059478",
+          "earliest_filing_date_observed": "2022-02-03",
+          "latest_filing_date_observed": "2026-11-10",
+          "original_item_2_02_events": 6,
+          "item_2_02_amendments": 0,
+          "sources": [
+            {
+              "file": "webfetch-bc383db9-9d43-4ee5-8aed-b5fc17746593.md",
+              "sha256": "76f86d4c50749c64191db75c1b7e762e3fbbae0c794d2576411f07d7f89b36d7",
+              "rows": 1002
+            }
+          ]
+        },
+        "COST": {
+          "cik": "0000909832",
+          "earliest_filing_date_observed": "2016-11-03",
+          "latest_filing_date_observed": "2026-11-13",
+          "original_item_2_02_events": 6,
+          "item_2_02_amendments": 0,
+          "sources": [
+            {
+              "file": "webfetch-ac5707a2-c455-4730-b4ba-168ab9686a8c.md",
+              "sha256": "6f1c07666d610a73fa4f2622bf2d6ca01f83b2f41b1fd374d3139bee82c5c513",
+              "rows": 1000
+            }
+          ]
+        }
+      },
+      "excluded_events": []
+    },
+    "prices": {
+      "sources": {
+        "AAPL": {
+          "provider": "Moomoo MCP quote_cur_kline",
+          "parameters": {
+            "num": 370,
+            "ktype": 2,
+            "autype": 1
+          },
+          "file": "moomoo_quote_cur_kline_4900cfeb2529.txt",
+          "sha256": "4900cfeb2529956698bce25f0011e967b0b825b549c302737667b055a18dfb56",
+          "rows": 370,
+          "first_session": "2025-05-29",
+          "last_session": "2026-11-16"
+        },
+        "MSFT": {
+          "provider": "Moomoo MCP quote_cur_kline",
+          "parameters": {
+            "num": 370,
+            "ktype": 2,
+            "autype": 1
+          },
+          "file": "moomoo_quote_cur_kline_89e9fb72007c.txt",
+          "sha256": "89e9fb72007cb57c3a370a1f40d35da5acd3ea0b5059c54a1ae3778cfbb63c43",
+          "rows": 370,
+          "first_session": "2025-05-29",
+          "last_session": "2026-11-16"
+        },
+        "NVDA": {
+          "provider": "Moomoo MCP quote_cur_kline",
+          "parameters": {
+            "num": 370,
+            "ktype": 2,
+            "autype": 1
+          },
+          "file": "moomoo_quote_cur_kline_d56beebbd098.txt",
+          "sha256": "d56beebbd098836ea603ac1325a036a5689c10cbdf0cfa2b069fe04ec173436a",
+          "rows": 370,
+          "first_session": "2025-05-29",
+          "last_session": "2026-11-16"
+        },
+        "AMZN": {
+          "provider": "Moomoo MCP quote_cur_kline",
+          "parameters": {
+            "num": 370,
+            "ktype": 2,
+            "autype": 1
+          },
+          "file": "moomoo_quote_cur_kline_154b0184a3fe.txt",
+          "sha256": "154b0184a3fe11b5104c906bed2e91dfd07c3b9cd4b7006c8ad142f855d27768",
+          "rows": 370,
+          "first_session": "2025-05-29",
+          "last_session": "2026-11-16"
+        },
+        "GOOGL": {
+          "provider": "Moomoo MCP quote_cur_kline",
+          "parameters": {
+            "num": 370,
+            "ktype": 2,
+            "autype": 1
+          },
+          "file": "moomoo_quote_cur_kline_43a80a397d60.txt",
+          "sha256": "43a80a397d6011e6c6a4dfc93aec3cb1ea51e77bc4987f8d0ac833506d90328b",
+          "rows": 370,
+          "first_session": "2025-05-29",
+          "last_session": "2026-11-16"
+        },
+        "META": {
+          "provider": "Moomoo MCP quote_cur_kline",
+          "parameters": {
+            "num": 370,
+            "ktype": 2,
+            "autype": 1
+          },
+          "file": "moomoo_quote_cur_kline_feebd3acfc22.txt",
+          "sha256": "feebd3acfc2252dd12788fa947a982fa0115bd10a1a60117b8986bd6b0187393",
+          "rows": 370,
+          "first_session": "2025-05-29",
+          "last_session": "2026-11-16"
+        },
+        "AVGO": {
+          "provider": "Moomoo MCP quote_cur_kline",
+          "parameters": {
+            "num": 370,
+            "ktype": 2,
+            "autype": 1
+          },
+          "file": "moomoo_quote_cur_kline_669c715f30e3.txt",
+          "sha256": "669c715f30e3dde6522654e1a915d8bda9bad8812b6f21e4e5ba70638bcfd687",
+          "rows": 370,
+          "first_session": "2025-05-29",
+          "last_session": "2026-11-16"
+        },
+        "TSLA": {
+          "provider": "Moomoo MCP quote_cur_kline",
+          "parameters": {
+            "num": 370,
+            "ktype": 2,
+            "autype": 1
+          },
+          "file": "moomoo_quote_cur_kline_9786a98b08f2.txt",
+          "sha256": "9786a98b08f2c57aa62b50f9234b27660678063e3f2b6b27be5d4fd8ff6e28c6",
+          "rows": 370,
+          "first_session": "2025-05-29",
+          "last_session": "2026-11-16"
+        },
+        "JPM": {
+          "provider": "Moomoo MCP quote_cur_kline",
+          "parameters": {
+            "num": 370,
+            "ktype": 2,
+            "autype": 1
+          },
+          "file": "moomoo_quote_cur_kline_e42348094220.txt",
+          "sha256": "e423480942209bc0b913d69f0ce60422301e3845da996c8a33892e534ef2fdd3",
+          "rows": 370,
+          "first_session": "2025-05-29",
+          "last_session": "2026-11-16"
+        },
+        "XOM": {
+          "provider": "Moomoo MCP quote_cur_kline",
+          "parameters": {
+            "num": 370,
+            "ktype": 2,
+            "autype": 1
+          },
+          "file": "moomoo_quote_cur_kline_d3b9f9c2621f.txt",
+          "sha256": "d3b9f9c2621f6d93a4d2ce5bfeb9d8ebb2334601fed72bc2f6eb2de29b7e760e",
+          "rows": 370,
+          "first_session": "2025-05-29",
+          "last_session": "2026-11-16"
+        },
+        "LLY": {
+          "provider": "Moomoo MCP quote_cur_kline",
+          "parameters": {
+            "num": 370,
+            "ktype": 2,
+            "autype": 1
+          },
+          "file": "moomoo_quote_cur_kline_5695c177838c.txt",
+          "sha256": "5695c177838cc4b8d69386945f38d039eb4430d3de071b08a45b7a86e584a9a4",
+          "rows": 370,
+          "first_session": "2025-05-29",
+          "last_session": "2026-11-16"
+        },
+        "COST": {
+          "provider": "Moomoo MCP quote_cur_kline",
+          "parameters": {
+            "num": 370,
+            "ktype": 2,
+            "autype": 1
+          },
+          "file": "moomoo_quote_cur_kline_fed4e80291de.txt",
+          "sha256": "fed4e80291de0396ba670b9f4bb055d3268637e58d22b32927278d6a95714781",
+          "rows": 370,
+          "first_session": "2025-05-29",
+          "last_session": "2026-11-16"
+        },
+        "SPY": {
+          "provider": "Moomoo MCP quote_cur_kline",
+          "parameters": {
+            "num": 370,
+            "ktype": 2,
+            "autype": 1,
+            "extended_time": 0
+          },
+          "file": "moomoo_daily_bars_2026-11-16.json",
+          "sha256": "e92006dbd3ba07944a831ad154aa84b505407b4bfc53290c2ba80ea38509de98",
+          "rows": 370,
+          "first_session": "2025-05-29",
+          "last_session": "2026-11-16"
+        },
+        "QQQ": {
+          "provider": "Moomoo MCP quote_cur_kline",
+          "parameters": {
+            "num": 370,
+            "ktype": 2,
+            "autype": 1,
+            "extended_time": 0
+          },
+          "file": "moomoo_daily_bars_2026-11-16.json",
+          "sha256": "e92006dbd3ba07944a831ad154aa84b505407b4bfc53290c2ba80ea38509de98",
+          "rows": 370,
+          "first_session": "2025-05-29",
+          "last_session": "2026-11-16"
+        },
+        "IWM": {
+          "provider": "Moomoo MCP quote_cur_kline",
+          "parameters": {
+            "num": 370,
+            "ktype": 2,
+            "autype": 1,
+            "extended_time": 0
+          },
+          "file": "moomoo_daily_bars_2026-11-16.json",
+          "sha256": "e92006dbd3ba07944a831ad154aa84b505407b4bfc53290c2ba80ea38509de98",
+          "rows": 370,
+          "first_session": "2025-05-29",
+          "last_session": "2026-11-16"
+        }
+      },
+      "common_sessions": 370,
+      "missing_sessions": {}
+    }
+  },
+  "results": {
+    "development": {
+      "catalyst": {
+        "start_session": "2025-06-30",
+        "end_session": "2026-03-31",
+        "sessions": 190,
+        "initial_equity": 100000.0,
+        "final_equity": 97585.71914883048,
+        "total_return_pct": -2.414280851169525,
+        "average_exposure_pct": 3.991531386479806,
+        "maximum_exposure_pct": 30.07552401611649,
+        "turnover_gross_notional_over_average_equity": 3.594688547450115,
+        "modelled_costs_usd": 70.74934449287422,
+        "max_drawdown_pct": 2.812341218412224,
+        "trade_count": 18,
+        "closed_trade_count": 18,
+        "open_trade_count": 0,
+        "win_rate_pct": 27.77777777777778,
+        "average_closed_trade_pnl_usd": -134.1267139538625,
+        "sharpe_descriptive": -1.2031956863833413,
+        "sharpe_statistically_meaningful": false
+      },
+      "SPY": {
+        "start_session": "2025-06-30",
+        "end_session": "2026-03-31",
+        "sessions": 190,
+        "initial_equity": 100000.0,
+        "final_equity": 105317.62577478997,
+        "total_return_pct": 5.3176257747899704,
+        "average_exposure_pct": 100.0,
+        "maximum_exposure_pct": 100.0,
+        "turnover_gross_notional_over_average_equity": 0.928214884758309,
+        "modelled_costs_usd": 19.996000799840033,
+        "max_drawdown_pct": 9.133129160735596,
+        "trade_count": 1,
+        "closed_trade_count": 0,
+        "open_trade_count": 1,
+        "win_rate_pct": null,
+        "average_closed_trade_pnl_usd": null,
+        "sharpe_descriptive": 0.6321932336308206,
+        "sharpe_statistically_meaningful": false
+      },
+      "QQQ": {
+        "start_session": "2025-06-30",
+        "end_session": "2026-03-31",
+        "sessions": 190,
+        "initial_equity": 100000.0,
+        "final_equity": 104681.01931621802,
+        "total_return_pct": 4.681019316218025,
+        "average_exposure_pct": 100.0,
+        "maximum_exposure_pct": 100.0,
+        "turnover_gross_notional_over_average_equity": 0.9225713834228282,
+        "modelled_costs_usd": 19.996000799840033,
+        "max_drawdown_pct": 12.188370008021769,
+        "trade_count": 1,
+        "closed_trade_count": 0,
+        "open_trade_count": 1,
+        "win_rate_pct": null,
+        "average_closed_trade_pnl_usd": null,
+        "sharpe_descriptive": 0.46063264942309445,
+        "sharpe_statistically_meaningful": false
+      },
+      "cash": {
+        "start_session": "2025-06-30",
+        "end_session": "2026-03-31",
+        "sessions": 190,
+        "initial_equity": 100000.0,
+        "final_equity": 100000.0,
+        "total_return_pct": 0.0,
+        "average_exposure_pct": 0.0,
+        "maximum_exposure_pct": 0.0,
+        "turnover_gross_notional_over_average_equity": 0.0,
+        "modelled_costs_usd": 0.0,
+        "max_drawdown_pct": 0.0,
+        "trade_count": 0,
+        "closed_trade_count": 0,
+        "open_trade_count": 0,
+        "win_rate_pct": null,
+        "average_closed_trade_pnl_usd": null,
+        "sharpe_descriptive": null,
+        "sharpe_statistically_meaningful": false
+      },
+      "momentum-v1": {
+        "start_session": "2025-06-30",
+        "end_session": "2026-03-31",
+        "sessions": 190,
+        "initial_equity": 100000.0,
+        "final_equity": 97162.61134355646,
+        "total_return_pct": -2.8373886564435393,
+        "average_exposure_pct": 68.94736842105263,
+        "maximum_exposure_pct": 100.0,
+        "turnover_gross_notional_over_average_equity": 25.866325200785646,
+        "modelled_costs_usd": 525.7061432260638,
+        "max_drawdown_pct": 9.640083084948914,
+        "trade_count": 13,
+        "closed_trade_count": 13,
+        "open_trade_count": 0,
+        "win_rate_pct": 30.76923076923077,
+        "average_closed_trade_pnl_usd": -218.26066588027223,
+        "sharpe_descriptive": -0.23197696215885197,
+        "sharpe_statistically_meaningful": false
+      },
+      "news-catalyst-v1": {
+        "start_session": "2025-06-30",
+        "end_session": "2026-03-31",
+        "sessions": 190,
+        "initial_equity": 100000.0,
+        "final_equity": 100000.0,
+        "total_return_pct": 0.0,
+        "average_exposure_pct": 0.0,
+        "maximum_exposure_pct": 0.0,
+        "turnover_gross_notional_over_average_equity": 0.0,
+        "modelled_costs_usd": 0.0,
+        "max_drawdown_pct": 0.0,
+        "trade_count": 0,
+        "closed_trade_count": 0,
+        "open_trade_count": 0,
+        "win_rate_pct": null,
+        "average_closed_trade_pnl_usd": null,
+        "sharpe_descriptive": null,
+        "sharpe_statistically_meaningful": false
+      }
+    },
+    "holdout": {
+      "catalyst": {
+        "start_session": "2026-04-01",
+        "end_session": "2026-11-16",
+        "sessions": 159,
+        "initial_equity": 100000.0,
+        "final_equity": 98746.40519304207,
+        "total_return_pct": -1.2535948069579252,
+        "average_exposure_pct": 4.4928887718719,
+        "maximum_exposure_pct": 30.936795314602858,
+        "turnover_gross_notional_over_average_equity": 2.5904827839905296,
+        "modelled_costs_usd": 51.816438306225805,
+        "max_drawdown_pct": 2.5687005637740685,
+        "trade_count": 13,
+        "closed_trade_count": 13,
+        "open_trade_count": 0,
+        "win_rate_pct": 23.076923076923077,
+        "average_closed_trade_pnl_usd": -96.43036976599424,
+        "sharpe_descriptive": -0.9405383779437887,
+        "sharpe_statistically_meaningful": false
+      },
+      "SPY": {
+        "start_session": "2026-04-01",
+        "end_session": "2026-11-16",
+        "sessions": 159,
+        "initial_equity": 100000.0,
+        "final_equity": 113136.87713596599,
+        "total_return_pct": 13.136877135965987,
+        "average_exposure_pct": 100.0,
+        "maximum_exposure_pct": 100.0,
+        "turnover_gross_notional_over_average_equity": 0.8754072761708172,
+        "modelled_costs_usd": 19.996000799840033,
+        "max_drawdown_pct": 5.91587621455801,
+        "trade_count": 1,
+        "closed_trade_count": 0,
+        "open_trade_count": 1,
+        "win_rate_pct": null,
+        "average_closed_trade_pnl_usd": null,
+        "sharpe_descriptive": 1.4737905861523084,
+        "sharpe_statistically_meaningful": false
+      },
+      "QQQ": {
+        "start_session": "2026-04-01",
+        "end_session": "2026-11-16",
+        "sessions": 159,
+        "initial_equity": 100000.0,
+        "final_equity": 113781.67374023303,
+        "total_return_pct": 13.781673740233035,
+        "average_exposure_pct": 100.0,
+        "maximum_exposure_pct": 100.0,
+        "turnover_gross_notional_over_average_equity": 0.8263743862098788,
+        "modelled_costs_usd": 19.996000799840033,
+        "max_drawdown_pct": 14.82373693494458,
+        "trade_count": 1,
+        "closed_trade_count": 0,
+        "open_trade_count": 1,
+        "win_rate_pct": null,
+        "average_closed_trade_pnl_usd": null,
+        "sharpe_descriptive": 0.9874878721688545,
+        "sharpe_statistically_meaningful": false
+      },
+      "cash": {
+        "start_session": "2026-04-01",
+        "end_session": "2026-11-16",
+        "sessions": 159,
+        "initial_equity": 100000.0,
+        "final_equity": 100000.0,
+        "total_return_pct": 0.0,
+        "average_exposure_pct": 0.0,
+        "maximum_exposure_pct": 0.0,
+        "turnover_gross_notional_over_average_equity": 0.0,
+        "modelled_costs_usd": 0.0,
+        "max_drawdown_pct": 0.0,
+        "trade_count": 0,
+        "closed_trade_count": 0,
+        "open_trade_count": 0,
+        "win_rate_pct": null,
+        "average_closed_trade_pnl_usd": null,
+        "sharpe_descriptive": null,
+        "sharpe_statistically_meaningful": false
+      },
+      "momentum-v1": {
+        "start_session": "2026-04-01",
+        "end_session": "2026-11-16",
+        "sessions": 159,
+        "initial_equity": 100000.0,
+        "final_equity": 102502.58647639949,
+        "total_return_pct": 2.5025864763994927,
+        "average_exposure_pct": 62.264150943396224,
+        "maximum_exposure_pct": 100.0,
+        "turnover_gross_notional_over_average_equity": 19.920071987560764,
+        "modelled_costs_usd": 439.00663574073354,
+        "max_drawdown_pct": 11.676767319858277,
+        "trade_count": 10,
+        "closed_trade_count": 10,
+        "open_trade_count": 0,
+        "win_rate_pct": 20.0,
+        "average_closed_trade_pnl_usd": 250.25864763994926,
+        "sharpe_descriptive": 0.3798248612941406,
+        "sharpe_statistically_meaningful": false
+      },
+      "news-catalyst-v1": {
+        "start_session": "2026-04-01",
+        "end_session": "2026-11-16",
+        "sessions": 159,
+        "initial_equity": 100000.0,
+        "final_equity": 101557.38154859943,
+        "total_return_pct": 1.5573815485994247,
+        "average_exposure_pct": 45.911949685534594,
+        "maximum_exposure_pct": 100.0,
+        "turnover_gross_notional_over_average_equity": 13.982657718225441,
+        "modelled_costs_usd": 300.26913433190737,
+        "max_drawdown_pct": 11.027432828495725,
+        "trade_count": 7,
+        "closed_trade_count": 7,
+        "open_trade_count": 0,
+        "win_rate_pct": 28.571428571428573,
+        "average_closed_trade_pnl_usd": 222.48307837134638,
+        "sharpe_descriptive": 0.27075097099768447,
+        "sharpe_statistically_meaningful": false
+      }
+    }
+  }
+}

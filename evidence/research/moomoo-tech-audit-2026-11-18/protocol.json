@@ -1,0 +1,37 @@
+{
+  "protocol": "moomoo-oversold-reversal-v1",
+  "status": "PROSPECTIVE_RESEARCH_ONLY",
+  "frozen_at_utc": "2026-11-18T00:50:00Z",
+  "deployment": "NONE",
+  "hypothesis": "A liquid US stock in a market and stock uptrend, with a short-term oversold RSI_6 reading and a bullish daily candlestick pattern on above-average volume, tends to rise over the following ten sessions more often than a matched SPY exposure.",
+  "universe": ["AAPL", "MSFT", "NVDA", "AMZN", "GOOGL", "META", "TSLA", "AVGO", "JPM", "XOM"],
+  "benchmarks": ["SPY", "QQQ", "CASH"],
+  "signal_inputs": {
+    "regime": "SPY close > 20-session SMA on the signal close",
+    "trend": "stock close > 50-session SMA on the signal close",
+    "oversold": "Moomoo indicator-polarity item indicator_name == RSI_6 has polarity OVER_SOLD or SEVERELY_OVER_SOLD at the signal close",
+    "pattern": "Moomoo kline-shape ktype=2 for the completed daily bar has direction == BULLISH and kline_shape != 0",
+    "volume": "signal-day volume >= 1.2 x the mean volume of the prior 20 sessions",
+    "liquidity": "20-session mean dollar volume (close x volume) >= USD 100,000,000"
+  },
+  "entry": "next session open after all conditions are true at a completed close; market order assumption",
+  "selection": "if more than three names qualify, rank by 20-session mean dollar volume descending, then alphabetically; at most three concurrent positions",
+  "position_sizing": {"per_position_equity_fraction": 0.10, "maximum_gross_exposure": 0.30, "leverage": 0, "shorting": false},
+  "exit": "next open after ten sessions, or next open after a close with RSI_6 polarity OVER_BOUGHT or SEVERELY_OVER_BOUGHT, or next open after a close below the 50-session SMA",
+  "costs": {"commission_bps_per_side": 2, "slippage_bps_per_side": 0, "fractional_shares": true},
+  "historical_evaluation": "NOT POSSIBLE for this candidate: kline-shape and indicator-polarity expose only the current snapshot, so a historical signal series cannot be reconstructed without inventing provider logic. No historical return is claimed.",
+  "forward_observation": {
+    "cadence": "each US trading day after the 16:20 America/New_York close",
+    "recorded_fields": ["observed_at_utc", "provider_update_time", "close", "pattern_direction", "pattern_name", "rsi6_polarity", "all_polarities", "volume", "conditions_met"],
+    "minimum_observation": "20 trading days before any performance statement",
+    "evaluation": "hypothetical next-open entries and exits under the stated caps and costs, compared with same-notional SPY and cash; no statistical-significance claim"
+  },
+  "capital_flow_secondary_analysis": {
+    "purpose": "test whether historical main net inflow carries information independent of price momentum",
+    "window": "up to 500 provider daily observations ending 2026-11-17",
+    "measure": "5-session sum of main_in_flow divided by same-day dollar volume versus 20-session past return and next 5-session return",
+    "caveat": "overlapping windows, descriptive only, not a strategy and not out-of-sample evidence"
+  },
+  "excluded": ["news catalyst (no verified point-in-time feed)", "provider probability_up/profit_prob statistics as backtest evidence", "parameter search", "holdout reuse"],
+  "safety": {"order_writes_enabled": false, "trade_write_requested": false, "risk_gate_unchanged": true}
+}

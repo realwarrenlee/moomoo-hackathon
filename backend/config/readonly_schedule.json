@@ -1,0 +1,7 @@
+{
+  "timezone": "America/New_York",
+  "run_time": "16:20",
+  "window": "post-close",
+  "order_writes_enabled": false,
+  "note": "Local read-only schedule. It refreshes completed bars, snapshots the competition paper account and runs the three-agent Qoder review. It never submits or approves orders."
+}

@@ -1,0 +1,141 @@
+{
+  "schema_version": "1",
+  "kind": "EXECUTION_PREFLIGHT_DIAGNOSTIC_BUY",
+  "mode": "PAPER",
+  "purpose": "DIAGNOSTIC_BROKER_CONNECTIVITY_TEST",
+  "not_a_strategy_signal": true,
+  "checked_at_utc": "2026-11-18T02:51:33.176482+00:00",
+  "reads_observed_at_utc": "2026-11-18T02:51:33.949925+00:00",
+  "decision": "DEFERRED_TO_NEXT_REGULAR_SESSION",
+  "reason": "Provider market state is AFTER_HOURS_END; regular US session is not open.",
+  "market": {
+    "symbol": "QQQ",
+    "market_state": "AFTER_HOURS_END",
+    "regular_session_open": false,
+    "last_price": "656.95",
+    "quote_data_time_utc": "2026-11-17T21:00:00.204000+00:00",
+    "quote_age_seconds": 21093.7,
+    "sec_status": "NORMAL",
+    "suspended": false,
+    "next_trading_day_et": "2026-11-18",
+    "next_regular_session_utc": "2026-11-18T14:30:00Z",
+    "next_regular_session_local_sgt": "2026-11-18T22:30:00+08:00",
+    "calendar_days_checked": [
+      "2026-11-17",
+      "2026-11-18",
+      "2026-11-19",
+      "2026-11-20",
+      "2026-11-23",
+      "2026-11-24",
+      "2026-11-25"
+    ]
+  },
+  "account": {
+    "masked_id": "****0101",
+    "market_id": 100,
+    "account_type": 2,
+    "title": "Moomoo x Qoder AI Paper Trading Agent Challenge",
+    "fingerprint_matches": true,
+    "equity_usd": "100000",
+    "cash_usd": "100000",
+    "buying_power_usd": "100000",
+    "positions": [],
+    "open_orders": 0,
+    "order_history_count": 0,
+    "reconciled": true,
+    "unknown_orders": 0,
+    "snapshot_as_of_utc": "2026-11-18T02:51:33.949925+00:00",
+    "age_seconds": 0.0
+  },
+  "execution_authorization": {
+    "present": true,
+    "scopes": {
+      "quote:read": true,
+      "trade:read": true,
+      "trade:write": true,
+      "account_scope": true
+    },
+    "access_token_expires_at_utc": "2026-11-18T04:44:37.966696+00:00",
+    "refresh_token_present": true,
+    "account_exclusive_write_scope_verified": false
+  },
+  "ledger": {
+    "submissions": 0,
+    "durable_approvals": 0,
+    "unknown_submissions": false,
+    "kill_switch_engaged": false,
+    "controls_rows": 0
+  },
+  "order_write_state": {
+    "env_order_writes_enabled": "false",
+    "module_default": false,
+    "execute_requires_enable_flag": true,
+    "execute_requires_exact_client_key": true
+  },
+  "diagnostic_candidate": {
+    "symbol": "QQQ",
+    "side": "BUY",
+    "quantity": 1,
+    "order_type": "MARKET",
+    "time_in_force": "DAY",
+    "strategy_version": "diagnostic-connectivity-v1",
+    "proposal_id": "diagnostic-connectivity-2026-11-18-qqq-buy",
+    "client_order_key": "mootrade-a33298d06d53fc9366998d16d60c4f3bf1a29a373ba7c2356682a72bd82b68ec",
+    "correlation_tag": "MTP1-a33298d06d53fc9366998d16d60c4f3bf1a29a373ba7c2356682a72bd82b68ec",
+    "provisional_notional_at_last_close_usd": "656.95",
+    "provisional_single_exposure_fraction": "0.0065695",
+    "documented_payload_not_sent": {
+      "market": 100,
+      "symbol": "US.QQQ",
+      "order_type": 3,
+      "order_side": 1,
+      "qty": "1",
+      "text": "MTP1-a33298d06d53fc9366998d16d60c4f3bf1a29a373ba7c2356682a72bd82b68ec",
+      "order_trade_time_type": 1
+    }
+  },
+  "risk_gate": {
+    "scope": "deterministic evaluation at reads above with writes hypothetically enabled and no durable approval; NOT executable and NOT a submission",
+    "decision": "REJECT",
+    "approved_quantity": 0,
+    "rejection_rule_ids": [
+      "R007",
+      "R012",
+      "R014"
+    ],
+    "reasons": [
+      "R007 Quote is stale (older than 300s)",
+      "R012 Orders are limited to the regular exchange session",
+      "R014 First paper order requires explicit owner approval"
+    ],
+    "quote_fresh": false,
+    "regular_session_open": false,
+    "account_fresh": true,
+    "account_reconciled": true,
+    "rules_passing": [
+      "R001",
+      "R002",
+      "R003",
+      "R004",
+      "R005",
+      "R006",
+      "R008",
+      "R009",
+      "R011",
+      "R013"
+    ],
+    "rules_failing_now": [
+      "R007",
+      "R012"
+    ],
+    "rules_pending_owner": [
+      "R014"
+    ]
+  },
+  "safety": {
+    "order_endpoint_contacted": false,
+    "submission_performed": false,
+    "order_writes_enabled": false,
+    "durable_approval_recorded": false
+  }
+}

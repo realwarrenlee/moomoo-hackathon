@@ -1,0 +1,81 @@
+{
+  "schema_version": "1",
+  "kind": "REAL_READ_ONLY_PREFLIGHT",
+  "mode": "PAPER",
+  "checked_at_utc": "2026-11-17T13:08:54.928705+00:00",
+  "account": {
+    "masked_id": "****0101",
+    "market_id": 100,
+    "account_type": 2,
+    "title": "Moomoo x Qoder AI Paper Trading Agent Challenge",
+    "fingerprint_matches": true,
+    "equity_usd": "100000",
+    "cash_usd": "100000",
+    "buying_power_usd": "100000",
+    "positions": 0,
+    "open_orders": 0,
+    "today_orders": 0,
+    "history_orders": 0,
+    "reconciled": true,
+    "unknown_orders": 0,
+    "snapshot_as_of_utc": "2026-11-17T13:09:11.078881+00:00"
+  },
+  "quotes": {
+    "SPY": {
+      "last_price": 739.95,
+      "data_time_utc": "2026-11-16T21:00:00+00:00",
+      "age_seconds": 58134.9,
+      "sec_status": "NORMAL",
+      "suspension": false,
+      "market_state": "PRE_MARKET_BEGIN"
+    },
+    "QQQ": {
+      "last_price": 661.75,
+      "data_time_utc": "2026-11-16T21:00:00.312000+00:00",
+      "age_seconds": 58134.6,
+      "sec_status": "NORMAL",
+      "suspension": false,
+      "market_state": "PRE_MARKET_BEGIN"
+    },
+    "IWM": {
+      "last_price": 272.94,
+      "data_time_utc": "2026-11-16T21:00:00+00:00",
+      "age_seconds": 58134.9,
+      "sec_status": "NORMAL",
+      "suspension": false,
+      "market_state": "PRE_MARKET_BEGIN"
+    }
+  },
+  "diagnostic_preview": {
+    "command": "moomoo-preview-order --symbol QQQ --action BUY --quantity 1 --proposal-id diagnostic-2026-11-17",
+    "preview_exit_code": 1,
+    "preview_result": "Order preview failed closed: Moomoo quote is stale (58139s old, limit 300s)",
+    "reason": "The quote is the prior regular-session close and outside the 300-second execution window.",
+    "submission_performed": false,
+    "order_transport_available": false
+  },
+  "diagnostic_risk_evaluation": {
+    "note": "RiskGate evaluated the real verified stale/premarket quote only to record deterministic rejection reasons. This is not an executable approval or preflight success.",
+    "decision": "REJECT",
+    "approved_quantity": 0,
+    "rejection_rule_ids": ["R007", "R012", "R010", "R014"],
+    "reasons": [
+      "R007 Quote is stale or timestamped in the future (58150.8s old)",
+      "R012 Orders are limited to the regular exchange session; provider state was PRE_MARKET_BEGIN",
+      "R010 ORDER_WRITES_ENABLED is false",
+      "R014 First paper order requires explicit owner approval"
+    ],
+    "quote_fresh": false,
+    "regular_session_open": false,
+    "trading_status_normal": true,
+    "suspended": false,
+    "account_fresh": true
+  },
+  "safety": {
+    "order_writes_enabled": false,
+    "submissions_in_ledger": 0,
+    "unknown_submissions": false,
+    "order_endpoint_contacted": false,
+    "oauth_scope_trade_write": false
+  }
+}

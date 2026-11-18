@@ -1,0 +1,117 @@
+{
+  "schema_version": "1",
+  "protocol_id": "volume-confirmed-relative-strength-v1",
+  "status": "PRE_REGISTERED_NOT_EVALUATED_NOT_DEPLOYED",
+  "created_at_utc": "2026-11-18T01:20:00Z",
+  "hypothesis": "Among a fixed liquid large-cap universe, stocks with positive 20-session relative strength, a close above their 50-session SMA, and broadening 5-session volume may continue to outperform over the next week. Volume expansion is a participation check, not a claim of proven alpha.",
+  "research_only": true,
+  "deployed": false,
+  "order_writes_enabled": false,
+  "universe": [
+    "AAPL",
+    "AMD",
+    "AMZN",
+    "AVGO",
+    "COST",
+    "GOOGL",
+    "HD",
+    "JNJ",
+    "JPM",
+    "MA",
+    "META",
+    "MSFT",
+    "NFLX",
+    "NVDA",
+    "PG",
+    "TSLA",
+    "UNH",
+    "V",
+    "WMT",
+    "XOM"
+  ],
+  "universe_note": "Fixed list declared before evaluation. It is not a point-in-time index membership list, so survivorship and selection bias are limitations. No symbol may be added or removed after the evaluation starts.",
+  "data": {
+    "source": "Moomoo REST history-kline daily bars for each symbol and SPY",
+    "fields": ["date", "open", "high", "low", "close", "volume"],
+    "adjustment": "forward-adjusted OHLC as returned by the documented history-kline request; volume is the provider daily volume",
+    "independently_reconstructable": true,
+    "forbidden_signal_inputs": [
+      "kline-shape pattern labels",
+      "indicator-polarity labels",
+      "indicator-backtest provider statistics",
+      "capital-flow categories",
+      "news or model-generated scores"
+    ],
+    "context_only_note": "Moomoo pattern or indicator readings may be stored as timestamped research context, but they must not create, veto or rank a signal.",
+    "evaluation_window": {
+      "start": "2016-01-04",
+      "end": "2024-12-31",
+      "untouched_after": "2025-01-01",
+      "note": "This window is separate from the ETF holdout used earlier. The 2025-2026 fixture is not used to tune or validate this protocol."
+    }
+  },
+  "signal": {
+    "frequency": "weekly, using the last fully completed session of the week",
+    "warmup_sessions": 200,
+    "regime": "SPY close > SPY 200-session simple moving average, including the signal session",
+    "stock_filters": [
+      "stock close > stock 50-session simple moving average, including the signal session",
+      "20-session return = close[t] / close[t-20] - 1 > 0",
+      "volume expansion: mean(volume[t-4..t]) >= 1.2 * mean(volume[t-24..t-5])"
+    ],
+    "ranking": "eligible stocks sorted by 20-session return descending, then symbol ascending",
+    "selection": "top 3 eligible stocks; hold fewer if fewer qualify; never substitute outside the eligible set",
+    "no_snapshot_labels": true
+  },
+  "portfolio_and_execution": {
+    "target_per_name_pct": 10,
+    "max_names": 3,
+    "max_gross_pct": 30,
+    "cash_only": true,
+    "leverage": false,
+    "shorting": false,
+    "whole_shares": true,
+    "execution": "next session open after the weekly signal",
+    "rebalance": "weekly at the next open; sell names no longer selected and buy newly selected names",
+    "exit": "weekly rebalance; if the SPY regime is false, sell all holdings at the next open and hold cash",
+    "intraweek_stop": false,
+    "cost_bps_per_side": 2
+  },
+  "evaluation_plan": {
+    "runs": 1,
+    "no_parameter_search": true,
+    "no_changes_after_first_result": true,
+    "required_metrics": [
+      "total return",
+      "CAGR",
+      "annualized volatility",
+      "maximum drawdown",
+      "average and maximum gross exposure",
+      "weekly turnover",
+      "completed trades",
+      "hit rate",
+      "average holding period"
+    ],
+    "benchmarks": [
+      "SPY on the strategy's weekly target gross exposure (same-schedule exposure-matched)",
+      "SPY at a constant 30% exposure",
+      "equal-weight fixed universe on the same weekly schedule and 30% gross cap",
+      "cash"
+    ],
+    "reporting": "Publish all results, including losses and years with no eligible names. Do not call the result out-of-sample alpha unless the pre-registered window and benchmark rules were unchanged.",
+    "rejection_rule": "If the single run does not beat the same-schedule SPY and equal-weight universe comparators after costs, or if the result depends on a handful of trades, reject the hypothesis and do not tune it on the same window."
+  },
+  "deployment_blockers": [
+    "The RiskGate allowlist is currently {SPY, QQQ, IWM}; this protocol would require an owner-approved universe expansion.",
+    "No order transport exists and ORDER_WRITES_ENABLED is false.",
+    "The first paper order requires explicit owner approval and a verified broker lifecycle.",
+    "This protocol has no backtest, no forward paper observation and no independent alpha evidence yet."
+  ],
+  "prohibitions": [
+    "No parameter grid, threshold search or repeated tuning of the evaluation window.",
+    "No reuse of the existing ETF holdout as evidence for this stock hypothesis.",
+    "No Moomoo snapshot-only pattern or polarity label as a mandatory entry condition.",
+    "No provider indicator-backtest success rates as historical evidence.",
+    "No deployment, allowlist change or order submission under this proposal."
+  ]
+}

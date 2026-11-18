@@ -1,0 +1,20 @@
+{
+  "codes": [
+    "SPY",
+    "QQQ",
+    "IWM"
+  ],
+  "start_date": "2025-05-29",
+  "end_date": "2026-11-16",
+  "interval": "1D",
+  "source": "moomoo_fixture",
+  "engine": "global_equity",
+  "position_adjustment": "hold",
+  "initial_cash": 100000.0,
+  "slippage_us": 0.0002,
+  "execution_cost_multiplier": 1.0,
+  "extra_slippage_bps": 0.0,
+  "warmup_bars": 21,
+  "benchmark": "none",
+  "leverage": 1.0
+}
