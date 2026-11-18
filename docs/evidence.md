@@ -52,15 +52,15 @@ Runs marked `directional-event-v2` and `momentum-v1` predate the 18 November piv
 ## Moomoo competition paper account
 
 - Identity: masked `****0101`, `account_type=2`, `market_id=100`, title `Moomoo x Qoder AI Paper Trading Agent Challenge`. Verified through a vault-attached Qoder Cloud Agent v4 session (17 Nov) and the local OAuth 2.1 + PKCE REST client (17–18 Nov).
-- State: 100,000 USD cash/equity, zero positions, zero orders, `reconciled=true`. Margin buying power (200,000 USD) is deliberately ignored for sizing.
-- All reads were made with a token that has no `trade:write`; the separate execution token (18 Nov) has `trade:write` but has never been used to contact an order endpoint.
+- State: 100,000 USD cash/equity at session start; after the 18 Nov diagnostic round trip the account is flat with 99,991.02 USD cash. Margin buying power (200,000 USD) is deliberately ignored for sizing.
+- Reads use a token with no `trade:write`; the separate execution token (18 Nov) has `trade:write` and submitted exactly two diagnostic orders, each behind a separate owner approval.
 
 ## Preflight and execution evidence
 
 - `evidence/preflight/preflight-*.json` — four real read-only preflights (17–18 Nov), each recording quotes, account identity, a diagnostic QQQ BUY 1 risk evaluation and `submission_performed=false`, `order_endpoint_contacted=false`, `oauth_scope_trade_write=false`.
 - `evidence/execution/execution-preflight-2026-11-18T025133Z.json` — supervised preview against the execution client; decision `DEFERRED_TO_NEXT_REGULAR_SESSION` (stale post-close quote); no submission.
 - `evidence/execution/diagnostic-buy-candidate-2026-11-18T024420Z.json` — diagnostic candidate record; `submission_performed=false`, `durable_approval=false`.
-- There is no `evidence/paper-orders/` directory because no broker order or fill exists.
+- `evidence/execution/diagnostic-roundtrip-2026-11-18.json` — the completed supervised diagnostic: broker order `3115842` QQQ BUY 1 filled at 661.72 (14:33:36Z), broker order `3115920` QQQ SELL 1 filled at 654.73 (14:45:27Z); both reconciled `RECONCILIATION_OK` from broker rows and recorded `FILLED` in the ledger `submissions` table.
 
 ## Scheduler evidence
 
@@ -83,18 +83,17 @@ Details and exact figures are in `docs/strategy-and-risk.md` (appendix) and each
 
 ## Automated test results
 
-- Backend: **310 tests passed**, Python 3.14.5, 18 November 2026 (`pytest`). Covers contracts, account lock, risk policy, ledger append-only/kill-switch persistence, trading flow and mock broker failure injection, Moomoo REST/history/quote/order adapters, supervised CLI guards, Qoder runner and tools, `spy-directional` signal/HOLD/CASH/reversal, leverage gate, ETF baseline, scheduler recovery and dashboard API.
+- Backend: **313 tests passed**, Python 3.14.5, 18 November 2026 (`pytest`). Covers contracts, account lock, risk policy, ledger append-only/kill-switch persistence, trading flow and mock broker failure injection, Moomoo REST/history/quote/order adapters (including the three live-contract regression tests from the first paper trade), supervised CLI guards, Qoder runner and tools, `spy-directional` signal/HOLD/CASH/reversal, leverage gate, ETF baseline, scheduler recovery and dashboard API.
 - Frontend: formatting regression tests via `node --test`, TypeScript `tsc --noEmit`, ESLint, `next build` — all passing on 18 November 2026.
 - Reproduce: `python -m pytest` from the root; frontend commands in `frontend/README.md`.
 
 ## Currently blocked or unverified
 
-1. **No broker-confirmed order or fill.** The supervised diagnostic BUY/SELL remains pending owner execution during a regular session. Mock fills are not broker evidence.
+1. **Broker-confirmed order and fill lifecycle partially observed:** market-order acknowledgement, full fill and post-trade reconciliation are now real broker evidence (18 Nov diagnostic); modify/cancel and partial-fill lifecycles remain unobserved.
 2. **Account-exclusive `trade:write` scope is unverified**; the execution consent is treated as potentially account-wide.
-3. **Provider order lifecycle unobserved:** non-empty order-history shape, real cancellation and post-trade reconciliation have not been seen against the broker.
-4. **No demonstrated forward edge:** `spy-directional` has no filled forward paper sample; the historical sanity check underperformed SPY buy-and-hold.
-5. **Python cannot reach the cloud Moomoo MCP** (vault credentials are injection-only); reads use the local REST client instead.
-6. **Kill-switch operator command:** the kill switch is persisted and tested through the ledger API; no CLI command toggles it yet.
+3. **No demonstrated forward edge:** `spy-directional` has no filled forward paper sample; the historical sanity check underperformed SPY buy-and-hold. The 18 Nov diagnostic fills are connectivity evidence, not strategy performance.
+4. **Python cannot reach the cloud Moomoo MCP** (vault credentials are injection-only); reads use the local REST client instead.
+5. **Kill-switch operator command:** the kill switch is persisted and tested through the ledger API; no CLI command toggles it yet.
 
 ## Regenerating the evidence summary
 

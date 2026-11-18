@@ -323,12 +323,16 @@ def _remark(value: Mapping[str, Any]) -> str:
     return item
 
 
-def _market(value: Mapping[str, Any], *, required: bool) -> int | None:
+def _market(
+    value: Mapping[str, Any], *, required: bool, allow_account_market_id: bool = False
+) -> int | None:
     item = value.get("market")
     if item is None and not required:
         return None
     market = _require_int(value, "market")
-    if market != 2:
+    # Live position rows return the account market id (100 = US) instead of the
+    # documented market enum (2 = US); order rows return the enum.
+    if market != 2 and not (allow_account_market_id and market == 100):
         raise MoomooResponseError("Moomoo response instrument market is not US")
     return market
 
@@ -494,7 +498,7 @@ class MoomooRestBroker:
         )
         return AccountSnapshot(
             snapshot_id=_snapshot_id(
-                match.account.fingerprint, equity, cash, positions, open_orders
+                match.account.fingerprint, cash, positions, open_orders
             ),
             account_fingerprint=match.account.fingerprint,
             environment="paper",
@@ -613,7 +617,7 @@ def _parse_positions(
             raise MoomooResponseError("Moomoo position list contains a non-object row")
         if _require_int(row, "pstn_type") != 0:
             raise MoomooResponseError("Moomoo position is not a long position")
-        _market(row, required=True)
+        _market(row, required=True, allow_account_market_id=True)
         symbol = _symbol(row)
         if symbol in symbols:
             raise MoomooResponseError("Moomoo position list contains a duplicate symbol")
@@ -627,7 +631,10 @@ def _parse_positions(
             )
             total += market_value
             symbols.add(symbol)
-    if total != expected_market_value:
+    # The cash-info and positions endpoints are read in separate calls; the
+    # position mark can drift by a few cents between them in a live session.
+    tolerance = max(Decimal("0.01"), expected_market_value * Decimal("0.001"))
+    if abs(total - expected_market_value) > tolerance:
         raise MoomooResponseError("Moomoo position values do not match cash market value")
     return tuple(positions)
 
@@ -713,26 +720,19 @@ def _parse_rest_order(row: Mapping[str, Any], now: datetime) -> RestOrder:
 
 def _snapshot_id(
     fingerprint: str,
-    equity: Decimal,
     cash: Decimal,
     positions: tuple[Position, ...],
     open_orders: tuple[OpenOrder, ...],
 ) -> str:
+    # Mark-driven values (equity, position market value, order reference price)
+    # drift between consecutive reads in a live session; the id tracks state
+    # changes only, which R009 uses to reject a changed account.
     payload = {
         "fingerprint": fingerprint,
-        "equity": str(equity),
         "cash": str(cash),
-        "positions": [
-            [item.symbol, item.quantity, str(item.market_value)] for item in positions
-        ],
+        "positions": [[item.symbol, item.quantity] for item in positions],
         "open_orders": [
-            [
-                item.symbol,
-                item.side.value,
-                item.remaining_quantity,
-                str(item.reference_price),
-            ]
-            for item in open_orders
+            [item.symbol, item.side.value, item.remaining_quantity] for item in open_orders
         ],
     }
     digest = hashlib.sha256(str(payload).encode("utf-8")).hexdigest()

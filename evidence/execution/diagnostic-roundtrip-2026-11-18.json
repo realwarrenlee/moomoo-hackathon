@@ -1,0 +1,61 @@
+{
+  "mode": "PAPER",
+  "purpose": "DIAGNOSTIC_BROKER_CONNECTIVITY_TEST",
+  "not_a_strategy_signal": true,
+  "not_an_ai_investment_decision": true,
+  "strategy_version": "diagnostic-connectivity-v1",
+  "account": {
+    "masked_id": "****0101",
+    "market_id": 100,
+    "account_type": 2,
+    "account_title": "Moomoo x Qoder AI Paper Trading Agent Challenge",
+    "fingerprint_matches": true
+  },
+  "orders": [
+    {
+      "proposal_id": "diagnostic-connectivity-2026-11-18-qqq-buy",
+      "side": "BUY",
+      "quantity": 1,
+      "client_order_key": "mootrade-a33298d06d53fc9366998d16d60c4f3bf1a29a373ba7c2356682a72bd82b68ec",
+      "broker_order_id": "3115842",
+      "status": "FILLED",
+      "fill_price_usd": "661.72",
+      "filled_at_utc": "2026-11-18T14:33:36Z",
+      "approved_by": "owner",
+      "approved_at_utc": "2026-11-18T14:33:23.790725Z",
+      "reconciliation_outcome": "RECONCILIATION_OK"
+    },
+    {
+      "proposal_id": "diagnostic-connectivity-2026-11-18-qqq-sell",
+      "side": "SELL",
+      "quantity": 1,
+      "client_order_key": "mootrade-e40567745d569de8344c7aa8cc3f736dc91883f92f6337e0c5bce8548f74391b",
+      "broker_order_id": "3115920",
+      "status": "FILLED",
+      "fill_price_usd": "654.73",
+      "filled_at_utc": "2026-11-18T14:45:27Z",
+      "approved_by": "owner",
+      "approved_at_utc": "2026-11-18T14:40:44.272228Z",
+      "reconciliation_outcome": "RECONCILIATION_OK"
+    }
+  ],
+  "final_state": {
+    "cash_usd": "99991.02",
+    "positions": [],
+    "open_orders": 0,
+    "observed_at_utc": "2026-11-18T14:45:58Z"
+  },
+  "execution_authorization": {
+    "quote_read": true,
+    "trade_read": true,
+    "trade_write": true,
+    "account_scope": true,
+    "account_exclusive_write_scope_verified": false
+  },
+  "notes": [
+    "Round-trip price move of -6.99 USD plus commissions; this is a connectivity diagnostic and is not counted as strategy performance.",
+    "Account-exclusive trade:write scope remains unverified and is treated as potentially account-wide.",
+    "Both submissions were executed by moomoo-supervised-execute with --enable-order-writes and exact key confirmation, each behind a separate owner approval."
+  ],
+  "recorded_at_utc": "2026-11-18T14:46:30Z"
+}

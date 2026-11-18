@@ -276,6 +276,42 @@ def test_snapshot_reads_cash_positions_and_orders_with_market_filter():
     assert orders_call[1] == {"market": 100}
 
 
+def test_position_row_accepts_live_us_account_market_id():
+    client = FakeRestClient(
+        cash=cash_payload(balance="100000", mv="10000", total_asset="110000"),
+        positions=[position_row(market=100)],
+    )
+    snapshot = make_broker(client).get_account_snapshot()
+
+    assert snapshot.positions[0].symbol == "IWM"
+
+    with pytest.raises(MoomooResponseError, match="instrument market is not US"):
+        make_broker(
+            FakeRestClient(
+                cash=cash_payload(balance="100000", mv="10000", total_asset="110000"),
+                positions=[position_row(market=1)],
+            )
+        ).get_account_snapshot()
+
+
+def test_position_total_tolerates_small_mark_drift():
+    client = FakeRestClient(
+        cash=cash_payload(balance="100000", mv="10000", total_asset="110000"),
+        positions=[position_row(market_value="9999.50")],
+    )
+    snapshot = make_broker(client).get_account_snapshot()
+
+    assert snapshot.positions[0].market_value == Decimal("9999.50")
+
+    with pytest.raises(MoomooResponseError, match="position values"):
+        make_broker(
+            FakeRestClient(
+                cash=cash_payload(balance="100000", mv="10000", total_asset="110000"),
+                positions=[position_row(market_value="9000")],
+            )
+        ).get_account_snapshot()
+
+
 @pytest.mark.parametrize(
     ("title", "account_type", "match"),
     [
@@ -538,6 +574,30 @@ def test_snapshot_id_is_stable_for_identical_state():
     second = broker.get_account_snapshot()
 
     assert first.snapshot_id == second.snapshot_id
+
+
+def test_snapshot_id_ignores_mark_drift_but_tracks_state_changes():
+    positions = [position_row(market_value="10000")]
+    cash = cash_payload(balance="100000", mv="10000", total_asset="110000")
+    broker = make_broker(FakeRestClient(cash=cash, positions=positions))
+
+    baseline = broker.get_account_snapshot().snapshot_id
+
+    drifted = make_broker(
+        FakeRestClient(
+            cash=cash_payload(balance="100000", mv="10001", total_asset="110001"),
+            positions=[position_row(market_value="10001")],
+        )
+    ).get_account_snapshot()
+    assert drifted.snapshot_id == baseline
+
+    state_changed = make_broker(
+        FakeRestClient(
+            cash=cash_payload(balance="99999", mv="10000", total_asset="109999"),
+            positions=positions,
+        )
+    ).get_account_snapshot()
+    assert state_changed.snapshot_id != baseline
 
 
 class FakeAuth:
