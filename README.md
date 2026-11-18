@@ -172,6 +172,8 @@ See [`docs/integrations.md`](docs/integrations.md). The owner must personally re
 
 ## License and attribution
 
+This repository is licensed under the MIT License (see [`LICENSE`](LICENSE)). Third-party components keep their own notices: the dashboard adapts the MIT-licensed Shadcn Fintech template, with its original MIT notice preserved in [`frontend/LICENSE`](frontend/LICENSE) and attribution in [`frontend/ATTRIBUTION.md`](frontend/ATTRIBUTION.md).
+
 This project does not vendor external repositories. The research references below were inspected as separate, pinned clones and have been moved outside the repository (archive: `../mootrade-reference-archive/`). Their licences and revisions are recorded here for attribution:
 
 | Reference | Pinned revision | Licence | Use |
