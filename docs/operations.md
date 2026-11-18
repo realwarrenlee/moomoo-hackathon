@@ -69,6 +69,8 @@ The account lock fails closed if the masked id or fingerprint is missing; the ma
 
 Activation records a pin only; it never submits an order. It refuses unless `TRADING_MODE=AUTO_PAPER` and `ORDER_WRITES_ENABLED=true` are already set, and it stores the pin for the configured competition-account fingerprint. Autonomous submission additionally requires, at every run: `TRADING_MODE=AUTO_PAPER`, `ORDER_WRITES_ENABLED=true`, a matching activation pin, an unengaged kill switch and a fresh RiskGate decision. To stop autonomous trading: set `TRADING_MODE=READ_ONLY` and `ORDER_WRITES_ENABLED=false`, or engage the persistent kill switch for an immediate stop of new submissions.
 
+**Current state:** AUTO_PAPER was activated by explicit owner authorization on 18 November 2026 (16:03Z); `moomoo-auto-paper-status` shows the durable pin. `ORDER_WRITES_ENABLED` stays `false` in `.env` — the execution-phase scheduler scopes it to `true` only inside the scheduled invocation.
+
 ## Read-only account verification
 
 All from the repository root. Replace the fingerprint step's hidden prompt input with the full Moomoo acc_id.
@@ -154,7 +156,7 @@ For one-time timer validation add `-ValidationDelayMinutes 2`, then remove the v
 
 ## Autonomous AUTO_PAPER schedule
 
-The autonomous trading loop reuses the read-only scheduler for its evening decision phase and adds a separate execution-phase task. Nothing submits until the owner completes the AUTO_PAPER activation (see above); until then every execution attempt records an abstention.
+The autonomous trading loop reuses the read-only scheduler for its evening decision phase and adds a separate execution-phase task. AUTO_PAPER was activated on 18 November 2026 (16:03Z); before that every execution attempt recorded an abstention.
 
 **Decision phase (read-only, existing task `MooTrade Read-Only Scheduler`):** at 16:20 ET it refreshes completed daily bars to `evidence/current-market/<session>/daily-bars.json` and runs the three-agent Qoder workflow into `evidence/qoder/<run-id>.json`. This is the pinned decision artifact the execution phase consumes.
 
