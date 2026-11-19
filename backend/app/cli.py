@@ -79,7 +79,14 @@ def ledger_path_from_env(environ: Mapping[str, str]) -> str:
     prefix = "sqlite:///"
     if not url.startswith(prefix) or not url[len(prefix) :]:
         raise SystemExit("DATABASE_URL must be a local sqlite:/// path")
-    return url[len(prefix) :]
+    path = Path(url[len(prefix) :])
+    if not path.is_absolute():
+        # Anchor relative paths at the project root so scheduled tasks, which
+        # run with cwd=backend, never create a second ledger there.
+        root_raw = environ.get("MOOTRADE_PROJECT_ROOT", "").strip()
+        root = Path(root_raw) if root_raw else Path(__file__).resolve().parents[2]
+        path = root / path
+    return str(path)
 
 
 def load_local_env(path: Path) -> None:

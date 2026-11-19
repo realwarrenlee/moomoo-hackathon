@@ -67,3 +67,27 @@ def test_kill_switch_cli_rejects_contradictory_flags(tmp_path, capsys):
     path = tmp_path / "audit.db"
     assert main(_kill_switch_args(path, "--engage", "--release", "--confirm-engage", "--confirm-release")) == 2
     assert "Refusing" in capsys.readouterr().out
+
+
+def test_ledger_path_from_env_anchors_relative_paths_to_project_root(monkeypatch):
+    import os
+    from pathlib import Path
+
+    from app.cli import ledger_path_from_env
+
+    monkeypatch.setenv("DATABASE_URL", "sqlite:///./data/mootrade.db")
+    monkeypatch.delenv("MOOTRADE_PROJECT_ROOT", raising=False)
+    path = Path(ledger_path_from_env(os.environ))
+    assert path.is_absolute()
+    assert path.parts[-2:] == ("data", "mootrade.db")
+
+
+def test_ledger_path_from_env_respects_absolute_urls(monkeypatch):
+    import os
+    from pathlib import Path
+
+    from app.cli import ledger_path_from_env
+
+    monkeypatch.setenv("DATABASE_URL", "sqlite:///C:/tmp/audit.db")
+    path = ledger_path_from_env(os.environ)
+    assert Path(path) == Path("C:/tmp/audit.db")
