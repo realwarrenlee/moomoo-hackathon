@@ -9,7 +9,7 @@
       "extended_time": 0,
       "num": 370
     },
-    "fetched_at_utc": "2026-11-18T23:50:24.922340+00:00",
+    "fetched_at_utc": "2026-11-19T01:44:52.270009+00:00",
     "last_completed_session": "20261118",
     "note": "Read-only completed daily bars fetched from the documented Moomoo REST history-kline endpoint. No account identifiers or credentials are included."
   },
@@ -3342,7 +3342,7 @@
         "high": "735.06",
         "low": "726.795",
         "close": "730.2",
-        "volume": 51702100,
+        "volume": 51804809,
         "time_key_ms": 1794978000000
       }
     ],
@@ -6674,7 +6674,7 @@
         "high": "127.88",
         "low": "123.575",
         "close": "125.4",
-        "volume": 2571856,
+        "volume": 2652429,
         "time_key_ms": 1794978000000
       }
     ],
@@ -10006,7 +10006,7 @@
         "high": "34.17",
         "low": "33.79",
         "close": "34",
-        "volume": 12755399,
+        "volume": 12770495,
         "time_key_ms": 1794978000000
       }
     ],
@@ -13338,7 +13338,7 @@
         "high": "39.95",
         "low": "38.63",
         "close": "39.39",
-        "volume": 7489288,
+        "volume": 7544948,
         "time_key_ms": 1794978000000
       }
     ]

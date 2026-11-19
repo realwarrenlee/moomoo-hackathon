@@ -339,7 +339,7 @@ def build_report(db: Path) -> str:
             research_section(),
             "## Missing or pending evidence",
             "",
-            "- First broker-confirmed paper order: pending. Until a supervised order is executed, reconciled and filled, no paper-account performance can be reported.",
+            "- First autonomous strategy paper order: pending. The two QQQ broker-confirmed fills are diagnostics; UPRO/SPXU acceptance orders and the first strategy order remain pending. No paper-account performance is reported until then.",
             "- Account-exclusive `trade:write` scope: unverified (see `docs/integrations.md`).",
         ]
     )
