@@ -58,6 +58,23 @@ const data = {
   ],
 }
 
+function tradingModePill(mode?: string | null) {
+  if (mode === "AUTO_PAPER")
+    return <StatusPill tone="danger">PAPER · AUTO_PAPER</StatusPill>
+  if (mode === "SUPERVISED_PAPER")
+    return <StatusPill tone="warning">PAPER · SUPERVISED</StatusPill>
+  if (mode === "READ_ONLY")
+    return <StatusPill tone="neutral">PAPER · READ ONLY</StatusPill>
+  return <StatusPill tone="neutral">Unknown</StatusPill>
+}
+
+function paperModeLabel(mode?: string | null) {
+  if (mode === "AUTO_PAPER") return "PAPER · AUTO_PAPER"
+  if (mode === "SUPERVISED_PAPER") return "PAPER · SUPERVISED"
+  if (mode === "READ_ONLY") return "PAPER · READ ONLY"
+  return "PAPER · —"
+}
+
 function AccountCard() {
   const [open, setOpen] = useState(false)
   const health = useDashboard<HealthResponse>("health", 60_000)
@@ -85,6 +102,9 @@ function AccountCard() {
         <div className="flex items-center justify-between gap-2">
           <span className="text-[11px] font-medium text-muted-foreground">
             Competition paper account
+          </span>
+          <span className="shrink-0 font-mono text-[10px] font-semibold tracking-wide text-amber-700 dark:text-amber-300">
+            {paperModeLabel(controls?.trading_mode)}
           </span>
         </div>
         <div className="mt-1 flex items-center justify-between gap-2">
@@ -222,8 +242,18 @@ function AccountCard() {
             Execution controls
           </p>
           <KeyValue
+            label="Trading mode"
+            value={tradingModePill(controls?.trading_mode)}
+          />
+          <KeyValue
             label="Order writes"
-            value={<StatusPill tone="neutral">Disabled</StatusPill>}
+            value={
+              controls?.order_writes_enabled ? (
+                <StatusPill tone="danger">Enabled</StatusPill>
+              ) : (
+                <StatusPill tone="neutral">Disabled</StatusPill>
+              )
+            }
           />
           <KeyValue
             label="Kill switch"

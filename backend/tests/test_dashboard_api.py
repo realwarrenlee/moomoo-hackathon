@@ -11,7 +11,7 @@ from app.broker.moomoo_rest import RestAccountIdentity, RestOrder
 from app.dashboard.api import create_app
 from app.dashboard.data import DashboardAuthRequired, DashboardPaths, DashboardService
 from app.ledger.store import SQLiteLedger
-from app.models.contracts import AccountSnapshot, OrderSide, Position
+from app.models.contracts import AccountSnapshot, OrderSide, Position, TradingActivation
 
 NOW = datetime(2026, 11, 17, 15, 0, tzinfo=UTC)
 TOKEN = "test-dashboard-token"
@@ -196,6 +196,43 @@ def test_overview_exposes_real_data_without_identity_secrets(tmp_path: Path) -> 
     assert "trade:write" not in serialized
 
 
+def test_trading_mode_is_reported_from_environment(tmp_path: Path, monkeypatch) -> None:
+    monkeypatch.setenv("TRADING_MODE", "SUPERVISED_PAPER")
+    monkeypatch.setenv("ORDER_WRITES_ENABLED", "false")
+    client, _ = build_client(tmp_path)
+    health = client.get("/api/v1/health", headers=headers()).json()
+    assert health["trading_mode"] == "SUPERVISED_PAPER"
+    assert health["order_writes_enabled"] is False
+    overview = client.get("/api/v1/overview", headers=headers()).json()
+    assert overview["safety"]["trading_mode"] == "SUPERVISED_PAPER"
+    assert overview["safety"]["order_writes_enabled"] is False
+
+
+def test_auto_paper_pin_enables_reported_order_writes(tmp_path: Path, monkeypatch) -> None:
+    monkeypatch.setenv("TRADING_MODE", "AUTO_PAPER")
+    monkeypatch.setenv("ORDER_WRITES_ENABLED", "false")
+    client, ledger = build_client(tmp_path)
+    ledger.record_trading_activation(
+        TradingActivation(
+            activated_at_utc=NOW,
+            activated_by="owner",
+            account_fingerprint="f" * 64,
+            strategy_version="spy-directional",
+            allowed_symbols=("SPY", "UPRO", "SH", "SPXU"),
+            risk_policy_version="risk-v2",
+            min_effective_exposure_fraction=Decimal("0.20"),
+            max_effective_exposure_fraction=Decimal("1.50"),
+            max_daily_drawdown=Decimal("0.02"),
+        )
+    )
+    overview = client.get("/api/v1/overview", headers=headers()).json()
+    assert overview["safety"]["trading_mode"] == "AUTO_PAPER"
+    assert overview["safety"]["order_writes_enabled"] is True
+    health = client.get("/api/v1/health", headers=headers()).json()
+    assert health["trading_mode"] == "AUTO_PAPER"
+    assert health["order_writes_enabled"] is True
+
+
 def test_stale_quotes_are_labelled_and_risk_is_locked(tmp_path: Path) -> None:
     client, _ = build_client(tmp_path, stale=True)
     overview = client.get("/api/v1/overview", headers=headers()).json()
@@ -210,6 +247,69 @@ def test_stale_quotes_are_labelled_and_risk_is_locked(tmp_path: Path) -> None:
     assert "ORDER_WRITES_ENABLED=false" in risk["lock_reasons"]
     assert risk["last_real_preflight"]["submission_performed"] is False
     assert risk["last_real_preflight"]["scope_trade_write"] is False
+
+
+def _activation(**overrides):
+    fields = dict(
+        activated_at_utc=NOW,
+        activated_by="owner",
+        account_fingerprint="f" * 64,
+        strategy_version="spy-directional",
+        allowed_symbols=("SPY", "SH", "UPRO", "SPXU"),
+        risk_policy_version="risk-v2",
+        min_effective_exposure_fraction=Decimal("0.20"),
+        max_effective_exposure_fraction=Decimal("1.50"),
+        max_daily_drawdown=Decimal("0.02"),
+    )
+    fields.update(overrides)
+    return TradingActivation(**fields)
+
+
+def test_risk_limits_default_to_risk_v1_without_activation(tmp_path: Path) -> None:
+    client, _ = build_client(tmp_path)
+    risk = client.get("/api/v1/risk", headers=headers()).json()
+    assert risk["policy_version"] == "risk-v1"
+    limits = risk["limits"]
+    assert limits["max_single_exposure_pct"] == 10.0
+    assert limits["max_total_exposure_pct"] == 30.0
+    assert limits["max_open_positions"] == 3
+    assert limits["min_effective_exposure_pct"] is None
+    assert limits["max_effective_exposure_pct"] is None
+    assert limits["max_leverage"] is None
+
+
+def test_risk_limits_follow_the_pinned_risk_v2_activation(tmp_path: Path) -> None:
+    client, ledger = build_client(tmp_path)
+    ledger.record_trading_activation(_activation())
+    risk = client.get("/api/v1/risk", headers=headers()).json()
+    assert risk["policy_version"] == "risk-v2"
+    limits = risk["limits"]
+    assert limits["min_effective_exposure_pct"] == 20.0
+    assert limits["max_effective_exposure_pct"] == 150.0
+    assert limits["max_leverage"] == 3.0
+    assert limits["max_open_positions"] == 1
+    assert limits["max_single_exposure_pct"] is None
+    assert limits["max_total_exposure_pct"] is None
+
+
+def test_risk_limits_reflect_the_pinned_risk_v1_activation(tmp_path: Path) -> None:
+    client, ledger = build_client(tmp_path)
+    ledger.record_trading_activation(
+        _activation(
+            risk_policy_version="risk-v1",
+            max_single_exposure=Decimal("0.10"),
+            max_total_exposure=Decimal("0.30"),
+            position_fraction=Decimal("0.05"),
+            min_effective_exposure_fraction=None,
+            max_effective_exposure_fraction=None,
+        )
+    )
+    risk = client.get("/api/v1/risk", headers=headers()).json()
+    assert risk["policy_version"] == "risk-v1"
+    limits = risk["limits"]
+    assert limits["max_single_exposure_pct"] == 10.0
+    assert limits["max_total_exposure_pct"] == 30.0
+    assert limits["min_effective_exposure_pct"] is None
 
 
 def test_portfolio_and_audit_return_broker_and_ledger_data(tmp_path: Path) -> None:

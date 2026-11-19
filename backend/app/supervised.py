@@ -44,6 +44,7 @@ def build_supervised_execution(
     order_writes_enabled: bool = False,
     http: httpx.Client | None = None,
     clock: Callable[[], datetime] | None = None,
+    risk_gate: RiskGate | None = None,
 ) -> SupervisedExecution:
     if not isinstance(order_writes_enabled, bool):
         raise ValueError("order write state must be explicit")
@@ -63,14 +64,19 @@ def build_supervised_execution(
         account_market_id=account_lock.expected_market_id,
         clock=clock,
     )
-    risk_gate = RiskGate(
-        expected_account_fingerprint=account_lock.expected_fingerprint,
-        allowed_symbols=frozenset(UNIVERSE),
-        leverage_by_symbol={
-            symbol: instrument.leverage for symbol, instrument in INSTRUMENTS.items()
-        },
-        allow_leveraged=False,
-    )
+    if risk_gate is None:
+        # Supervised owner orders use the risk-v2 envelope without the
+        # autonomous 20% floor, so small acceptance tests stay possible.
+        risk_gate = RiskGate(
+            expected_account_fingerprint=account_lock.expected_fingerprint,
+            allowed_symbols=frozenset(UNIVERSE),
+            leverage_by_symbol={
+                symbol: instrument.leverage for symbol, instrument in INSTRUMENTS.items()
+            },
+            policy_version="risk-v2",
+            allow_leveraged=True,
+            enforce_min_exposure=False,
+        )
     service = TradingService(
         broker=broker,
         risk_gate=risk_gate,

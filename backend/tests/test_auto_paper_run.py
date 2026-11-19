@@ -34,6 +34,8 @@ BULLISH_ARTIFACT_SNAPSHOT = {
     "market_state": "STRONG_BULLISH",
     "direction": "BULLISH",
     "target_symbol": "SPY",
+    "target_exposure_fraction": "0.60",
+    "exposure_tier": "MODERATE",
     "action": "BUY",
 }
 
@@ -438,6 +440,8 @@ def test_neutral_signal_records_cash_without_submission(tmp_path):
                 "market_state": "NEUTRAL",
                 "direction": None,
                 "target_symbol": None,
+                "target_exposure_fraction": "0",
+                "exposure_tier": "NEUTRAL",
                 "action": "CASH",
             }
         },
@@ -465,14 +469,14 @@ def test_bullish_signal_submits_buy_and_reconciles(tmp_path):
     assert report["status"] == "COMPLETED"
     assert report["submission_performed"] is True
     assert report["symbol"] == "SPY"
-    assert report["requested_quantity"] == 48
+    assert report["requested_quantity"] == 582
     assert report["order"]["status"] == "FILLED"
     assert report["reconciled"] is True
     assert len(service.execute_calls) == 1
     proposal, quote = service.execute_calls[0]
     assert proposal.symbol == "SPY"
     assert proposal.action.value == "BUY"
-    assert proposal.requested_quantity == 48
+    assert proposal.requested_quantity == 582
     assert quote.symbol == "SPY"
     assert len(service.reconcile_calls) == 1
     assert service.reconcile_calls[0].startswith("mootrade-")
@@ -485,7 +489,7 @@ def test_holding_the_target_records_hold_without_submission(tmp_path):
     exit_code, report, ledger, service = _harness(
         tmp_path,
         account=_account(
-            positions=(Position(symbol="SPY", quantity=49, market_value=Decimal("5100")),)
+            positions=(Position(symbol="SPY", quantity=574, market_value=Decimal("60000")),)
         ),
     )
     assert exit_code == 0

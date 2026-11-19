@@ -2,7 +2,7 @@
 
 **Status:** implemented 17 November 2026 as six read-only pages. The UI is adapted from the MIT-licensed [Shadcn Fintech](https://github.com/abderrahimghazali/shadcn-fintech) template (commit `a905058`). Banking routes, components, mock data and decorative 3D assets were removed. Attribution is preserved in `frontend/LICENSE` and `frontend/ATTRIBUTION.md`.
 
-**Safety boundary:** the dashboard has no order-capable route. It cannot enable writes, approve an order, cancel an order, liquidate a position, change a risk limit or edit Qoder evidence. `ORDER_WRITES_ENABLED=true` causes the API to refuse startup. On 18 November 2026 the owner removed the header `PAPER` badge and “Competition account · read-only” caption; the persistent sidebar `Writes DISABLED` status remains the in-shell paper-mode indicator.
+**Safety boundary:** the dashboard has no order-capable route. It cannot enable writes, approve an order, cancel an order, liquidate a position, change a risk limit or edit Qoder evidence. `ORDER_WRITES_ENABLED=true` causes the API to refuse startup. On 18 November 2026 the owner removed the header `PAPER` badge and “Competition account · read-only” caption; the persistent sidebar account card remains the in-shell paper-mode indicator. Since 19 November 2026 that indicator reports the **actual recorded trading mode** (`PAPER · READ ONLY` / `PAPER · SUPERVISED` / `PAPER · AUTO_PAPER`) and the detail sheet reports the effective order-write state, derived from the environment flag or the AUTO_PAPER activation pin, per the production deployment directive.
 
 ## Pages
 
@@ -21,10 +21,10 @@ FastAPI application: `backend/app/dashboard/api.py`.
 
 | Endpoint | Read model |
 |---|---|
-| `GET /api/v1/health` | Auth presence, masked-scope state, writes disabled, ledger availability |
+| `GET /api/v1/health` | Auth presence, masked-scope state, trading mode, effective order-write state, ledger availability |
 | `GET /api/v1/overview` | Account, quote observations, safety, latest Qoder run, warnings |
 | `GET /api/v1/portfolio` | Account snapshot, positions, open orders, today/history orders |
-| `GET /api/v1/risk` | Limits, lock reasons, current inputs, recorded real preflight |
+| `GET /api/v1/risk` | Pinned policy version, versioned limits (risk-v1 single/gross caps or risk-v2 effective-exposure floor/ceiling/leverage), allowlisted symbols, broker-derived gross/signed-effective exposure, lock reasons, current inputs, recorded real preflight |
 | `GET /api/v1/agents` | Latest sanitised Qoder dry-run artifact |
 | `GET /api/v1/analytics` | Historical datasets, server-normalised base-100 curves, metrics |
 | `GET /api/v1/audit` | Reverse-chronological ledger summaries |

@@ -39,6 +39,8 @@ class AccountView(ApiModel):
     open_orders_count: int | None = None
     reconciled: bool | None = None
     unknown_orders: int | None = None
+    gross_exposure_pct: float | None = None
+    effective_exposure_pct: float | None = None
     as_of_utc: str | None = None
     age_seconds: float | None = None
     provenance: str = "LIVE_BROKER_READ"
@@ -61,6 +63,7 @@ class QuoteView(ApiModel):
 
 
 class SafetyView(ApiModel):
+    trading_mode: str
     order_writes_enabled: bool
     kill_switch_engaged: bool
     first_order_approval_count: int
@@ -254,8 +257,11 @@ class PreflightView(ApiModel):
 
 
 class RiskLimits(ApiModel):
-    max_single_exposure_pct: float
-    max_total_exposure_pct: float
+    max_single_exposure_pct: float | None = None
+    max_total_exposure_pct: float | None = None
+    min_effective_exposure_pct: float | None = None
+    max_effective_exposure_pct: float | None = None
+    max_leverage: float | None = None
     max_open_positions: int
     max_daily_drawdown_pct: float
     max_quote_age_seconds: int
@@ -270,6 +276,7 @@ class RiskResponse(ApiModel):
     read_only: bool
     policy_version: str
     limits: RiskLimits
+    allowed_symbols: list[str] | None = None
     controls: SafetyView
     execution_locked: bool
     lock_reasons: list[str]
@@ -385,6 +392,7 @@ class HealthResponse(ApiModel):
     generated_at_utc: str
     mode: str
     read_only: bool
+    trading_mode: str
     order_writes_enabled: bool
     auth: AuthState
     database: DatabaseState

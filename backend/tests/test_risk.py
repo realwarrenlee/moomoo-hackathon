@@ -216,6 +216,8 @@ def test_fourth_open_position_is_rejected(risk_gate, proposal, account, quote, c
             "positions": positions,
         }
     )
+    proposal = proposal.model_copy(update={"symbol": "SH"})
+    quote = quote.model_copy(update={"symbol": "SH"})
 
     decision = risk_gate.evaluate(proposal, account, quote, control, now)
 
@@ -233,15 +235,15 @@ def test_first_paper_order_requires_explicit_approval(risk_gate, proposal, accou
 def _leveraged_gate(fingerprint: str, allow_leveraged: bool):
     return RiskGate(
         expected_account_fingerprint=fingerprint,
-        allowed_symbols=frozenset({"QQQ", "TQQQ"}),
-        leverage_by_symbol={"TQQQ": Decimal("3")},
+        allowed_symbols=frozenset({"SPY", "UPRO"}),
+        leverage_by_symbol={"UPRO": Decimal("3")},
         allow_leveraged=allow_leveraged,
     )
 
 
 def test_leveraged_instrument_is_rejected_by_default(proposal, account, quote, control, now):
-    proposal = proposal.model_copy(update={"symbol": "TQQQ", "requested_quantity": 2})
-    quote = quote.model_copy(update={"symbol": "TQQQ"})
+    proposal = proposal.model_copy(update={"symbol": "UPRO", "requested_quantity": 2})
+    quote = quote.model_copy(update={"symbol": "UPRO"})
 
     decision = _leveraged_gate(account.account_fingerprint, allow_leveraged=False).evaluate(
         proposal, account, quote, control, now
@@ -255,8 +257,8 @@ def test_leveraged_instrument_is_rejected_by_default(proposal, account, quote, c
 def test_leveraged_instrument_is_exposure_checked_when_opted_in(
     proposal, account, quote, control, now
 ):
-    proposal = proposal.model_copy(update={"symbol": "TQQQ", "requested_quantity": 100})
-    quote = quote.model_copy(update={"symbol": "TQQQ"})
+    proposal = proposal.model_copy(update={"symbol": "UPRO", "requested_quantity": 100})
+    quote = quote.model_copy(update={"symbol": "UPRO"})
 
     decision = _leveraged_gate(account.account_fingerprint, allow_leveraged=True).evaluate(
         proposal, account, quote, control, now
@@ -270,8 +272,8 @@ def test_leveraged_instrument_is_exposure_checked_when_opted_in(
 def test_small_leveraged_order_passes_exposure_limits_when_opted_in(
     proposal, account, quote, control, now
 ):
-    proposal = proposal.model_copy(update={"symbol": "TQQQ", "requested_quantity": 20})
-    quote = quote.model_copy(update={"symbol": "TQQQ"})
+    proposal = proposal.model_copy(update={"symbol": "UPRO", "requested_quantity": 20})
+    quote = quote.model_copy(update={"symbol": "UPRO"})
 
     decision = _leveraged_gate(account.account_fingerprint, allow_leveraged=True).evaluate(
         proposal, account, quote, control, now
@@ -284,8 +286,8 @@ def test_small_leveraged_order_passes_exposure_limits_when_opted_in(
 def test_invalid_leverage_metadata_is_rejected(proposal, account, quote, control, now):
     gate = RiskGate(
         expected_account_fingerprint=account.account_fingerprint,
-        allowed_symbols=frozenset({"QQQ"}),
-        leverage_by_symbol={"QQQ": Decimal("0")},
+        allowed_symbols=frozenset({"SPY"}),
+        leverage_by_symbol={"SPY": Decimal("0")},
     )
 
     decision = gate.evaluate(proposal, account, quote, control, now)

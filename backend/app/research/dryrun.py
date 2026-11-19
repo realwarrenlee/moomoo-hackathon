@@ -15,7 +15,9 @@ from app.models.contracts import (
 from app.research.data import UNIVERSE, MarketHistory, session_close_utc
 from app.research.instruments import INSTRUMENTS
 from app.research.strategy import (
+    EXPOSURE_POLICY_V2,
     MIN_COMPLETED_SESSIONS,
+    ExposurePolicy,
     ResearchSnapshot,
     decide,
     screen,
@@ -72,12 +74,13 @@ def dry_run_control(order_writes_enabled: bool = True, first_order_approved: boo
     )
 
 
-def _gate(fingerprint: str) -> RiskGate:
+def _gate(fingerprint: str, policy_version: str = "risk-v2") -> RiskGate:
     return RiskGate(
         expected_account_fingerprint=fingerprint,
         allowed_symbols=frozenset(UNIVERSE),
         leverage_by_symbol={symbol: item.leverage for symbol, item in INSTRUMENTS.items()},
-        allow_leveraged=False,
+        policy_version=policy_version,
+        allow_leveraged=policy_version != "risk-v1",
     )
 
 
@@ -127,13 +130,18 @@ def decide_at(
     now: datetime | None = None,
     control: ControlState | None = None,
     account: AccountSnapshot | None = None,
+    exposure_policy: ExposurePolicy = EXPOSURE_POLICY_V2,
 ) -> DryRunDecision:
-    gate = _gate(fingerprint)
-    snapshot = screen(history, decision_time, strategy_version)
+    gate = _gate(fingerprint, policy_version=exposure_policy.version)
+    snapshot = screen(
+        history, decision_time, strategy_version, exposure_policy=exposure_policy
+    )
     effective_account = account or build_account(
         decision_time, fingerprint, f"dryrun-{decision_time:%Y%m%dT%H%M%SZ}"
     )
-    snapshot, proposal = decide(snapshot, history, effective_account)
+    snapshot, proposal = decide(
+        snapshot, history, effective_account, exposure_policy=exposure_policy
+    )
     quote = (
         history.quote(proposal.symbol, decision_time) if proposal is not None else None
     )
@@ -209,8 +217,13 @@ def oversized_example(
 ) -> DryRunDecision | None:
     if accepted.quote is None or accepted.proposal is None:
         return None
-    quantity = int(VERIFIED_EQUITY * Decimal("0.20") / accepted.quote.price)
-    proposal = accepted.proposal.model_copy(update={"requested_quantity": quantity})
+    quantity = int(VERIFIED_EQUITY * Decimal("2.0") / accepted.quote.price)
+    proposal = accepted.proposal.model_copy(
+        update={
+            "requested_quantity": quantity,
+            "target_exposure_fraction": None,
+        }
+    )
     gate = _gate(fingerprint)
     decision = judge(
         gate,
@@ -221,7 +234,7 @@ def oversized_example(
         accepted.account.as_of_utc,
     )
     return DryRunDecision(
-        scenario="oversized quantity (20% of equity versus 10% limit)",
+        scenario="oversized quantity (200% of equity versus the 150% ceiling)",
         snapshot=accepted.snapshot,
         proposal=proposal,
         quote=accepted.quote,

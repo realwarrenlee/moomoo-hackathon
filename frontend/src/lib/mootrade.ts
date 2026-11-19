@@ -36,6 +36,8 @@ export type AccountView = {
   open_orders_count?: number | null
   reconciled?: boolean | null
   unknown_orders?: number | null
+  gross_exposure_pct?: number | null
+  effective_exposure_pct?: number | null
   as_of_utc?: string | null
   age_seconds?: number | null
   provenance: Provenance
@@ -58,6 +60,7 @@ export type QuoteView = {
 }
 
 export type SafetyView = {
+  trading_mode: string
   order_writes_enabled: boolean
   kill_switch_engaged: boolean
   first_order_approval_count: number
@@ -237,14 +240,18 @@ export type RiskResponse = {
   read_only: boolean
   policy_version: string
   limits: {
-    max_single_exposure_pct: number
-    max_total_exposure_pct: number
+    max_single_exposure_pct?: number | null
+    max_total_exposure_pct?: number | null
+    min_effective_exposure_pct?: number | null
+    max_effective_exposure_pct?: number | null
+    max_leverage?: number | null
     max_open_positions: number
     max_daily_drawdown_pct: number
     max_quote_age_seconds: number
     max_account_age_seconds: number
     buying_power_buffer_usd: number
   }
+  allowed_symbols?: string[] | null
   controls: SafetyView
   execution_locked: boolean
   lock_reasons: string[]
@@ -335,6 +342,7 @@ export type HealthResponse = {
   generated_at_utc: string
   mode: "PAPER"
   read_only: boolean
+  trading_mode: string
   order_writes_enabled: boolean
   auth: {
     authorization: string
@@ -593,7 +601,10 @@ export const RISK_RULES: Record<string, string> = {
   R012: "Regular trading session",
   R013: "Position count",
   R014: "First-order approval",
-  R015: "Leveraged product approval",
+  R015: "Leverage limit",
+  R016: "Minimum exposure floor",
+  R017: "Maximum effective exposure",
+  R018: "Declared target consistency",
 }
 
 export function ruleLabel(ruleId?: string | null): string {

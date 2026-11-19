@@ -44,6 +44,7 @@ from app.models.contracts import (
     PolicyDecision,
     ProposalAction,
     TradeProposal,
+    TradingActivation,
 )
 from app.risk.policy import RiskGate
 from app.service import build_client_order_key
@@ -187,6 +188,37 @@ def _reconciliation_outcome(ledger: SQLiteLedger, proposal_id: str) -> str:
     return events[-1]["event_type"] if events else "NOT_ATTEMPTED"
 
 
+def _activation_policy_fields(activation: TradingActivation) -> dict[str, object]:
+    return {
+        "max_single_exposure": (
+            str(activation.max_single_exposure)
+            if activation.max_single_exposure is not None
+            else None
+        ),
+        "max_total_exposure": (
+            str(activation.max_total_exposure)
+            if activation.max_total_exposure is not None
+            else None
+        ),
+        "position_fraction": (
+            str(activation.position_fraction)
+            if activation.position_fraction is not None
+            else None
+        ),
+        "min_effective_exposure_fraction": (
+            str(activation.min_effective_exposure_fraction)
+            if activation.min_effective_exposure_fraction is not None
+            else None
+        ),
+        "max_effective_exposure_fraction": (
+            str(activation.max_effective_exposure_fraction)
+            if activation.max_effective_exposure_fraction is not None
+            else None
+        ),
+        "max_daily_drawdown": str(activation.max_daily_drawdown),
+    }
+
+
 def _add_supervised_order_arguments(parser) -> None:
     parser.add_argument("--symbol", required=True)
     parser.add_argument("--action", choices=["BUY", "SELL"], required=True)
@@ -325,6 +357,21 @@ def main(argv: Sequence[str] | None = None) -> int:
     auto_paper_activate.add_argument("--authorized-by", default="owner")
     auto_paper_activate.add_argument("--env-file", default=".env")
     auto_paper_activate.add_argument("--ledger")
+
+    kill_switch = commands.add_parser(
+        "moomoo-kill-switch",
+        help=(
+            "Show, engage or release the persistent kill switch. Engaging blocks "
+            "new paper orders; it never liquidates holdings. Every state change "
+            "is an explicit, logged audit event and requires a confirmation flag."
+        ),
+    )
+    kill_switch.add_argument("--engage", action="store_true")
+    kill_switch.add_argument("--confirm-engage", action="store_true")
+    kill_switch.add_argument("--release", action="store_true")
+    kill_switch.add_argument("--confirm-release", action="store_true")
+    kill_switch.add_argument("--env-file", default=".env")
+    kill_switch.add_argument("--ledger")
 
     args = parser.parse_args(argv)
 
@@ -999,10 +1046,7 @@ def main(argv: Sequence[str] | None = None) -> int:
                     "strategy_version": activation.strategy_version,
                     "allowed_symbols": list(activation.allowed_symbols),
                     "risk_policy_version": activation.risk_policy_version,
-                    "max_single_exposure": str(activation.max_single_exposure),
-                    "max_total_exposure": str(activation.max_total_exposure),
-                    "max_daily_drawdown": str(activation.max_daily_drawdown),
-                    "position_fraction": str(activation.position_fraction),
+                    **_activation_policy_fields(activation),
                     "paper_only": True,
                     "order_writes_enabled": True,
                 }
@@ -1060,10 +1104,7 @@ def main(argv: Sequence[str] | None = None) -> int:
                 "strategy_version": activation.strategy_version,
                 "allowed_symbols": list(activation.allowed_symbols),
                 "risk_policy_version": activation.risk_policy_version,
-                "max_single_exposure": str(activation.max_single_exposure),
-                "max_total_exposure": str(activation.max_total_exposure),
-                "max_daily_drawdown": str(activation.max_daily_drawdown),
-                "position_fraction": str(activation.position_fraction),
+                **_activation_policy_fields(activation),
                 "paper_only": True,
                 "order_writes_enabled": True,
             },
@@ -1076,15 +1117,69 @@ def main(argv: Sequence[str] | None = None) -> int:
             "strategy_version": activation.strategy_version,
             "allowed_symbols": list(activation.allowed_symbols),
             "risk_policy_version": activation.risk_policy_version,
-            "max_single_exposure": str(activation.max_single_exposure),
-            "max_total_exposure": str(activation.max_total_exposure),
-            "max_daily_drawdown": str(activation.max_daily_drawdown),
-            "position_fraction": str(activation.position_fraction),
+            **_activation_policy_fields(activation),
             "account_fingerprint": activation.account_fingerprint,
             "paper_only": True,
             "note": (
                 "Autonomous submissions still require the per-run pipeline checks, "
                 "a fresh RiskGate decision and an unengaged kill switch."
+            ),
+        }, indent=2, ensure_ascii=True))
+        return 0
+
+    if args.command == "moomoo-kill-switch":
+        load_local_env(Path(args.env_file))
+        ledger = SQLiteLedger(args.ledger or ledger_path_from_env(os.environ))
+        engaged = ledger.kill_switch_engaged()
+        now = datetime.now(UTC)
+        changed = False
+        if args.engage and args.release:
+            print("Refusing: --engage and --release are mutually exclusive.")
+            return 2
+        if args.engage:
+            if not args.confirm_engage:
+                print(
+                    "Refusing: --confirm-engage is required to engage the kill "
+                    "switch. Nothing was written."
+                )
+                return 2
+            if engaged:
+                print("The persistent kill switch is already engaged.")
+            else:
+                ledger.set_kill_switch(True)
+                ledger.append_event(
+                    "KILL_SWITCH_ENGAGED", now, None, "operator-cli", {"reason": "manual owner action"}
+                )
+                engaged = True
+                changed = True
+        if args.release:
+            if not args.confirm_release:
+                print(
+                    "Refusing: --confirm-release is required to release the kill "
+                    "switch. Nothing was written."
+                )
+                return 2
+            if not engaged:
+                print("The persistent kill switch is not engaged.")
+            else:
+                ledger.set_kill_switch(False)
+                ledger.append_event(
+                    "KILL_SWITCH_RELEASED", now, None, "operator-cli", {"reason": "manual owner action"}
+                )
+                engaged = False
+                changed = True
+        print(json.dumps({
+            "mode": "PAPER",
+            "kill_switch_engaged": engaged,
+            "state_changed": changed,
+            "action": (
+                "engaged" if changed and engaged else
+                "released" if changed else
+                "reported"
+            ),
+            "note": (
+                "The kill switch blocks new paper orders and never liquidates "
+                "holdings. Release it only after the triggering condition is resolved."
             ),
         }, indent=2, ensure_ascii=True))
         return 0

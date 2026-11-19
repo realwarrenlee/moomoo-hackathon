@@ -15,6 +15,7 @@ import threading
 from collections.abc import Mapping
 from dataclasses import dataclass
 from datetime import UTC, datetime
+from decimal import Decimal
 from pathlib import Path
 from typing import Any, Protocol
 
@@ -37,18 +38,56 @@ from app.broker.moomoo_rest import (
 )
 from app.cli import ledger_path_from_env, load_local_env
 from app.ledger.store import SQLiteLedger
-from app.models.contracts import AccountSnapshot
+from app.models.contracts import AccountSnapshot, TradingActivation, TradingMode
+from app.research.instruments import INSTRUMENTS
+from app.trading_mode import order_writes_enabled, resolve_trading_mode
 
 QUOTE_SYMBOLS = ("SPY", "UPRO", "SH", "SPXU")
-POLICY_LIMITS = {
-    "max_single_exposure_pct": 10.0,
-    "max_total_exposure_pct": 30.0,
-    "max_open_positions": 3,
-    "max_daily_drawdown_pct": 2.0,
+OPERATIONAL_LIMITS = {
     "max_quote_age_seconds": 300,
     "max_account_age_seconds": 60,
     "buying_power_buffer_usd": 5.0,
 }
+RISK_V1_LIMITS = {
+    "max_single_exposure_pct": 10.0,
+    "max_total_exposure_pct": 30.0,
+    "max_open_positions": 3,
+    "max_daily_drawdown_pct": 2.0,
+}
+RISK_V2_LIMITS = {
+    "min_effective_exposure_pct": 20.0,
+    "max_effective_exposure_pct": 150.0,
+    "max_leverage": 3.0,
+    "max_open_positions": 1,
+    "max_daily_drawdown_pct": 2.0,
+}
+
+
+def policy_limits_for(
+    activation: TradingActivation | None,
+) -> tuple[str, dict[str, float]]:
+    if activation is not None and activation.risk_policy_version == "risk-v2":
+        limits = dict(RISK_V2_LIMITS)
+        limits["min_effective_exposure_pct"] = float(
+            activation.min_effective_exposure_fraction * 100
+        )
+        limits["max_effective_exposure_pct"] = float(
+            activation.max_effective_exposure_fraction * 100
+        )
+        limits["max_daily_drawdown_pct"] = float(activation.max_daily_drawdown * 100)
+        return "risk-v2", {**limits, **OPERATIONAL_LIMITS}
+    limits = dict(RISK_V1_LIMITS)
+    if activation is not None:
+        if activation.max_single_exposure is not None:
+            limits["max_single_exposure_pct"] = float(
+                activation.max_single_exposure * 100
+            )
+        if activation.max_total_exposure is not None:
+            limits["max_total_exposure_pct"] = float(
+                activation.max_total_exposure * 100
+            )
+        limits["max_daily_drawdown_pct"] = float(activation.max_daily_drawdown * 100)
+    return "risk-v1", {**limits, **OPERATIONAL_LIMITS}
 
 
 class DashboardDataError(RuntimeError):
@@ -224,10 +263,27 @@ class DashboardService:
             raise ValueError("dashboard clock must be timezone-aware")
         return now
 
+    def _trading_state(self) -> tuple[str, bool]:
+        """Report the recorded trading mode and effective order-write capability.
+
+        Writes are effective when the environment flag is set or when the
+        ledger holds an AUTO_PAPER activation pin that authorises writes
+        (the autonomous scheduler scopes the flag in-process only).
+        """
+        mode = resolve_trading_mode(os.environ)
+        writes = order_writes_enabled(os.environ)
+        if mode is TradingMode.AUTO_PAPER:
+            activation = self.source.ledger.latest_trading_activation()
+            if activation is not None and activation.order_writes_enabled:
+                writes = True
+        return mode.value, writes
+
     def _safety(self) -> dict[str, Any]:
         ledger = self.source.ledger
+        trading_mode, writes = self._trading_state()
         return {
-            "order_writes_enabled": False,
+            "trading_mode": trading_mode,
+            "order_writes_enabled": writes,
             "kill_switch_engaged": ledger.kill_switch_engaged(),
             "first_order_approval_count": ledger.order_approval_count(),
             "submission_count": ledger.submission_count(),
@@ -573,13 +629,18 @@ class DashboardService:
         lock_reasons.append("The read-only REST adapter has no order endpoint.")
         warnings = [account_error] if account_error else []
         state = "UNAVAILABLE" if account is None else "LOCKED"
+        activation = self.source.ledger.latest_trading_activation()
+        policy_version, limits = policy_limits_for(activation)
         return {
             "state": state,
             "generated_at_utc": _iso(now),
             "mode": "PAPER",
             "read_only": True,
-            "policy_version": "risk-v1",
-            "limits": POLICY_LIMITS,
+            "policy_version": policy_version,
+            "limits": limits,
+            "allowed_symbols": (
+                list(activation.allowed_symbols) if activation is not None else None
+            ),
             "controls": safety,
             "execution_locked": True,
             "lock_reasons": lock_reasons,
@@ -749,18 +810,31 @@ class DashboardService:
     def health(self) -> dict[str, Any]:
         now = self._now()
         auth = self.source.auth_state()
+        trading_mode, writes = self._trading_state()
         return {
             "state": "OK",
             "generated_at_utc": _iso(now),
             "mode": "PAPER",
             "read_only": True,
-            "order_writes_enabled": False,
+            "trading_mode": trading_mode,
+            "order_writes_enabled": writes,
             "auth": auth,
             "database": {"available": True, "provenance": "LOCAL_LEDGER"},
         }
 
 
 def _account_view(now: datetime, identity: Any, snapshot: AccountSnapshot) -> dict[str, Any]:
+    gross = sum(
+        (item.market_value for item in snapshot.positions), Decimal("0")
+    )
+    effective = sum(
+        (
+            item.market_value * INSTRUMENTS[item.symbol].effective_exposure
+            for item in snapshot.positions
+            if item.symbol in INSTRUMENTS
+        ),
+        Decimal("0"),
+    )
     return {
         "masked_id": identity.masked_id,
         "title": identity.title,
@@ -776,6 +850,8 @@ def _account_view(now: datetime, identity: Any, snapshot: AccountSnapshot) -> di
         "open_orders_count": len(snapshot.open_orders),
         "reconciled": snapshot.reconciled,
         "unknown_orders": snapshot.unknown_orders,
+        "gross_exposure_pct": float(gross / snapshot.equity * 100),
+        "effective_exposure_pct": float(effective / snapshot.equity * 100),
         "as_of_utc": _iso(snapshot.as_of_utc),
         "age_seconds": _age(now, snapshot.as_of_utc),
         "provenance": "LIVE_BROKER_READ",
@@ -783,7 +859,7 @@ def _account_view(now: datetime, identity: Any, snapshot: AccountSnapshot) -> di
 
 
 def _quote_view(observation: QuoteObservation) -> dict[str, Any]:
-    stale = observation.age_seconds > POLICY_LIMITS["max_quote_age_seconds"]
+    stale = observation.age_seconds > OPERATIONAL_LIMITS["max_quote_age_seconds"]
     abnormal = observation.sec_status != "NORMAL" or observation.suspended
     return {
         "symbol": observation.symbol,

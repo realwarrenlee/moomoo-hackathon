@@ -292,6 +292,17 @@ The first order failed closed with `R014` until a durable exact-proposal approva
 
 **Acceptance tests:** fresh quote and session checks pass with strict success/partial/filled/cancelled/rejected/unknown mapping; stale, future, suspended, wrong-symbol and malformed quote responses fail closed; POST-read allowlisting refuses order paths and refresh failure is fatal; the correlation tag is bounded and ambiguous matches are refused; the disabled transport sends nothing; a documented success response records acknowledgement without inventing a fill; partial fill and rejection arrive only through read-only reconciliation; transport timeout or malformed acknowledgement persists `UNKNOWN`, blocks new submissions and never retries; duplicate proposals send at most one request; an oversized order returns `R004` without a broker call; reconciliation queries all three broker sources and rejects account mismatch. The full backend suite passes (**313 tests**, 18 November 2026, including execution OAuth registration-only status rejection, scheduler catch-up, lock exclusion, abandoned-run recovery, interruption persistence, clock-skew acceptance, execution-transport mocks, supervised CLI guard tests, dashboard API tests and the three live-contract regression tests).
 
+### UPRO/SPXU tradability verification (19 November 2026)
+
+Read-only probes against the competition token, no orders submitted (`TRADING_MODE=READ_ONLY` in force):
+
+- `quote_stock_quote` for `US.UPRO`, `US.SPXU`, `US.SPY`, `US.SH` returned live regular-session quotes: `sec_status=NORMAL`, `suspension=false` for all four. Last prices at probe time (2026-11-18 session data): UPRO 124.32, SPXU 39.64, SPY 728.88, SH 34.11.
+- `quote_market_state`: UPRO and SPXU both `AFTERNOON` (regular session 09:30–16:00 ET) on 20261118.
+- `quote_order_book`: both leveraged ETFs returned deep LV2 consolidated books on NASDAQ and ARCA. UPRO inside spread 124.67/124.73 (~5 bps) with thousands of visible shares on each side; SPXU 39.60/39.61 (~2.5 bps). No sign of illiquidity at these levels.
+- These probes also returned the 20-session average dollar volume recorded in `backend/app/research/instruments.py` (UPRO ~393M, SPXU ~415M).
+
+**Honest status:** quote, book and session access for UPRO/SPXU are verified read-only. Simulated-order *acceptance* for these two symbols is not yet demonstrated — no UPRO/SPXU order has been submitted. The same `US.{symbol}` market-day order path that filled the SPY/SH orders on this account is the documented transport, but broker acceptance of the leveraged symbols requires the supervised acceptance procedure at cutover (one small paper order each, with owner approval, before the new activation is authorised).
+
 ## Vibe-Trading research audit (18 November 2026)
 
 Vibe-Trading `0.1.19` (MIT, pinned commit `a8d815d17ec054a34dbdfc7ce8d1d9972566b709`, now archived outside the repository) was assessed as a possible quantitative research engine. It was **not** imported into the MooTrade backend and did not touch the risk gate, broker adapter, OAuth scopes, scheduler, dashboard or order transport. `ORDER_WRITES_ENABLED=false` remained in force.

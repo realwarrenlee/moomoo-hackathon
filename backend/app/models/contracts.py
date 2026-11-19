@@ -57,6 +57,10 @@ class TradeProposal(ContractModel):
     thesis: str = Field(min_length=1)
     invalidation: str = Field(min_length=1)
     evidence_ids: tuple[str, ...] = ()
+    target_exposure_fraction: Decimal | None = Field(
+        default=None,
+        description="Signed S&P 500 exposure as a fraction of equity that the quantity is sized to express",
+    )
 
     @model_validator(mode="after")
     def validate_action_and_timestamps(self) -> Self:
@@ -67,6 +71,8 @@ class TradeProposal(ContractModel):
             raise ValueError("BUY and SELL proposals require positive quantity")
         if self.data_as_of_utc > self.decision_time_utc:
             raise ValueError("data timestamp cannot be after decision time")
+        if self.target_exposure_fraction is not None and self.target_exposure_fraction == 0:
+            raise ValueError("declared target exposure must not be zero")
         return self
 
 
@@ -123,23 +129,58 @@ class TradingActivation(ContractModel):
     strategy_version: str = Field(min_length=1)
     allowed_symbols: tuple[str, ...]
     risk_policy_version: str = Field(min_length=1)
-    max_single_exposure: Decimal
-    max_total_exposure: Decimal
+    # risk-v1 exposure limits (the incumbent activation's fixed-allocation model)
+    max_single_exposure: Decimal | None = None
+    max_total_exposure: Decimal | None = None
+    position_fraction: Decimal | None = None
+    # risk-v2 exposure limits (tier-based effective-exposure model)
+    min_effective_exposure_fraction: Decimal | None = None
+    max_effective_exposure_fraction: Decimal | None = None
     max_daily_drawdown: Decimal
-    position_fraction: Decimal
     paper_only: Literal[True] = True
     order_writes_enabled: Literal[True] = True
 
     @model_validator(mode="after")
     def validate_limits(self) -> Self:
-        if self.max_single_exposure <= 0 or self.max_single_exposure > 1:
-            raise ValueError("max single exposure must be within (0, 1]")
-        if self.max_total_exposure <= 0 or self.max_total_exposure > 1:
-            raise ValueError("max total exposure must be within (0, 1]")
+        if self.risk_policy_version == "risk-v1":
+            for field in ("max_single_exposure", "max_total_exposure", "position_fraction"):
+                value = getattr(self, field)
+                if value is None:
+                    raise ValueError(f"{field} is required for risk-v1 activations")
+                if value <= 0 or value > 1:
+                    raise ValueError(f"{field} must be within (0, 1]")
+            if (
+                self.min_effective_exposure_fraction is not None
+                or self.max_effective_exposure_fraction is not None
+            ):
+                raise ValueError("risk-v2 exposure fields must be absent for risk-v1 activations")
+        elif self.risk_policy_version == "risk-v2":
+            if self.min_effective_exposure_fraction is None:
+                raise ValueError("minimum effective exposure fraction is required for risk-v2")
+            if self.max_effective_exposure_fraction is None:
+                raise ValueError("maximum effective exposure fraction is required for risk-v2")
+            if (
+                self.min_effective_exposure_fraction <= 0
+                or self.min_effective_exposure_fraction > 1
+            ):
+                raise ValueError("minimum effective exposure fraction must be within (0, 1]")
+            if self.max_effective_exposure_fraction <= 0:
+                raise ValueError("maximum effective exposure fraction must be positive")
+            if (
+                self.min_effective_exposure_fraction
+                >= self.max_effective_exposure_fraction
+            ):
+                raise ValueError("minimum exposure must be below the maximum")
+            if (
+                self.max_single_exposure is not None
+                or self.max_total_exposure is not None
+                or self.position_fraction is not None
+            ):
+                raise ValueError("risk-v1 exposure fields must be absent for risk-v2 activations")
+        else:
+            raise ValueError("unsupported risk policy version")
         if self.max_daily_drawdown <= 0 or self.max_daily_drawdown > 1:
             raise ValueError("max daily drawdown must be within (0, 1]")
-        if self.position_fraction <= 0 or self.position_fraction > 1:
-            raise ValueError("position fraction must be within (0, 1]")
         if len(self.allowed_symbols) == 0 or len(set(self.allowed_symbols)) != len(self.allowed_symbols):
             raise ValueError("allowed symbols must be a non-empty tuple of unique symbols")
         return self

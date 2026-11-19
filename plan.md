@@ -1,11 +1,11 @@
 # MooTrade — Moomoo × Qoder AI Trading Agent Challenge
 
 **Project plan and implementation specification**  
-**Version:** 18 November 2026  
+**Version:** 19 November 2026  
 **Development and paper-trading window:** 17–28 November 2026  
 **Submission deadline:** 30 November 2026, 23:59 SGT  
 **Finalist presentations:** 8 December 2026  
-**Status:** Implemented read-only research, agents and dashboard; supervised paper execution is built but disabled and the first paper order is still pending.
+**Status:** AUTO_PAPER was activated under the risk-v1 pin (18 Nov 16:03Z), then paused for the exposure/leverage upgrade. The owner approved the risk-v2 cutover and the risk-v2 activation is now recorded (18 Nov 23:58Z: SPY/UPRO/SH/SPXU, 20% floor, 150% signed-effective ceiling, 3x leverage, 2% drawdown). Autonomous submission stays gated (`TRADING_MODE=SUPERVISED_PAPER`, `ORDER_WRITES_ENABLED=false`) until the supervised UPRO/SPXU acceptance orders complete; then `AUTO_PAPER` is restored. The first autonomous trade is still pending.
 
 ---
 
@@ -33,6 +33,10 @@ The objective is **not** to maximise raw trading profit over a short period. The
 The original momentum and news-catalyst hypotheses did not produce a defensible edge and are retired from the active product. The active strategy is **`spy-directional`**: one deterministic daily S&P 500 direction rule over completed SPY bars, with exactly four candidate ETFs (SPY `+1x`, UPRO `+3x`, SH `-1x`, SPXU `-3x`) or CASH. Bullish/bearish requires a `±1.5%` 10-session return with price on the matching side of the 50-session SMA; 20-session annualised volatility above `40%` forces CASH. Strong labels require `±3.0%` and volatility at or below `30%`, and select the 3x fund only when leverage is separately enabled. Target size is `5%` effective exposure, with HOLD, SELL/CASH, confirmed-fill reversal and one directional position at a time. The full specification, state transitions, leverage gate, evidence limitations and acceptance/rejection criteria are in [`docs/strategy-and-risk.md`](docs/strategy-and-risk.md). `momentum-v1`, `news-catalyst-v1`, `directional-event-v2`, the stock-selection pre-registration, the Moomoo oversold-reversal candidate and the research-only ETF trend comparator are retained only as historical evidence.
 
 The pivot does not change the execution boundary: no agent receives order authority and `ORDER_WRITES_ENABLED=false`. On 18 November 2026 the research and supervised-execution gates were given the four-symbol universe with per-symbol leverage metadata, so SPY and SH (1x inverse, BUY only) are eligible while UPRO/SPXU remain disabled by `R015` until separately approved; QQQ is preserved for historical diagnostic reconciliation only. The first supervised diagnostic paper BUY/SELL test was completed and reconciled on 18 November 2026 (`evidence/execution/diagnostic-roundtrip-2026-11-18.json`).
+
+### Strategy correction — 19 November 2026
+
+The owner corrected the exposure model: the agent decides **how much** directional exposure to take first, then chooses the ETF to express it. Leverage is an instrument for scaling exposure, not the strategy itself. The implementation (risk-v2) now follows a fixed decision sequence — analyse SPY → direction → strength/risk → target signed S&P 500 exposure as % of equity → ETF choice → cash allocation and whole-share quantity → RiskGate → execute → monitor/exit/resize. Exposure tiers are transparent and reproducible from the existing return/trend/volatility measurements: NEUTRAL `0%` (CASH); weak `±20%`; moderate `±40–60%`; strong `±80–100%`; exceptional `±120–150%`. `|target| ≤ 100%` selects SPY/SH; above `100%` selects UPRO/SPXU with cash allocation `|target| / 3` (e.g. `+150%` → 50% of equity in UPRO). Position adjustments follow deterministic resize rules (tier deltas, SELL-first reversals, 5-session 3x duration exits) — never repeated intraday BUYs from one daily signal. The owner approved the cutover on 18 November 2026 and the risk-v2 pin is recorded (23:58Z); the risk-v1 row (SPY/SH, 5%; 16:03Z) is retained append-only. The risk-v2 pin adds R016 (20% floor), R017 (150% signed-effective ceiling) and R018 (declared-target consistency) on top of the existing rules. A 150% exposure can lose ≈3% of equity on a 2% adverse daily index move; the 2% drawdown brake does not cap losses and stop-losses do not remove overnight gap risk. See [`docs/strategy-and-risk.md`](docs/strategy-and-risk.md) for the full tier table and dual-policy rules.
 
 ---
 

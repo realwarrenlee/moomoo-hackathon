@@ -36,7 +36,7 @@ INSTRUMENTS: dict[str, Instrument] = {
     ),
     "UPRO": Instrument(
         "UPRO", 1, Decimal("3"), Decimal("393169316.77"),
-        "Daily 3x long S&P 500 exposure; disabled until separate leverage approval.",
+        "Daily 3x long S&P 500 exposure; selectable when the risk-v2 target exceeds 100%.",
     ),
     "SH": Instrument(
         "SH", -1, Decimal("1"), Decimal("369048377.47"),
@@ -44,7 +44,7 @@ INSTRUMENTS: dict[str, Instrument] = {
     ),
     "SPXU": Instrument(
         "SPXU", -1, Decimal("3"), Decimal("414841698.59"),
-        "Daily 3x inverse S&P 500 exposure; bought with a BUY order and disabled until separate leverage approval.",
+        "Daily 3x inverse S&P 500 exposure; bought with a BUY order and selectable when the risk-v2 target is below -100%.",
     ),
 }
 
@@ -60,3 +60,16 @@ def select_instrument(direction: int, strong: bool, allow_leveraged: bool) -> st
     if direction < 0:
         return "SPXU" if strong and allow_leveraged else "SH"
     return None
+
+
+def select_instrument_for_exposure(direction: int, target_fraction: Decimal) -> str | None:
+    """Choose the ETF that expresses a signed exposure fraction.
+
+    |target| <= 100% uses the 1x product; larger targets use the 3x product so
+    the cash outlay stays at |target| / leverage of equity.
+    """
+    if direction == 0 or target_fraction == 0:
+        return None
+    if abs(target_fraction) <= Decimal("1"):
+        return "SPY" if direction > 0 else "SH"
+    return "UPRO" if direction > 0 else "SPXU"

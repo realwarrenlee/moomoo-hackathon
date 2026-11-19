@@ -601,7 +601,7 @@ def test_supervised_builder_defaults_to_disabled_writes(tmp_path, account_finger
     assert stack.broker._transport.order_writes_enabled is False
 
 
-def test_supervised_gate_enables_spy_and_sh_but_keeps_leveraged_disabled(
+def test_supervised_gate_covers_the_universe_for_acceptance_tests(
     tmp_path, account_fingerprint
 ):
     import httpx
@@ -629,7 +629,9 @@ def test_supervised_gate_enables_spy_and_sh_but_keeps_leveraged_disabled(
     )
     gate = stack.risk_gate
     assert gate.allowed_symbols == frozenset({"SPY", "UPRO", "SH", "SPXU"})
-    assert gate.allow_leveraged is False
+    assert gate.policy_version == "risk-v2"
+    assert gate.allow_leveraged is True
+    assert gate.enforce_min_exposure is False
     assert gate.leverage_by_symbol["SPY"] == Decimal("1")
     assert gate.leverage_by_symbol["SH"] == Decimal("1")
     assert gate.leverage_by_symbol["UPRO"] == Decimal("3")
@@ -677,16 +679,9 @@ def test_supervised_gate_enables_spy_and_sh_but_keeps_leveraged_disabled(
             regular_session_open=True,
         )
 
-    for symbol in ("SPY", "SH"):
+    for symbol in ("SPY", "SH", "UPRO", "SPXU"):
         decision = gate.evaluate(
             proposal_for(symbol), account, quote_for(symbol), control, now
         )
         assert decision.decision is PolicyDecision.APPROVE
         assert decision.reasons == ()
-
-    for symbol in ("UPRO", "SPXU"):
-        decision = gate.evaluate(
-            proposal_for(symbol), account, quote_for(symbol), control, now
-        )
-        assert decision.decision is PolicyDecision.REJECT
-        assert {reason.rule_id for reason in decision.reasons} == {"R015"}

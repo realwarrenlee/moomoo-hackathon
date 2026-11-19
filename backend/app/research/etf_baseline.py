@@ -7,15 +7,13 @@ from datetime import date
 from decimal import Decimal
 
 from app.research.data import DailyBar, MarketHistory
-from app.risk.policy import RiskGate
 
 BASELINE_VERSION = "etf-trend-baseline-v1"
 INITIAL_EQUITY = Decimal("100000")
 COST_BPS = Decimal("2")
 SMA_WINDOW = 200
-POLICY_MAX_SINGLE_EXPOSURE = RiskGate(
-    expected_account_fingerprint="baseline-study"
-).max_single_exposure
+# Frozen allocation from the retired risk-v1 baseline study.
+POLICY_MAX_SINGLE_EXPOSURE = Decimal("0.10")
 
 
 @dataclass(frozen=True)

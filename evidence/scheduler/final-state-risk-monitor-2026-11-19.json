@@ -1,0 +1,12 @@
+﻿{
+    "TaskName":  "MooTrade Risk Monitor",
+    "State":  3,
+    "UserId":  "Warren",
+    "WakeToRun":  true,
+    "StartWhenAvailable":  true,
+    "TriggerCount":  6,
+    "NextRunTime":  "\/Date(1795031100000)\/",
+    "LastRunTime":  "\/Date(1795021800000)\/",
+    "LastTaskResult":  0,
+    "TriggerStartBoundaries":  "2026-11-18T21:45:00+08:00; 2026-11-18T22:45:00+08:00; 2026-11-19T00:00:00+08:00; 2026-11-19T01:00:00+08:00; 2026-11-19T03:45:00+08:00; 2026-11-19T04:45:00+08:00"
+}

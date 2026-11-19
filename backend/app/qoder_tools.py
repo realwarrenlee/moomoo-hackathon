@@ -21,7 +21,13 @@ from app.research.dryrun import (
     latest_decision,
 )
 from app.research.instruments import INSTRUMENTS
-from app.research.strategy import STRATEGY_VERSION, decide, screen
+from app.research.strategy import (
+    EXPOSURE_POLICY_V2,
+    STRATEGY_VERSION,
+    ExposurePolicy,
+    decide,
+    screen,
+)
 from app.risk.policy import RiskGate
 
 StrategyVersion = Literal["spy-directional"]
@@ -96,10 +102,12 @@ class QoderToolService:
         *,
         current: CurrentMarketContext | None = None,
         clock: Callable[[], datetime] | None = None,
+        exposure_policy: ExposurePolicy = EXPOSURE_POLICY_V2,
     ) -> None:
         self.history = history
         self.fingerprint = fingerprint
         self.current = current
+        self.exposure_policy = exposure_policy
         self.mode = "CURRENT_MARKET_READ_ONLY" if current is not None else "HISTORICAL_DRY_RUN"
         self.notice = CURRENT_NOTICE if current is not None else HISTORICAL_NOTICE
         self._clock = clock or (lambda: datetime.now(UTC))
@@ -179,9 +187,16 @@ class QoderToolService:
     ) -> DryRunDecision:
         assert self.current is not None
         decision_time = decision_time_utc or self.current.decision_time_utc
-        snapshot = screen(self.history, decision_time, strategy_version)
+        snapshot = screen(
+            self.history,
+            decision_time,
+            strategy_version,
+            exposure_policy=self.exposure_policy,
+        )
         account = self.current.account_provider()
-        snapshot, proposal = decide(snapshot, self.history, account)
+        snapshot, proposal = decide(
+            snapshot, self.history, account, exposure_policy=self.exposure_policy
+        )
         quote = self.current.quote_provider(proposal.symbol) if proposal is not None else None
         return DryRunDecision(
             scenario="current market read-only",
@@ -231,7 +246,8 @@ class QoderToolService:
             expected_account_fingerprint=self.fingerprint,
             allowed_symbols=frozenset(UNIVERSE),
             leverage_by_symbol={symbol: item.leverage for symbol, item in INSTRUMENTS.items()},
-            allow_leveraged=False,
+            policy_version=self.exposure_policy.version,
+            allow_leveraged=self.exposure_policy.allow_leveraged,
         )
         decision = gate.evaluate(
             proposal=proposal,

@@ -1,0 +1,24 @@
+{
+  "schema_version": "1",
+  "mode": "RISK_MONITOR",
+  "window": "midday",
+  "checked_at_utc": "2026-11-18T17:07:36.891722+00:00",
+  "session": "2026-11-18",
+  "order_writes_enabled": false,
+  "policy_version": "risk-v1",
+  "status": "COMPLETED",
+  "account": {
+    "equity": "99991.02",
+    "day_start_equity": "100000",
+    "cash": "99991.02",
+    "drawdown": "0.0000898",
+    "positions": [],
+    "open_orders": 0
+  },
+  "breaches": [],
+  "kill_switch": {
+    "engaged": false,
+    "reason": null
+  },
+  "reconciliation": null
+}

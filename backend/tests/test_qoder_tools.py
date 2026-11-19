@@ -83,7 +83,7 @@ def test_accepted_proposal_uses_real_risk_gate(service, history):
     assert result["ok"] is True
     assert result["risk_decision"]["decision"] == "APPROVE"
     assert result["risk_decision"]["approved_quantity"] == research["proposal"]["requested_quantity"]
-    assert result["risk_decision"]["policy_version"] == "risk-v1"
+    assert result["risk_decision"]["policy_version"] == "risk-v2"
 
 
 def test_stale_quote_is_rejected(service, history):
@@ -106,10 +106,12 @@ def test_oversized_proposal_is_rejected(service, history):
         proposal["symbol"], datetime.fromisoformat(proposal["decision_time_utc"])
     )
     assert quote is not None
-    proposal["requested_quantity"] = int(VERIFIED_EQUITY * Decimal("0.20") / quote.price)
+    proposal["requested_quantity"] = int(VERIFIED_EQUITY * Decimal("2") / quote.price)
     result = service.evaluate_proposal({"run_id": run_id, "proposal": proposal})
     assert result["risk_decision"]["decision"] == "REJECT"
-    assert "R004" in {rule["rule_id"] for rule in result["risk_decision"]["reasons"]}
+    assert {"R017", "R008"} <= {
+        rule["rule_id"] for rule in result["risk_decision"]["reasons"]
+    }
 
 
 def test_malformed_and_untrusted_inputs_fail_closed(service):

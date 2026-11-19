@@ -78,10 +78,12 @@ class SQLiteLedger:
                     strategy_version TEXT NOT NULL,
                     allowed_symbols_json TEXT NOT NULL,
                     risk_policy_version TEXT NOT NULL,
-                    max_single_exposure TEXT NOT NULL,
-                    max_total_exposure TEXT NOT NULL,
+                    max_single_exposure TEXT,
+                    max_total_exposure TEXT,
+                    position_fraction TEXT,
+                    min_effective_exposure_fraction TEXT,
+                    max_effective_exposure_fraction TEXT,
                     max_daily_drawdown TEXT NOT NULL,
-                    position_fraction TEXT NOT NULL,
                     paper_only INTEGER NOT NULL,
                     order_writes_enabled INTEGER NOT NULL,
                     schema_version TEXT NOT NULL
@@ -94,6 +96,80 @@ class SQLiteLedger:
                 BEGIN SELECT RAISE(ABORT, 'trading activations are append-only'); END;
                 """
             )
+            columns = {
+                row["name"]
+                for row in connection.execute("PRAGMA table_info(trading_activations)")
+            }
+            for column in (
+                "min_effective_exposure_fraction",
+                "max_effective_exposure_fraction",
+            ):
+                if column not in columns:
+                    # Pre-risk-v2 databases keep their risk-v1 activation rows
+                    # intact; the nullable columns let both versions coexist.
+                    connection.execute(
+                        f"ALTER TABLE trading_activations ADD COLUMN {column} TEXT"
+                    )
+            notnull_columns = {
+                row["name"]
+                for row in connection.execute("PRAGMA table_info(trading_activations)")
+                if row["notnull"]
+            }
+            if "max_single_exposure" in notnull_columns:
+                # Databases created before the dual risk-policy change hold the
+                # risk-v1 limit columns as NOT NULL, which rejects risk-v2 pins
+                # that leave them null. Rebuild the table with the nullable
+                # schema, preserving every existing activation row.
+                with connection:
+                    connection.executescript(
+                        """
+                        ALTER TABLE trading_activations
+                        RENAME TO trading_activations_pre_risk_v2;
+                        CREATE TABLE trading_activations (
+                            activation_id TEXT PRIMARY KEY,
+                            activated_at_utc TEXT NOT NULL,
+                            activated_by TEXT NOT NULL,
+                            account_fingerprint TEXT NOT NULL,
+                            strategy_version TEXT NOT NULL,
+                            allowed_symbols_json TEXT NOT NULL,
+                            risk_policy_version TEXT NOT NULL,
+                            max_single_exposure TEXT,
+                            max_total_exposure TEXT,
+                            position_fraction TEXT,
+                            min_effective_exposure_fraction TEXT,
+                            max_effective_exposure_fraction TEXT,
+                            max_daily_drawdown TEXT NOT NULL,
+                            paper_only INTEGER NOT NULL,
+                            order_writes_enabled INTEGER NOT NULL,
+                            schema_version TEXT NOT NULL
+                        );
+                        INSERT INTO trading_activations (
+                            activation_id, activated_at_utc, activated_by,
+                            account_fingerprint, strategy_version,
+                            allowed_symbols_json, risk_policy_version,
+                            max_single_exposure, max_total_exposure,
+                            position_fraction, min_effective_exposure_fraction,
+                            max_effective_exposure_fraction, max_daily_drawdown,
+                            paper_only, order_writes_enabled, schema_version
+                        )
+                        SELECT
+                            activation_id, activated_at_utc, activated_by,
+                            account_fingerprint, strategy_version,
+                            allowed_symbols_json, risk_policy_version,
+                            max_single_exposure, max_total_exposure,
+                            position_fraction, min_effective_exposure_fraction,
+                            max_effective_exposure_fraction, max_daily_drawdown,
+                            paper_only, order_writes_enabled, schema_version
+                        FROM trading_activations_pre_risk_v2;
+                        DROP TABLE trading_activations_pre_risk_v2;
+                        CREATE TRIGGER trading_activations_no_update
+                        BEFORE UPDATE ON trading_activations
+                        BEGIN SELECT RAISE(ABORT, 'trading activations are append-only'); END;
+                        CREATE TRIGGER trading_activations_no_delete
+                        BEFORE DELETE ON trading_activations
+                        BEGIN SELECT RAISE(ABORT, 'trading activations are append-only'); END;
+                        """
+                    )
 
     def append_event(
         self,
@@ -281,6 +357,15 @@ class SQLiteLedger:
                 "SELECT * FROM submissions WHERE proposal_id = ?", (proposal_id,)
             ).fetchone()
 
+    def list_submissions(self) -> list[sqlite3.Row]:
+        with self._connect() as connection:
+            return connection.execute(
+                """
+                SELECT client_order_key, proposal_id, status, request_json, order_json
+                FROM submissions ORDER BY rowid
+                """
+            ).fetchall()
+
     def has_unknown_submissions(self) -> bool:
         with self._connect() as connection:
             row = connection.execute(
@@ -314,9 +399,10 @@ class SQLiteLedger:
                     activation_id, activated_at_utc, activated_by,
                     account_fingerprint, strategy_version, allowed_symbols_json,
                     risk_policy_version, max_single_exposure, max_total_exposure,
-                    max_daily_drawdown, position_fraction, paper_only,
+                    position_fraction, min_effective_exposure_fraction,
+                    max_effective_exposure_fraction, max_daily_drawdown, paper_only,
                     order_writes_enabled, schema_version
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """,
                 (
                     activation_id,
@@ -326,10 +412,22 @@ class SQLiteLedger:
                     activation.strategy_version,
                     json.dumps(list(activation.allowed_symbols)),
                     activation.risk_policy_version,
-                    str(activation.max_single_exposure),
-                    str(activation.max_total_exposure),
+                    str(activation.max_single_exposure)
+                    if activation.max_single_exposure is not None
+                    else None,
+                    str(activation.max_total_exposure)
+                    if activation.max_total_exposure is not None
+                    else None,
+                    str(activation.position_fraction)
+                    if activation.position_fraction is not None
+                    else None,
+                    str(activation.min_effective_exposure_fraction)
+                    if activation.min_effective_exposure_fraction is not None
+                    else None,
+                    str(activation.max_effective_exposure_fraction)
+                    if activation.max_effective_exposure_fraction is not None
+                    else None,
                     str(activation.max_daily_drawdown),
-                    str(activation.position_fraction),
                     1,
                     1,
                     activation.schema_version,
@@ -351,8 +449,49 @@ class SQLiteLedger:
             strategy_version=row["strategy_version"],
             allowed_symbols=tuple(json.loads(row["allowed_symbols_json"])),
             risk_policy_version=row["risk_policy_version"],
-            max_single_exposure=Decimal(row["max_single_exposure"]),
-            max_total_exposure=Decimal(row["max_total_exposure"]),
+            max_single_exposure=(
+                Decimal(row["max_single_exposure"]) if row["max_single_exposure"] else None
+            ),
+            max_total_exposure=(
+                Decimal(row["max_total_exposure"]) if row["max_total_exposure"] else None
+            ),
+            position_fraction=(
+                Decimal(row["position_fraction"]) if row["position_fraction"] else None
+            ),
+            min_effective_exposure_fraction=(
+                Decimal(row["min_effective_exposure_fraction"])
+                if row["min_effective_exposure_fraction"]
+                else None
+            ),
+            max_effective_exposure_fraction=(
+                Decimal(row["max_effective_exposure_fraction"])
+                if row["max_effective_exposure_fraction"]
+                else None
+            ),
             max_daily_drawdown=Decimal(row["max_daily_drawdown"]),
-            position_fraction=Decimal(row["position_fraction"]),
         )
+
+    def latest_event_payload(
+        self, event_type: str, symbol: str | None = None
+    ) -> tuple[dict[str, Any], int] | None:
+        with self._connect() as connection:
+            if symbol is None:
+                row = connection.execute(
+                    """
+                    SELECT payload_redacted_json, rowid FROM events
+                    WHERE event_type = ? ORDER BY rowid DESC LIMIT 1
+                    """,
+                    (event_type,),
+                ).fetchone()
+            else:
+                row = connection.execute(
+                    """
+                    SELECT payload_redacted_json, rowid FROM events
+                    WHERE event_type = ? AND json_extract(payload_redacted_json, '$.symbol') = ?
+                    ORDER BY rowid DESC LIMIT 1
+                    """,
+                    (event_type, symbol),
+                ).fetchone()
+        if row is None:
+            return None
+        return json.loads(row["payload_redacted_json"]), int(row["rowid"])

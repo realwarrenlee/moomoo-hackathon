@@ -51,7 +51,7 @@ def account(now):
 @pytest.fixture
 def quote(now):
     return Quote(
-        symbol="QQQ",
+        symbol="SPY",
         price=Decimal("100"),
         as_of_utc=now,
         regular_session_open=True,
@@ -66,7 +66,7 @@ def proposal(now):
         strategy_version="spy-directional",
         decision_time_utc=now,
         data_as_of_utc=now,
-        symbol="QQQ",
+        symbol="SPY",
         action=ProposalAction.BUY,
         requested_quantity=2,
         thesis="Predefined conditions passed",

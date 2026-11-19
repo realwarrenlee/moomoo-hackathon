@@ -8,7 +8,12 @@ from decimal import ROUND_FLOOR, Decimal
 
 from app.research.data import MarketHistory, session_close_utc
 from app.research.instruments import INSTRUMENTS
-from app.research.strategy import MIN_COMPLETED_SESSIONS, screen
+from app.research.strategy import (
+    EXPOSURE_POLICY_V1,
+    EXPOSURE_POLICY_V2,
+    MIN_COMPLETED_SESSIONS,
+    screen,
+)
 
 INITIAL_EQUITY = Decimal("100000")
 COST_BPS = Decimal("2")
@@ -129,12 +134,13 @@ def simulate_strategy(
     exposures: list[Decimal] = [Decimal("0")]
     exposure_days = 0
     signals = 0
+    exposure_policy = EXPOSURE_POLICY_V2 if allow_leveraged else EXPOSURE_POLICY_V1
 
     initial_signal = screen(
         history,
         session_close_utc(dates[start_index - 1]),
         strategy_version,
-        allow_leveraged=allow_leveraged,
+        exposure_policy=exposure_policy,
     )
     pending_target = initial_signal.selected_symbol or CASH_TARGET
     pending_signal_date = dates[start_index - 1]
@@ -210,7 +216,7 @@ def simulate_strategy(
                 history,
                 session_close_utc(session),
                 strategy_version,
-                allow_leveraged=allow_leveraged,
+                exposure_policy=exposure_policy,
             )
             target = snapshot.selected_symbol or CASH_TARGET
             if position_symbol is None and target != CASH_TARGET:

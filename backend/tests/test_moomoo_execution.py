@@ -224,7 +224,7 @@ def make_request(
         client_order_key=build_client_order_key("spy-directional", proposal_id),
         proposal_id=proposal_id,
         account_snapshot_id="snapshot-1",
-        symbol="QQQ",
+        symbol="SPY",
         side=side,
         quantity=quantity,
         reference_price=Decimal("100"),
@@ -235,7 +235,7 @@ def make_rest_order(
     now: datetime,
     *,
     order_id: str = "broker-1",
-    symbol: str = "QQQ",
+    symbol: str = "SPY",
     side: OrderSide = OrderSide.BUY,
     status: int = 4,
     quantity: int = 2,
@@ -289,7 +289,7 @@ def test_documented_order_payload_omits_market_order_price():
 
     assert payload == {
         "market": 100,
-        "symbol": "US.QQQ",
+        "symbol": "US.SPY",
         "order_type": 3,
         "order_side": 1,
         "qty": "2",
@@ -357,7 +357,7 @@ def test_correlated_order_must_match_the_local_request(now, account):
     request = make_request()
 
     for order in [
-        make_rest_order(now, symbol="SPY"),
+        make_rest_order(now, symbol="SH"),
         make_rest_order(now, side=OrderSide.SELL),
         make_rest_order(now, quantity=3, filled=3),
     ]:
@@ -646,7 +646,7 @@ def test_paper_broker_acknowledges_and_blocks_a_duplicate(
     assert len(calls) == 1
     assert json.loads(calls[0].content) == {
         "market": 100,
-        "symbol": "US.QQQ",
+        "symbol": "US.SPY",
         "order_type": 3,
         "order_side": 1,
         "qty": "2",
@@ -670,7 +670,7 @@ def test_reconciliation_updates_a_partial_fill(
     first = service.execute(proposal, quote, now)
     tag = build_correlation_tag(first.order.client_order_key)
     reads.today = [
-        make_rest_order(now, status=3, filled=1, avg_price="100", remark=tag)
+        make_rest_order(now, symbol="SPY", status=3, filled=1, avg_price="100", remark=tag)
     ]
 
     reconciled = service.reconcile(first.order.client_order_key, now)
@@ -691,7 +691,7 @@ def test_reconciliation_records_a_broker_rejection(
     )
     first = service.execute(proposal, quote, now)
     tag = build_correlation_tag(first.order.client_order_key)
-    reads.today = [make_rest_order(now, status=6, filled=0, remark=tag)]
+    reads.today = [make_rest_order(now, symbol="SPY", status=6, filled=0, remark=tag)]
 
     reconciled = service.reconcile(first.order.client_order_key, now)
 

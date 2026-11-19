@@ -1,0 +1,8 @@
+{
+  "timezone": "America/New_York",
+  "windows": {
+    "reconcile": {"start": "09:45", "end": "10:30"},
+    "midday": {"start": "12:00", "end": "13:00"},
+    "pre_close": {"start": "15:45", "end": "16:00"}
+  }
+}
