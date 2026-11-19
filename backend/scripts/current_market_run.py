@@ -25,6 +25,7 @@ from app.qoder_tools import CurrentMarketContext, QoderToolService
 from app.research.data import MarketHistory
 from app.research.instruments import CANDIDATE_SYMBOLS
 from app.research.strategy import STRATEGY_VERSION, MIN_COMPLETED_SESSIONS
+from app.trading_mode import exposure_policy_for_activation
 from scripts.qoder_readonly_run import (
     QoderReadonlyRunner,
     QoderRunError,
@@ -393,6 +394,7 @@ def main(argv: list[str] | None = None) -> int:
             control=control,
         ),
         clock=lambda: datetime.now(UTC),
+        exposure_policy=exposure_policy_for_activation(ledger.latest_trading_activation()),
     )
     runner = QoderReadonlyRunner(
         client=Managed(

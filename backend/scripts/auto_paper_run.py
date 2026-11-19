@@ -27,15 +27,25 @@ from app.broker.moomoo_auth import (
 from app.cli import ledger_path_from_env, load_local_env
 from app.ledger.store import SQLiteLedger
 from app.models.contracts import AccountSnapshot, OrderStatus, PolicyDecision
-from app.research.strategy import STRATEGY_VERSION, ResearchSnapshot, decide, screen
-from app.risk.policy import POLICY_VERSION
+from app.research.data import MarketHistory
+from app.research.instruments import CANDIDATE_SYMBOLS
+from app.research.strategy import (
+    STRATEGY_VERSION,
+    ExposurePolicy,
+    ResearchSnapshot,
+    decide,
+    screen,
+)
+from app.risk.policy import POLICY_VERSION_V1, POLICY_VERSION_V2, RiskGate
 from app.service import build_client_order_key
 from app.supervised import SupervisedExecution, build_supervised_execution
 from app.trading_mode import (
     AUTO_PAPER_SYMBOLS,
+    LEGACY_AUTO_PAPER_SYMBOLS,
     TradingMode,
     TradingModeError,
     auto_paper_active,
+    exposure_policy_for_activation,
     order_writes_enabled,
     resolve_trading_mode,
 )
@@ -81,17 +91,24 @@ def _auto_paper_block(
     if not order_writes_enabled(environ):
         return "ORDER_WRITES_ENABLED is not true"
     if activation is None:
-        return "no AUTO_PAPER activation pin is recorded in the ledger"
+        return "no AUTO_PAPER activation pin compatible with the current policy is recorded in the ledger"
     if activation.account_fingerprint != fingerprint:
         return "activation pin does not match the configured competition-account fingerprint"
     if activation.strategy_version != STRATEGY_VERSION:
         return f"activation pin binds strategy {activation.strategy_version}, not {STRATEGY_VERSION}"
-    if activation.risk_policy_version != POLICY_VERSION:
-        return f"activation pin binds risk policy {activation.risk_policy_version}, not {POLICY_VERSION}"
-    if tuple(activation.allowed_symbols) != AUTO_PAPER_SYMBOLS:
+    if activation.risk_policy_version == POLICY_VERSION_V1:
+        expected_symbols = LEGACY_AUTO_PAPER_SYMBOLS
+    elif activation.risk_policy_version == POLICY_VERSION_V2:
+        expected_symbols = AUTO_PAPER_SYMBOLS
+    else:
+        return (
+            f"activation pin binds unsupported risk policy "
+            f"{activation.risk_policy_version}"
+        )
+    if tuple(activation.allowed_symbols) != expected_symbols:
         return (
             f"activation pin allowlist is {tuple(activation.allowed_symbols)}, "
-            f"expected {AUTO_PAPER_SYMBOLS}"
+            f"expected {expected_symbols}"
         )
     if activation.paper_only is not True:
         return "activation pin is not paper-only"
@@ -134,18 +151,90 @@ def _pinned_artifact(artifact_dir: Path, session_iso: str) -> dict[str, Any]:
     )
 
 
-def _verify_signal(artifact: Mapping[str, Any], snapshot: ResearchSnapshot) -> None:
+def _verify_signal(
+    artifact: Mapping[str, Any], snapshot: ResearchSnapshot, policy: ExposurePolicy
+) -> None:
     pinned = _artifact_snapshot(artifact)
     if pinned is None:
         raise AutoPaperError("decision artifact carries no research snapshot")
-    for key in ("market_state", "direction", "target_symbol"):
+    keys = ["market_state", "direction", "target_symbol"]
+    if policy.version != POLICY_VERSION_V1:
+        keys += ["target_exposure_fraction", "exposure_tier"]
+    for key in keys:
         pinned_value = pinned.get(key)
         actual = getattr(snapshot, key)
-        if pinned_value != actual:
+        if str(pinned_value) != str(actual):
             raise AutoPaperError(
                 f"decision artifact {key}={pinned_value!r} does not match the "
                 f"recomputed {actual!r}"
             )
+
+
+def _held_strategy_symbol(account: AccountSnapshot) -> str | None:
+    for position in account.positions:
+        if position.quantity > 0 and position.symbol in CANDIDATE_SYMBOLS:
+            return position.symbol
+    return None
+
+
+def _holding_entry_session(
+    ledger: SQLiteLedger, account: AccountSnapshot, session_iso: str, now: datetime
+) -> str | None:
+    """Track 3x entry sessions through append-only AUTO_PAPER_ENTRY/EXIT events.
+
+    The entry clock starts at the executor's first observation of a strategy
+    position (autonomous or supervised) and ends when the position disappears.
+    """
+    symbol = _held_strategy_symbol(account)
+    if symbol is None:
+        return None
+    entry = ledger.latest_event_payload("AUTO_PAPER_ENTRY", symbol)
+    exit_event = ledger.latest_event_payload("AUTO_PAPER_EXIT", symbol)
+    if entry is None or (exit_event is not None and exit_event[1] > entry[1]):
+        ledger.append_event(
+            "AUTO_PAPER_ENTRY",
+            now,
+            None,
+            "auto_paper_executor",
+            {"symbol": symbol, "session": session_iso},
+        )
+        return session_iso
+    return str(entry[0].get("session") or session_iso)
+
+
+def _record_exit_if_position_gone(
+    ledger: SQLiteLedger, account: AccountSnapshot, session_iso: str, now: datetime
+) -> None:
+    if _held_strategy_symbol(account) is not None:
+        return
+    entry = ledger.latest_event_payload("AUTO_PAPER_ENTRY")
+    if entry is None:
+        return
+    exit_event = ledger.latest_event_payload("AUTO_PAPER_EXIT")
+    if exit_event is not None and exit_event[1] > entry[1]:
+        return
+    ledger.append_event(
+        "AUTO_PAPER_EXIT",
+        now,
+        None,
+        "auto_paper_executor",
+        {"symbol": str(entry[0].get("symbol")), "session": session_iso},
+    )
+
+
+def _leveraged_reentry_blocked_through(
+    ledger: SQLiteLedger, history: MarketHistory, session_iso: str
+) -> str | None:
+    """Block 3x re-entry for the session after a holding-duration exit."""
+    exit_event = ledger.latest_event_payload("LEVERAGED_DURATION_EXIT")
+    if exit_event is None:
+        return None
+    exit_session = str(exit_event[0].get("session") or "")
+    sessions = history.session_dates()
+    for index, session in enumerate(sessions):
+        if session == exit_session and index + 1 < len(sessions):
+            return sessions[index + 1]
+    return None
 
 
 def _account_is_fresh(account: AccountSnapshot, fingerprint: str, now: datetime) -> str | None:
@@ -184,7 +273,8 @@ def run_execution(
         return 1, _abstain("execution stack was built without order writes", now)
     if not fingerprint:
         return 1, _abstain("competition account fingerprint is not configured", now)
-    if block := _auto_paper_block(environ, ledger.latest_trading_activation(), fingerprint):
+    activation = ledger.latest_trading_activation()
+    if block := _auto_paper_block(environ, activation, fingerprint):
         return 1, _abstain(block, now)
     if ledger.kill_switch_engaged():
         return 1, _abstain("kill switch is engaged", now)
@@ -199,8 +289,9 @@ def run_execution(
     session_iso = history.last_completed_session().isoformat()
     try:
         artifact = _pinned_artifact(artifact_dir, session_iso)
-        snapshot = screen(history, now, STRATEGY_VERSION, allow_leveraged=False)
-        _verify_signal(artifact, snapshot)
+        policy = exposure_policy_for_activation(activation)
+        snapshot = screen(history, now, STRATEGY_VERSION, exposure_policy=policy)
+        _verify_signal(artifact, snapshot, policy)
     except AutoPaperError as exc:
         return 1, _abstain(str(exc), now)
     try:
@@ -210,7 +301,17 @@ def run_execution(
     if stale := _account_is_fresh(account, fingerprint, now):
         return 1, _abstain(stale, now)
 
-    decision_snapshot, proposal = decide(snapshot, history, account)
+    holding_entry_session = _holding_entry_session(ledger, account, session_iso, now)
+    _record_exit_if_position_gone(ledger, account, session_iso, now)
+    blocked_through = _leveraged_reentry_blocked_through(ledger, history, session_iso)
+    decision_snapshot, proposal = decide(
+        snapshot,
+        history,
+        account,
+        exposure_policy=policy,
+        holding_entry_session=holding_entry_session,
+        leveraged_reentry_blocked_through=blocked_through,
+    )
     ledger.append_event(
         "AUTO_PAPER_DECISION",
         now,
@@ -218,6 +319,13 @@ def run_execution(
         "auto_paper_executor",
         {
             "session": session_iso,
+            "policy_version": policy.version,
+            "exposure_tier": decision_snapshot.exposure_tier,
+            "target_exposure_fraction": (
+                str(decision_snapshot.target_exposure_fraction)
+                if decision_snapshot.target_exposure_fraction is not None
+                else None
+            ),
             "action": decision_snapshot.action,
             "symbol": getattr(proposal, "symbol", None),
             "requested_quantity": getattr(proposal, "requested_quantity", 0),
@@ -225,12 +333,28 @@ def run_execution(
         },
         getattr(proposal, "proposal_id", None),
     )
+    if decision_snapshot.duration_exit and decision_snapshot.current_symbol:
+        ledger.append_event(
+            "LEVERAGED_DURATION_EXIT",
+            now,
+            getattr(proposal, "run_id", None),
+            "auto_paper_executor",
+            {"symbol": decision_snapshot.current_symbol, "session": session_iso},
+            getattr(proposal, "proposal_id", None),
+        )
     base_report = {
         "schema_version": "1",
         "mode": "AUTO_PAPER_EXECUTION",
         "status": "COMPLETED",
         "executed_at_utc": now.isoformat(),
         "session": session_iso,
+        "policy_version": policy.version,
+        "exposure_tier": decision_snapshot.exposure_tier,
+        "target_exposure_fraction": (
+            str(decision_snapshot.target_exposure_fraction)
+            if decision_snapshot.target_exposure_fraction is not None
+            else None
+        ),
         "market_state": decision_snapshot.market_state,
         "target_symbol": decision_snapshot.target_symbol,
         "action": decision_snapshot.action,
@@ -335,11 +459,14 @@ def _execution_stack(
         raise AutoPaperError("execution token lacks quote/account read access")
     if not record.has_trade_write():
         raise AutoPaperError("execution authorization did not grant trade:write")
+    activation = ledger.latest_trading_activation()
+    risk_gate = RiskGate.from_activation(activation) if activation is not None else None
     return build_supervised_execution(
         MoomooExecutionOAuth(store, open_browser=None),
         lock,
         ledger,
         order_writes_enabled=True,
+        risk_gate=risk_gate,
     )
 
 
