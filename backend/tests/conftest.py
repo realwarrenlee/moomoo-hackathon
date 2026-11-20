@@ -82,4 +82,7 @@ def control():
 
 @pytest.fixture
 def risk_gate():
-    return RiskGate(expected_account_fingerprint=TEST_ACCOUNT_FINGERPRINT)
+    return RiskGate(
+        expected_account_fingerprint=TEST_ACCOUNT_FINGERPRINT,
+        enforce_min_exposure=False,
+    )

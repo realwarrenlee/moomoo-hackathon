@@ -7,14 +7,14 @@ transport or write path in this module.
 
 from __future__ import annotations
 
-import csv
 import json
 import math
 import os
+import statistics
 import threading
 from collections.abc import Mapping
 from dataclasses import dataclass
-from datetime import UTC, datetime
+from datetime import UTC, date, datetime
 from decimal import Decimal
 from pathlib import Path
 from typing import Any, Protocol
@@ -38,56 +38,45 @@ from app.broker.moomoo_rest import (
 )
 from app.cli import ledger_path_from_env, load_local_env
 from app.ledger.store import SQLiteLedger
-from app.models.contracts import AccountSnapshot, TradingActivation, TradingMode
+from app.models.contracts import AccountSnapshot
 from app.research.instruments import INSTRUMENTS
-from app.trading_mode import order_writes_enabled, resolve_trading_mode
+from app.trading_mode import (
+    SUPERVISED_EXECUTION_SYMBOLS,
+    order_writes_enabled,
+    resolve_trading_mode,
+)
 
-QUOTE_SYMBOLS = ("SPY", "UPRO", "SH", "SPXU")
+QUOTE_SYMBOLS = ("SPY", "SH")
 OPERATIONAL_LIMITS = {
     "max_quote_age_seconds": 300,
     "max_account_age_seconds": 60,
     "buying_power_buffer_usd": 5.0,
 }
-RISK_V1_LIMITS = {
-    "max_single_exposure_pct": 10.0,
-    "max_total_exposure_pct": 30.0,
-    "max_open_positions": 3,
-    "max_daily_drawdown_pct": 2.0,
-}
-RISK_V2_LIMITS = {
-    "min_effective_exposure_pct": 20.0,
-    "max_effective_exposure_pct": 150.0,
-    "max_leverage": 3.0,
+RISK_V3_LIMITS = {
+    "min_effective_exposure_pct": 10.0,
+    "max_effective_exposure_pct": 40.0,
+    "max_leverage": 1.0,
     "max_open_positions": 1,
     "max_daily_drawdown_pct": 2.0,
 }
+COMPETITION_START = date(2026, 11, 17)
+COMPETITION_END = date(2026, 11, 30)
+COMPETITION_TRADING_DAYS = [
+    "2026-11-17",
+    "2026-11-18",
+    "2026-11-19",
+    "2026-11-20",
+    "2026-11-23",
+    "2026-11-24",
+    "2026-11-25",
+    "2026-11-27",
+    "2026-11-30",
+]
 
 
-def policy_limits_for(
-    activation: TradingActivation | None,
-) -> tuple[str, dict[str, float]]:
-    if activation is not None and activation.risk_policy_version == "risk-v2":
-        limits = dict(RISK_V2_LIMITS)
-        limits["min_effective_exposure_pct"] = float(
-            activation.min_effective_exposure_fraction * 100
-        )
-        limits["max_effective_exposure_pct"] = float(
-            activation.max_effective_exposure_fraction * 100
-        )
-        limits["max_daily_drawdown_pct"] = float(activation.max_daily_drawdown * 100)
-        return "risk-v2", {**limits, **OPERATIONAL_LIMITS}
-    limits = dict(RISK_V1_LIMITS)
-    if activation is not None:
-        if activation.max_single_exposure is not None:
-            limits["max_single_exposure_pct"] = float(
-                activation.max_single_exposure * 100
-            )
-        if activation.max_total_exposure is not None:
-            limits["max_total_exposure_pct"] = float(
-                activation.max_total_exposure * 100
-            )
-        limits["max_daily_drawdown_pct"] = float(activation.max_daily_drawdown * 100)
-    return "risk-v1", {**limits, **OPERATIONAL_LIMITS}
+def policy_limits() -> tuple[str, dict[str, float]]:
+    """Historical activation pins do not override the current supervised limits."""
+    return "risk-v3", {**RISK_V3_LIMITS, **OPERATIONAL_LIMITS}
 
 
 class DashboardDataError(RuntimeError):
@@ -264,19 +253,8 @@ class DashboardService:
         return now
 
     def _trading_state(self) -> tuple[str, bool]:
-        """Report the recorded trading mode and effective order-write capability.
-
-        Writes are effective when the environment flag is set or when the
-        ledger holds an AUTO_PAPER activation pin that authorises writes
-        (the autonomous scheduler scopes the flag in-process only).
-        """
-        mode = resolve_trading_mode(os.environ)
-        writes = order_writes_enabled(os.environ)
-        if mode is TradingMode.AUTO_PAPER:
-            activation = self.source.ledger.latest_trading_activation()
-            if activation is not None and activation.order_writes_enabled:
-                writes = True
-        return mode.value, writes
+        """Report runtime controls; a historical pin is not current write authority."""
+        return resolve_trading_mode(os.environ).value, order_writes_enabled(os.environ)
 
     def _safety(self) -> dict[str, Any]:
         ledger = self.source.ledger
@@ -620,17 +598,44 @@ class DashboardService:
             lock_reasons.append("ORDER_WRITES_ENABLED=false")
         if safety["kill_switch_engaged"]:
             lock_reasons.append("Kill switch is engaged.")
-        if safety["first_order_approval_count"] == 0:
-            lock_reasons.append("No first-order owner approval is recorded.")
-        if not any(q.get("fresh") for q in quotes):
+        lock_reasons.append(
+            "EVERY supervised BUY and SELL requires owner approval for the exact proposal and client order key; "
+            "only the scheduled autonomous executor may submit without per-order approval, and only under a valid, unexpired risk-v3 activation pin."
+        )
+        execution_quotes = [q for q in quotes if q["symbol"] in SUPERVISED_EXECUTION_SYMBOLS]
+        if not any(q.get("fresh") for q in execution_quotes):
             lock_reasons.append("No fresh quote is available for execution.")
-        if not any(q.get("regular_session_open") for q in quotes):
+        if not any(q.get("regular_session_open") for q in execution_quotes):
             lock_reasons.append("US regular market session is not open.")
         lock_reasons.append("The read-only REST adapter has no order endpoint.")
         warnings = [account_error] if account_error else []
         state = "UNAVAILABLE" if account is None else "LOCKED"
         activation = self.source.ledger.latest_trading_activation()
-        policy_version, limits = policy_limits_for(activation)
+        activation_view: dict[str, object] | None = None
+        if activation is not None:
+            expiry = activation.expires_at_utc
+            status = "EXPIRED" if expiry is not None and now >= expiry else "ACTIVE"
+            activation_view = {
+                "policy_version": activation.risk_policy_version,
+                "allowed_symbols": list(activation.allowed_symbols),
+                "activated_at_utc": _iso(activation.activated_at_utc),
+                "expires_at_utc": expiry.isoformat() if expiry else None,
+                "status": status,
+            }
+            if status == "ACTIVE":
+                until = f" until {expiry.isoformat()}" if expiry else ""
+                warnings.append(
+                    f"{activation.risk_policy_version} AUTO_PAPER pin "
+                    f"({', '.join(activation.allowed_symbols)}) authorises the scheduled "
+                    f"autonomous executor{until}; this dashboard is read-only and never submits."
+                )
+            else:
+                warnings.append(
+                    f"HISTORICAL {activation.risk_policy_version} AUTO_PAPER pin "
+                    f"({', '.join(activation.allowed_symbols)}) expired {expiry.isoformat()}; "
+                    f"it grants no execution authority."
+                )
+        policy_version, limits = policy_limits()
         return {
             "state": state,
             "generated_at_utc": _iso(now),
@@ -638,9 +643,7 @@ class DashboardService:
             "read_only": True,
             "policy_version": policy_version,
             "limits": limits,
-            "allowed_symbols": (
-                list(activation.allowed_symbols) if activation is not None else None
-            ),
+            "allowed_symbols": list(SUPERVISED_EXECUTION_SYMBOLS),
             "controls": safety,
             "execution_locked": True,
             "lock_reasons": lock_reasons,
@@ -648,6 +651,7 @@ class DashboardService:
             "quotes": quotes,
             "last_real_preflight": self._preflight(),
             "warnings": warnings,
+            "activation": activation_view,
         }
 
     def agents(self) -> dict[str, Any]:
@@ -671,124 +675,138 @@ class DashboardService:
 
     def analytics(self) -> dict[str, Any]:
         now = self._now()
-        datasets = []
-        baseline = self._baseline_analytics()
-        if baseline is not None:
-            datasets.append(baseline)
-        catalyst = self._catalyst_analytics()
-        if catalyst is not None:
-            datasets.append(catalyst)
+        dataset, paper_days = self._competition_analytics()
+        available = paper_days > 0
         return {
-            "state": "HISTORICAL" if datasets else "UNAVAILABLE",
+            "state": (
+                "LIVE"
+                if available
+                else ("EMPTY" if dataset is not None else "UNAVAILABLE")
+            ),
             "generated_at_utc": _iso(now),
             "mode": "PAPER",
             "read_only": True,
             "notice": (
-                "Historical signal-quality research. These are not paper-account "
-                "returns, broker fills or executable strategy results."
+                "Competition-period evidence only (17 Nov to 30 Nov 2026): "
+                "broker-observed day-start equity and completed Moomoo daily bars. "
+                "No backtest data is shown."
             ),
             "paper_account_performance": {
-                "available": False,
-                "reason": "No filled paper trades or broker-backed equity history.",
+                "available": available,
+                "reason": (
+                    "Broker-observed day-start equity exists within the competition period."
+                    if available
+                    else "No broker-observed day-start equity within the competition period yet."
+                ),
                 "provenance": "LIVE_BROKER_READ",
             },
-            "datasets": datasets,
+            "datasets": [dataset] if dataset is not None else [],
         }
 
-    def _baseline_analytics(self) -> dict[str, Any] | None:
-        folder = self.paths.evidence_dir / "research" / "etf-trend-baseline-2026-11-17"
-        result_path = folder / "results.json"
-        curve_path = folder / "equity-curves.csv"
-        try:
-            result = json.loads(result_path.read_text(encoding="utf-8"))
-        except (OSError, json.JSONDecodeError):
-            return None
-        if not isinstance(result, Mapping):
-            return None
-        curves = []
-        mapping = {
-            "trend_baseline": "Trend baseline",
-            "spy_hold_10pct": "SPY 10%",
-            "spy_hold_100pct": "SPY 100%",
-            "cash": "Cash",
-        }
-        for key, label in mapping.items():
-            points = _normalized_curve(curve_path, key)
-            if points:
-                curves.append({"key": key, "label": label, "points": points})
-        metrics = []
-        results = result.get("results")
-        if isinstance(results, Mapping):
-            for key, label in mapping.items():
-                item = results.get(key)
-                if isinstance(item, Mapping) and isinstance(item.get("metrics"), Mapping):
-                    metrics.append(_metric_row(label, "2026-04-01 to 2026-11-16", item["metrics"]))
-        period = result.get("period")
+    def _competition_analytics(self) -> tuple[dict[str, Any] | None, int]:
+        paper = self._paper_equity_series()
+        spy = self._spy_benchmark_series()
+        if not paper and not spy:
+            return None, 0
+        curves: list[dict[str, Any]] = []
+        metrics: list[dict[str, Any]] = []
+        if paper:
+            curves.append(
+                {"key": "paper_account", "label": "Paper account", "points": _normalized(paper)}
+            )
+            metrics.append(
+                _series_metric_row("paper_account", "Paper account", paper, "LIVE_BROKER_READ")
+            )
+        if spy:
+            curves.append({"key": "spy", "label": "SPY", "points": _normalized(spy)})
+            metrics.append(
+                _series_metric_row("spy", "SPY", spy, "CURRENT_MARKET_READ_ONLY")
+            )
+        cash_dates = paper or spy
+        curves.append(
+            {
+                "key": "cash",
+                "label": "Cash",
+                "points": [{"date": day, "value": 100.0} for day, _ in cash_dates],
+            }
+        )
+        metrics.append(_cash_metric_row())
         return {
-            "id": "etf-trend-baseline",
-            "label": "ETF trend baseline",
-            "version": result.get("baseline_version"),
-            "period": period if isinstance(period, Mapping) else {},
-            "generated_at_utc": result.get("generated_at_utc"),
-            "curves": curves,
-            "metrics": metrics,
-            "limitations": list(result.get("limitations", [])),
-            "provenance": "HISTORICAL_BACKTEST",
-        }
-
-    def _catalyst_analytics(self) -> dict[str, Any] | None:
-        folder = self.paths.evidence_dir / "research" / "catalyst-momentum-2026-11-17"
-        result_path = folder / "results.json"
-        try:
-            result = json.loads(result_path.read_text(encoding="utf-8"))
-        except (OSError, json.JSONDecodeError):
-            return None
-        if not isinstance(result, Mapping):
-            return None
-        results = result.get("results")
-        holdout = results.get("holdout") if isinstance(results, Mapping) else None
-        development = results.get("development") if isinstance(results, Mapping) else None
-        curves = []
-        labels = {
-            "momentum-v1": "Momentum v1 (retired)",
-            "SPY": "SPY",
-            "QQQ": "QQQ",
-            "cash": "Cash",
-        }
-        for key, label in labels.items():
-            points = _normalized_catalyst_curve(folder / f"holdout-{key}-equity.csv")
-            if points:
-                curves.append({"key": key, "label": label, "points": points})
-        metrics = []
-        for period_name, block in (("Development", development), ("Holdout", holdout)):
-            if not isinstance(block, Mapping):
-                continue
-            for key, label in labels.items():
-                item = block.get(key)
-                if isinstance(item, Mapping):
-                    metrics.append(
-                        _catalyst_metric_row(period_name, label, item)
-                    )
-        return {
-            "id": "catalyst-momentum",
-            "label": "SEC catalyst study",
-            "version": result.get("strategy_version"),
+            "id": "competition-period",
+            "label": "Competition period",
             "period": {
-                "development": "2025-06-30 to 2026-03-31",
-                "holdout": "2026-04-01 to 2026-11-16",
+                "start": COMPETITION_START.isoformat(),
+                "end": COMPETITION_END.isoformat(),
             },
             "generated_at_utc": None,
             "curves": curves,
             "metrics": metrics,
+            "axis_dates": list(COMPETITION_TRADING_DAYS),
             "limitations": [
-                "Historical signal study, not a broker or paper-account result.",
-                "Short samples; descriptive Sharpe is not statistically meaningful.",
-                "SEC filing coverage and adjusted-price fixtures constrain the sample.",
-                "Momentum v1 is retired from the active product; its results are retained as historical evidence.",
-                "Not registered as an executable strategy or linked to RiskGate order flow.",
+                "Paper-account equity is broker-observed day-start equity, not intraday mark-to-market or fill-derived P&L.",
+                "SPY is normalised to its first competition close from completed Moomoo daily bars.",
+                "Cash is a flat 100 baseline for comparison, not an account balance.",
+                "A few sessions make Sharpe and volatility descriptive only, not statistically meaningful.",
             ],
-            "provenance": "HISTORICAL_BACKTEST",
-        }
+            "provenance": "LIVE_BROKER_READ" if paper else "CURRENT_MARKET_READ_ONLY",
+        }, len(paper)
+
+    def _paper_equity_series(self) -> list[tuple[str, float]]:
+        rows = self.source.ledger.equity_days()
+        groups: dict[str, list[dict[str, str]]] = {}
+        for row in rows:
+            groups.setdefault(row["account_fingerprint"], []).append(row)
+        if not groups:
+            return []
+        best = max(groups.values(), key=lambda items: (len(items), items[-1]["trading_day"]))
+        series = []
+        for row in best:
+            day = row["trading_day"]
+            if COMPETITION_START.isoformat() <= day <= COMPETITION_END.isoformat():
+                series.append((day, float(Decimal(row["day_start_equity"]))))
+        return series
+
+    def _spy_benchmark_series(self) -> list[tuple[str, float]]:
+        market = self.paths.evidence_dir / "current-market"
+        if not market.is_dir():
+            return []
+        for folder in sorted((p for p in market.iterdir() if p.is_dir()), reverse=True):
+            bars_path = folder / "daily-bars.json"
+            if not bars_path.is_file():
+                continue
+            try:
+                payload = json.loads(bars_path.read_text(encoding="utf-8"))
+            except (OSError, json.JSONDecodeError):
+                continue
+            if not isinstance(payload, Mapping):
+                continue
+            symbols = payload.get("symbols")
+            if not isinstance(symbols, Mapping):
+                continue
+            spy = symbols.get("SPY")
+            if not isinstance(spy, list):
+                continue
+            closes: list[tuple[str, float]] = []
+            for bar in spy:
+                if not isinstance(bar, Mapping):
+                    continue
+                raw_day = bar.get("date")
+                close = bar.get("close")
+                if not isinstance(raw_day, str) or len(raw_day) != 8:
+                    continue
+                if isinstance(close, bool):
+                    continue
+                try:
+                    day = date(int(raw_day[:4]), int(raw_day[4:6]), int(raw_day[6:8]))
+                    close_number = float(close)
+                except (TypeError, ValueError):
+                    continue
+                if COMPETITION_START <= day <= COMPETITION_END and close_number > 0:
+                    closes.append((day.isoformat(), close_number))
+            if closes:
+                closes.sort()
+                return closes
+        return []
 
     def audit(self) -> dict[str, Any]:
         now = self._now()
@@ -895,102 +913,62 @@ def _order_view(order: RestOrder) -> dict[str, Any]:
     }
 
 
-def _metric_row(label: str, period: str, metrics: Mapping[str, Any]) -> dict[str, Any]:
+def _normalized(series: list[tuple[str, float]]) -> list[dict[str, Any]]:
+    base = series[0][1]
+    return [{"date": day, "value": round(value / base * 100.0, 4)} for day, value in series]
+
+
+def _series_metrics(values: list[float]) -> dict[str, Any]:
+    total_return_pct = (values[-1] / values[0] - 1.0) * 100.0
+    peak = values[0]
+    max_drawdown_pct = 0.0
+    for value in values:
+        peak = max(peak, value)
+        max_drawdown_pct = max(max_drawdown_pct, (peak - value) / peak * 100.0)
+    returns = [b / a - 1.0 for a, b in zip(values, values[1:])]
+    volatility = None
+    sharpe = None
+    if len(returns) >= 2:
+        spread = statistics.stdev(returns)
+        volatility = spread * math.sqrt(252) * 100.0
+        if spread > 0:
+            sharpe = statistics.mean(returns) / spread * math.sqrt(252)
     return {
-        "strategy": str(metrics.get("name") or label),
-        "label": label,
-        "period": period,
-        "total_return_pct": _float(metrics.get("total_return_pct")),
-        "max_drawdown_pct": _float(metrics.get("max_drawdown_pct")),
-        "annualized_volatility_pct": _float(metrics.get("annualized_volatility_pct")),
-        "sharpe": _float(metrics.get("sharpe_descriptive")),
-        "trades": _int(metrics.get("entries")),
-        "exposure_pct": _float(metrics.get("average_exposure_pct")),
-        "provenance": "HISTORICAL_BACKTEST",
+        "total_return_pct": round(total_return_pct, 4),
+        "max_drawdown_pct": round(max_drawdown_pct, 4),
+        "annualized_volatility_pct": round(volatility, 4) if volatility is not None else None,
+        "sharpe": round(sharpe, 4) if sharpe is not None else None,
     }
 
 
-def _catalyst_metric_row(period: str, label: str, metrics: Mapping[str, Any]) -> dict[str, Any]:
+def _series_metric_row(
+    strategy: str, label: str, series: list[tuple[str, float]], provenance: str
+) -> dict[str, Any]:
+    metrics = _series_metrics([value for _, value in series])
     return {
-        "strategy": label,
+        "strategy": strategy,
         "label": label,
-        "period": period,
-        "total_return_pct": _float(metrics.get("total_return_pct")),
-        "max_drawdown_pct": _float(metrics.get("max_drawdown_pct")),
-        "annualized_volatility_pct": None,
-        "sharpe": _float(metrics.get("sharpe_descriptive")),
-        "trades": _int(metrics.get("trade_count")),
-        "exposure_pct": _float(metrics.get("average_exposure_pct")),
-        "provenance": "HISTORICAL_BACKTEST",
+        "period": f"{COMPETITION_START.isoformat()} to {COMPETITION_END.isoformat()}",
+        "trades": None,
+        "exposure_pct": None,
+        "provenance": provenance,
+        **metrics,
     }
 
 
-def _float(value: Any) -> float | None:
-    if isinstance(value, bool) or not isinstance(value, (int, float)):
-        return None
-    if not math.isfinite(value):
-        return None
-    return round(float(value), 4)
-
-
-def _int(value: Any) -> int | None:
-    if isinstance(value, bool) or not isinstance(value, int):
-        return None
-    return value
-
-
-def _normalized_curve(path: Path, column: str) -> list[dict[str, Any]]:
-    try:
-        with path.open(newline="", encoding="utf-8-sig") as handle:
-            rows = list(csv.DictReader(handle))
-    except OSError:
-        return []
-    raw: list[tuple[str, float]] = []
-    for row in rows:
-        date = row.get("session_date")
-        value = row.get(column)
-        if not date or value is None:
-            continue
-        try:
-            number = float(value)
-        except ValueError:
-            continue
-        if math.isfinite(number) and number > 0:
-            raw.append((date, number))
-    return _normalize_points(raw)
-
-
-def _normalized_catalyst_curve(path: Path) -> list[dict[str, Any]]:
-    try:
-        with path.open(newline="", encoding="utf-8-sig") as handle:
-            rows = list(csv.DictReader(handle))
-    except OSError:
-        return []
-    raw: list[tuple[str, float]] = []
-    for row in rows:
-        date = row.get("session_date")
-        value = row.get("equity_usd")
-        if not date or value is None:
-            continue
-        try:
-            number = float(value)
-        except ValueError:
-            continue
-        if math.isfinite(number) and number > 0:
-            raw.append((date, number))
-    return _normalize_points(raw)
-
-
-def _normalize_points(raw: list[tuple[str, float]]) -> list[dict[str, Any]]:
-    if not raw:
-        return []
-    base = raw[0][1]
-    normalized = [(date, value / base * 100.0) for date, value in raw]
-    step = max(1, math.ceil(len(normalized) / 160))
-    sampled = normalized[::step]
-    if sampled[-1][0] != normalized[-1][0]:
-        sampled.append(normalized[-1])
-    return [{"date": date, "value": round(value, 4)} for date, value in sampled]
+def _cash_metric_row() -> dict[str, Any]:
+    return {
+        "strategy": "cash",
+        "label": "Cash",
+        "period": f"{COMPETITION_START.isoformat()} to {COMPETITION_END.isoformat()}",
+        "total_return_pct": 0.0,
+        "max_drawdown_pct": 0.0,
+        "annualized_volatility_pct": 0.0,
+        "sharpe": None,
+        "trades": None,
+        "exposure_pct": None,
+        "provenance": "LOCAL_LEDGER",
+    }
 
 
 def _audit_event(event: Mapping[str, Any]) -> dict[str, Any]:

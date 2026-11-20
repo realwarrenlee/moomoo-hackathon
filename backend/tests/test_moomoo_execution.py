@@ -609,6 +609,34 @@ def test_order_transport_never_retries_an_ambiguous_response():
     assert auth.refresh_calls == 0
 
 
+def test_order_transport_refusal_reports_the_broker_message():
+    handler = lambda request: httpx.Response(
+        200, json={"ret_code": -5, "ret_msg": "market does not match the account"}
+    )
+    transport = MoomooOrderTransport(
+        FakeAuth(),
+        http=httpx.Client(transport=httpx.MockTransport(handler), trust_env=False),
+        order_writes_enabled=True,
+    )
+
+    with pytest.raises(
+        OrderTransportError, match=r"ret_code=-5\) \(ret_msg='market does not match the account'\)"
+    ):
+        transport.submit("0000000000000101", {"market": 100, "symbol": "US.SH"})
+
+
+def test_order_transport_refusal_without_ret_msg_reports_the_body():
+    handler = lambda request: httpx.Response(200, json={"ret_code": -5, "data": {"err": "x"}})
+    transport = MoomooOrderTransport(
+        FakeAuth(),
+        http=httpx.Client(transport=httpx.MockTransport(handler), trust_env=False),
+        order_writes_enabled=True,
+    )
+
+    with pytest.raises(OrderTransportError, match=r"ret_code=-5\) \(body=\{"):
+        transport.submit("0000000000000101", {"market": 100, "symbol": "US.SH"})
+
+
 def test_order_transport_rejects_an_unbound_account_path():
     calls = []
     transport = MoomooOrderTransport(

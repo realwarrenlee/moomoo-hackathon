@@ -1,32 +1,31 @@
 # Strategy and risk specification
 
-**Active strategy:** `spy-directional` — deterministic daily S&P 500 directional exposure through SPY, UPRO, SH, SPXU or CASH. Exposure sizing is tier-based under the **risk-v2** policy, which the owner authorised at the 18 November 2026 cutover (23:58Z); the incumbent risk-v1 activation row remains in the append-only ledger for the historical record.
+**Active strategy:** `spy-directional` — deterministic daily S&P 500 directional research through SPY, SH or CASH, with **risk-v3 only** tiered sizing: 0% cash or 10%–40% of equity, 1x instruments only. Risk-v1 is retired; the pre-simplification risk-v2 (20% floor, 150% ceiling, 3x leverage, UPRO/SPXU selection) was replaced by **risk-v3 on 20 November 2026** and is **HISTORICAL** evidence only.
 
-**Status (19 November 2026):** the tier-based exposure model, leverage-aware sizing, dual risk policy and daily risk monitor are implemented and tested, and the owner has approved the cutover. The **risk-v2 activation is recorded in the ledger** (18 November 2026 23:58Z: SPY/UPRO/SH/SPXU, 20% floor, 150% signed-effective ceiling, 3x leverage, 2% daily drawdown; `order_submitted=false`). Autonomous submission stays gated (`ORDER_WRITES_ENABLED=false`, `TRADING_MODE=SUPERVISED_PAPER`) until the supervised UPRO and SPXU acceptance orders complete during the next regular session; after each acceptance order is reconciled, `TRADING_MODE=AUTO_PAPER` and `ORDER_WRITES_ENABLED=true` are restored and autonomous risk-v2 trading continues without individual order approvals. UPRO/SPXU quotes, order books and session access are verified read-only; simulated-order acceptance for the two 3x funds is the remaining step at cutover. Nothing in this document authorises higher exposure than the recorded pin — any future limit change requires explicit owner approval at a new activation gate.
+**Current mandate (20 November 2026):** risk-v2 was simplified to risk-v3 — SPY bullish / SH bearish / CASH when no valid trade, allocations 10%–40%, no leveraged ETFs, no margin/short/options, one directional ETF position at a time. UPRO/SPXU were removed from the candidate universe, instrument selection, supervised execution allowlist, automated paper-trading eligibility and decision-generation paths; their historical audit records and evidence are preserved unchanged. The stale 576-SH BUY approval (`spy-directional-2026-11-19-SH-BUY`, old 20% weak tier) was superseded in the append-only ledger (1:37Z, `APPROVAL_SUPERSEDED` event) and can no longer authorise an order. Explicit, durable owner approval for **EVERY supervised BUY and SELL**, bound to the exact proposal and client order key, remains required; `TRADING_MODE=SUPERVISED_PAPER` and `ORDER_WRITES_ENABLED=false` remain unchanged. The 18 November 2026 23:58Z pre-simplification risk-v2 pin is retained as a **HISTORICAL** record, not current unattended authority. No automatic return to `AUTO_PAPER` is authorised; future autonomy requires separate explicit approval.
 
 ## One-page strategy specification
 
 **Hypothesis:** a persistent 10-session S&P 500 move, confirmed by price relative to its 50-session trend, can be followed with one directional ETF sized to the strength of the signal, subject to volatility and portfolio controls.
 
-**Decision sequence (risk-v2):** (1) analyse SPY; (2) determine BULLISH/BEARISH/NEUTRAL; (3) determine the strength/risk of the view; (4) calculate a **target signed S&P 500 exposure as a fraction of equity**; (5) choose SPY/SH/UPRO/SPXU from the target; (6) calculate cash allocation and whole-share quantity; (7) apply the RiskGate; (8) execute through the autonomous paper broker when authorised; (9) monitor, exit or resize per approved policy. Leverage is an instrument for scaling exposure — it is not the strategy itself.
+**Decision sequence (risk-v3):** (1) analyse SPY; (2) determine BULLISH/BEARISH/NEUTRAL; (3) determine strength/risk; (4) calculate a **target signed S&P 500 exposure fraction** (0% or ±10%–±40%); (5) choose SPY (bullish) / SH (bearish) / CASH; (6) compute cash allocation and whole shares; (7) apply RiskGate; (8) obtain explicit owner approval for the exact BUY/SELL proposal/key and execute only through the supervised paper boundary with fresh preflight; (9) monitor and propose exits/resizes, each requiring its own approval.
 
 | Question | Deterministic answer in `spy-directional` |
 |---|---|
 | What is measured? | SPY's 10-session `close/close` return, its 50-session simple moving average and its 20-session annualised realised volatility, all from completed daily bars. |
-| Direction (risk-v2)? | The sign of the 10-session return: `>= +1.5%` BULLISH, `<= -1.5%` BEARISH, otherwise NEUTRAL/CASH. |
-| Direction (risk-v1)? | Unchanged: 10-session return beyond `±1.5%` **and** close beyond the SMA50 in the same direction; conflicting evidence is NEUTRAL. |
-| Volatility gates? | 20-session annualised volatility above `40%` forces CASH. Above `30%` the target is capped at `100%`. |
-| Target exposure? | Tiered by the absolute 10-session return: below `1.5%` → `0%`; `1.5–3%` → `20%` (weak); `3–5%` → `40%`, trend-confirmed `60%` (moderate); `5–8%` → `80%`, trend-confirmed `100%` (strong); `>= 8%` → `100%`, exceptional `150%` (only when trend-confirmed and volatility `<= 30%`). All tiers are the fraction of **equity** in signed S&P 500 exposure. |
-| Which ETF? | `|target| <= 100%` → SPY (bullish) / SH (bearish). `target > 100%` → UPRO; `target < -100%` → SPXU. |
-| Cash allocation? | `equity × |target| / leverage` — a 150% target spends 50% of equity on UPRO; a 40% target spends 40% on SPY. Whole shares, cash-only. |
+| Direction (risk-v3)? | The sign of the 10-session return: `>= +1.5%` BULLISH, `<= -1.5%` BEARISH, otherwise NEUTRAL/CASH. |
+| Volatility gates? | 20-session annualised volatility above `40%` forces CASH. |
+| Target exposure? | Tiered by the absolute 10-session return (risk-v3): below `1.5%` → `0%` (CASH); `1.5–3%` → `10%` (weak); `3–5%` → `25%`, trend-confirmed `40%` (moderate); `5–8%` → `40%` (strong); `>= 8%` → `40%` (exceptional, capped). All tiers are the fraction of **equity** in signed S&P 500 exposure; nothing can exceed `±40%`. |
+| Which ETF? | SPY (bullish) / SH (bearish), 1x only. UPRO/SPXU are outside the risk-v3 universe. |
+| Cash allocation? | `equity × |target|` — a 40% target spends 40% of equity on SPY or SH; a 10% target spends 10%. Whole shares, cash-only, never margin. |
 | BUY / SELL / HOLD / CASH? | BUY when flat and a target is selected; HOLD when the target equals the held ETF; SELL when the held ETF is no longer the target or the target is CASH. One directional position at a time. |
 | Reversal? | A SELL or CASH decision comes first. The opposite entry is considered only by a later run that observes a confirmed flat broker position. |
-| Resize? | Deterministic rules only, never discretionary LLM instructions: a tier move on the same held symbol resizes when the share delta is `>= 1` share and `>= 5%` relative (SELL excess or BUY top-up); a direction flip SELLs first; a 3x holding aged `>= 5` sessions is fully exited and the next entry is downgraded to `±100%`. |
+| Resize? | Deterministic rules only, never discretionary LLM instructions: a tier move on the same held symbol resizes when the share delta is `>= 1` share and `>= 5%` relative (SELL excess or BUY top-up); a direction flip SELLs first. |
 | Who decides? | Deterministic code computes the signal, tier, selection, sizing and state transition. Three Qoder agents reason and challenge. The RiskGate is final. |
 
 ### Signal and eligibility
 
-- Evaluate once after a session closes. The bar file must end on the latest completed US session, contain at least `51` sessions, and contain all four symbols.
+- Evaluate once after a session closes. The bar file must end on the latest completed US session, contain at least `51` sessions, and contain both SPY and SH bars.
 - Tier criteria are transparent and reproducible from the existing return/trend/volatility measurements. An LLM confidence percentage is never equated with an empirically calibrated probability of success.
 - No intraday signal, parameter search or unregistered strategy is used.
 - An agent may describe or challenge the signal but cannot change the computed direction, target, quantity or controls.
@@ -35,62 +34,61 @@
 
 ### Instrument universe and verified mapping
 
-All four positions are opened with **BUY** orders. Inverse ETFs have negative economic direction but are still bought, never shorted. Effective exposure is `direction × daily leverage`.
+Both positions are opened with **BUY** orders. SH has negative economic direction but is still bought, never shorted. Effective exposure is `direction × daily leverage`.
 
 | Symbol | Benchmark | Direction | Daily leverage | Effective exposure | Status |
 |---|---|---:|---:|---:|---|
-| SPY | S&P 500 | +1 | 1x | +1x | Execution allowlist; quote/history verified |
-| UPRO | S&P 500 (3x daily) | +1 | 3x | +3x | Quotes/books/session verified read-only; execution requires the risk-v2 activation and a supervised acceptance order |
-| SH | S&P 500 (inverse) | -1 | 1x | -1x | Execution allowlist; quote/history verified; 1x inverse bought with a BUY order |
-| SPXU | S&P 500 (3x inverse daily) | -1 | 3x | -3x | Quotes/books/session verified read-only; execution requires the risk-v2 activation and a supervised acceptance order |
+| SPY | S&P 500 | +1 | 1x | +1x | risk-v3 universe; quote/history verified; read-only MARKET cash-buy capacity verified 19 Nov; no fill claimed |
+| SH | S&P 500 (inverse) | -1 | 1x | -1x | risk-v3 universe; quote/history verified; read-only MARKET cash-buy capacity verified 19 Nov; broker refused all five sanctioned pre-simplification submissions with `ret_code=-5` (backend business error); cause verified 20 Nov via the official handbook: competition stock/ETF exposure is capped at **40% of total initial account assets**, so the 1,764-share (~60%) entry was rejected; risk-v3 tiers stay within ±40%, so `R019` is the binding ceiling; no fill claimed |
 
-Verified with 370 read-only Moomoo daily bars per symbol through 17 November 2026, plus current quote, order-book and market-state reads for all four (19 November 2026, see [`docs/integrations.md`](integrations.md)). Metadata lives in [`backend/app/research/instruments.py`](../backend/app/research/instruments.py). Quote support is not the same as competition-account execution eligibility: under the pinned risk-v1 activation only SPY and SH may execute; UPRO/SPXU additionally require the risk-v2 activation, `allow_leveraged=True` and one supervised acceptance order each at cutover. QQQ is preserved for historical diagnostic reconciliation only. CASH is always permitted.
+UPRO and SPXU were part of the pre-simplification risk-v2 universe; risk-v3 removed them entirely and their proposals are rejected by default-deny symbol validation. Their read-only quote/book/session observations remain **HISTORICAL** evidence in [`docs/integrations.md`](integrations.md).
+
+The earlier verified snapshot contains 370 read-only Moomoo daily bars per symbol through 17 November 2026; latest completed bars end on 18 November (decision below). Quote, order-book and market-state observations are recorded in [`docs/integrations.md`](integrations.md). Metadata lives in [`backend/app/research/instruments.py`](../backend/app/research/instruments.py). Quote support does not establish competition-account execution acceptance. The prepared SPY/SH execution scope grants no order permission; each BUY/SELL still needs approval. QQQ is preserved for historical diagnostic reconciliation only. CASH is always permitted.
 
 ### State machine, sizing and costs
 
-**risk-v1 (superseded by the recorded risk-v2 activation; row retained):** target size is `5%` of equity in effective exposure, `quantity = floor(equity × 0.05 / (price × leverage))`, whole shares, cash-only. Behaviour is otherwise as below.
+**Active risk-v3 tiered sizing:**
 
-**risk-v2 (recorded in the ledger 18 November 2026 23:58Z):**
-
-- Target exposure fraction `f` (signed) comes from the tier table. The selected ETF satisfies `direction × leverage = sign(f) × leverage` with `leverage = 1` for `|f| <= 100%` and `3` otherwise.
-- **Cash allocation** is `equity × |f| / leverage`; quantity is floored to whole shares at the **bar close** of the selected ETF.
+- Target exposure fraction `f` (signed) comes from the tier table: below `1.5%` → `0%`; `1.5–3%` → `10%`; `3–5%` → `25%` (trend-confirmed `40%`); `5–8%` → `40%`; `>= 8%` → `40%`. The selected ETF is SPY for `f > 0` and SH for `f < 0`, both 1x. Nothing can exceed `±40%` of equity.
+- **Competition concentration cap (verified 20 Nov 2026):** single-security stock/ETF exposure may not exceed **40%** of account value, enforced on entry. Sizing (fresh BUY and resize targets) is clamped so `price × quantity` stays at or below 40% of equity, and the declared target is recomputed from the capped quantity so `R018` stays consistent. A held position that is above the cap (e.g. after price movement) is trimmed back to it on the next resize check. The gate independently enforces the cap on entry (`R019`), counting the existing position and same-symbol pending BUYs.
+- **Cash allocation** is `equity × |f|`; quantity is floored to whole shares at the **bar close** of the selected ETF.
 - **Flat + target:** BUY the selected ETF.
 - **Held ETF equals target:** HOLD, with no order generated.
 - **Held ETF differs from target, or target is CASH:** SELL the held ETF. The opposite entry is not submitted in the same run.
 - **Reversal:** a later run may BUY the opposite ETF only after read-only reconciliation confirms the prior position is flat.
-- **Same-symbol resize:** tier moved `>= 1` share and `>= 5%` relative → SELL the excess or BUY the top-up with the same signal. Top-up BUYs carry no declared target so `R018` compares against the post-order total.
-- **Leveraged duration exit:** a 3x holding (UPRO/SPXU) aged `>= 5` completed sessions is fully exited (`duration_exit`), and the next entry is capped at `±100%`.
+- **Same-symbol resize:** tier moved `>= 1` share and `>= 5%` relative → SELL the excess or BUY the top-up with the same signal. Top-up BUYs carry no declared target, so `R018` is not applicable; `R017` still checks the post-order signed total.
 - **Multiple holdings, working orders or unreconciled state:** fail closed with no new order.
 - Only one directional S&P 500 position may exist at a time; bullish and bearish ETFs are never held simultaneously.
-- Evaluation charges 2 bps per side. Spread, slippage and daily-reset decay are not modelled; this is a limitation, not an estimate of profitability.
+- Evaluation charges 2 bps per side. Spread, slippage and inverse-ETF daily rebalancing costs are not modelled; this is a limitation, not an estimate of profitability.
 
-**Leverage risk (explicit):** a `150%` exposure can lose approximately `3%` of portfolio equity on a `2%` adverse daily index move (and approximately `6%` on a `4%` move). The 2% daily-drawdown brake halts new buying — it does **not** guarantee losses stop at 2%, and stop-losses do not eliminate overnight gap risk. The 3x funds' daily-reset compounding is a decay risk that the 5-session duration exit bounds but does not remove.
+**Concentration risk (explicit):** a `40%` exposure can lose approximately `0.8%` of portfolio equity on a `2%` adverse daily index move (and approximately `1.6%` on a `4%` move). The 2% daily-drawdown brake halts new buying — it does **not** guarantee losses stop at 2%, and stop-losses do not eliminate overnight gap risk.
 
 ### Deterministic authority and agent roles
 
-- **Market Researcher:** reviews the runner-pinned SPY return, trend, volatility, four-candidate eligibility, current holding and action; produces a timestamped assessment.
+- **Market Researcher:** reviews the runner-pinned SPY return, trend, volatility, two-candidate eligibility, current holding and action; produces a timestamped assessment.
 - **Independent Risk Auditor:** challenges the thesis, contradictory evidence, stale data, concentration, leverage, drawdown, invalidation and downside; calls `evaluate_proposal` when a proposal exists.
 - **Coordinator:** combines the research, counterarguments and deterministic output into `BUY`, `SELL`, `HOLD` or `NO_TRADE` with traceable reasoning. It has no tools.
 - **Deterministic code:** signal arithmetic, tier calculation, ETF selection, sizing, HOLD/SELL/CASH/reversal state, resize/duration rules, RiskGate enforcement, the supervised execution command and order permissions. The RiskGate is final and cannot be overridden by an agent, UI text or research content.
 - **Adaptation:** agents reason only. They cannot write bars, alter the computed signal or access broker order tools. All three agents are read-only with respect to order permissions.
 
-### Dual risk policy
+### Active risk-v3 policy only
 
-The ledger's pinned `TradingActivation` selects the policy version used by both the research producer and the executor. The recorded pin is **risk-v2** (18 November 2026 23:58Z); the earlier risk-v1 row (18 November 2026 16:03Z) is retained append-only and would only govern again if the environment were pointed back at it, which nothing does automatically.
+Research and execution use risk-v3, not a policy selected by a historical `TradingActivation`. The 18 November 16:03Z risk-v1 row and the 18 November 23:58Z pre-simplification risk-v2 row remain **HISTORICAL** and append-only; neither can govern new research or execution or be reactivated. Their old sizing and single/gross caps are not operative controls. `latest_trading_activation` returns the risk-v3 pin only when its policy version and limits match the current defaults exactly.
 
-| Area | risk-v1 (superseded) | risk-v2 (recorded pin) |
-|---|---|---|
-| Symbols | SPY, SH | SPY, SH, UPRO, SPXU |
-| Target exposure | fixed `5%` position fraction | tiered `0%` / `20%` / `40–60%` / `80–100%` / `100–150%` |
-| Exposure limits | `R004` single `<= 10%`, `R005` gross `<= 30%` | `R016` floor `>= 20%`, `R017` signed effective `<= 150%`, `R018` declared-target consistency `±5` points |
-| Leverage | none (`R015` rejects > 1x) | `<= 3x` within `R015` (`allow_leveraged=True`) |
-| Daily drawdown | `R006` 2% halts new buying | same |
-| Direction rule | return **and** SMA50 agree | sign of 10-session return |
+| Area | Active mandate |
+|---|---|
+| Research symbols | SPY, SH |
+| Prepared supervised execution scope | SPY/SH only; UPRO/SPXU are outside the risk-v3 universe and rejected by default-deny symbol validation |
+| Research targets | tiered `0%` / `10%` / `25–40%` / `40%` signed-exposure magnitude |
+| Exposure controls | `R016` 10% floor (skipped only by supervised path), `R017` 40% signed-effective ceiling, `R018` declared-target tolerance ±5 percentage points, `R019` competition 40% single-security concentration cap |
+| Position count | RiskGate maximum one; strategy maximum one directional position |
+| Daily drawdown | `R006` 2% halts new buying |
+| Cash / freshness | US$5 cash buffer; quote ≤300 seconds; account snapshot ≤60 seconds |
+| Owner approval | `R014` durable approval for the exact proposal/key of EVERY supervised BUY and SELL |
 
-- Existing `R001`–`R014` limits are unchanged for risk-v1.
-- `R015`: an instrument with leverage greater than 1 is rejected unless the gate is constructed with `allow_leveraged=True` (risk-v2 only). The maximum allowed leverage is 3x.
-- `R016`/`R017` measure **signed effective exposure** (`price × quantity × leverage × direction / equity`); `R018` compares the signed exposure of an initial BUY against the proposal's declared target within `±0.05`. Resize top-ups and SELLs carry no declared target.
-- `R008` still requires unlevered cash (`min(cash, buying_power) − buffer`) for the actual notional, so a leveraged ETF never buys on margin.
+- `R015` rejects any leverage above the 1x daily maximum; the risk-v3 model's ceiling is 1x and leveraged funds are outside the universe.
+- `R016`/`R017` measure **signed effective exposure** (`price × quantity × leverage × direction / equity`); the ceiling applies to the magnitude of the post-order signed total. `R018` compares an initial BUY's signed exposure against its declared target within `±0.05`; resize top-ups and SELLs carry no declared target. `R019` measures **per-security notional exposure** (`price × quantity` on the entry symbol, plus the existing position value and same-symbol pending BUYs) against 40% of equity and applies to BUYs only. Only the supervised path skips the floor, not the ceiling, target consistency or concentration cap.
+- `R008` requires unlevered cash (`min(cash, buying_power) − US$5 buffer`) for actual notional; no margin is used.
 - Per-symbol leverage metadata is validated; invalid or non-positive metadata rejects with `R007`.
 
 ### Daily risk monitoring (read-only)
@@ -100,19 +98,20 @@ A dedicated read-only monitor (no order-write capability) runs in three ET windo
 | Window | Checks |
 |---|---|
 | Reconcile `09:45–10:30` | Reconciles `SUBMITTING`/`ACKNOWLEDGED`/`PARTIALLY_FILLED`/`UNKNOWN` submissions against broker state; reports unresolved ambiguous submissions. |
-| Midday `12:00–13:00` | Daily drawdown against the activation's `max_daily_drawdown`; signed-effective (v2) or single/gross (v1) exposure breaches; 3x holding duration `>= 5` sessions; open-order leftovers. |
+| Midday `12:00–13:00` | Active v2 2% daily drawdown and signed-effective exposure breaches; 1x-universe holding-duration check (inert: SPY/SH only, no leveraged funds); open-order leftovers. |
 | Pre-close `15:45–16:00` | Same as midday **plus** unresolved ambiguous submissions and leftover open orders. |
 
-Breach policy: exposure, duration and open-order breaches are **reported only** (`RISK_BREACH` audit events) because the deterministic reduction rules at the next execution window handle them, and engaging the kill switch would block those exits. The **persistent kill switch engages only** when the daily drawdown reaches the policy limit, or when ambiguous submissions remain unresolved at pre-close. The monitor is read-only: it refuses to run with order-write scope or when `ORDER_WRITES_ENABLED=true` in its own stack.
+Breach policy: exposure, duration and open-order breaches are **reported only** (`RISK_BREACH` events); resulting reductions/exits are proposals that still require exact-proposal/key owner approval. The **persistent kill switch engages** when daily drawdown reaches the limit or ambiguous submissions remain unresolved at pre-close. It blocks new writes, including exits, and never liquidates implicitly. The monitor is read-only and refuses order-write scope or `ORDER_WRITES_ENABLED=true`. The monitor skips symbols outside the risk-v3 universe (e.g. historical UPRO/SPXU holdings) instead of crashing.
 
 ### Research evidence and limitations
 
-- **Real inputs:** SPY, UPRO, SH and SPXU, 370 completed daily bars each, read-only Moomoo `history-kline`, last session 17 November 2026. Runner data: `evidence/current-market/2026-11-17/daily-bars.json`; fixture: [`backend/tests/fixtures/moomoo_directional_etf_bars_2026-11-17.json`](../backend/tests/fixtures/moomoo_directional_etf_bars_2026-11-17.json). The prior IWM/QQQ/SPY snapshot is preserved beside it as `daily-bars-iwm-qqq-spy-prior.json`.
-- **Latest real decision:** 17 November 2026 close `732.44`, 10-session return `-2.90%`, SMA50 `762.89`, 20-session annualised volatility `23.06%` → BEARISH, target SH, 147 shares at 5% effective exposure. The real gate rejected the proposal (`R002`, stale post-close quote, non-regular session, `R010`, `R014`).
-- **Historical sanity check:** 12 August 2025 to 17 November 2026 at the fixed rules and 5% sizing produced `-0.40%` total return, `0.42%` annualised volatility, `-0.75` Sharpe, `0.59%` maximum drawdown, `41.07%` of sessions exposed, 35 trades and a `41.18%` win rate. SPY buy-and-hold over the same data returned `+15.47%` with `8.88%` maximum drawdown. The strategy underperformed; this is not evidence of alpha and was not optimised.
-- **Read-only agent demo:** genuine three-agent run `qoder-328aefff-7dde-4a98-ac76-99b3e0e33728` (18 November 2026) recorded the real BEARISH signal, SH proposal and full rejection. It placed no order. See [`evidence/qoder/`](../evidence/qoder/).
-- **Forward paper validation** is the required next evidence step. Until filled, reconciled paper results exist, the strategy has no demonstrated live edge.
-- **Acceptance:** mechanics/unit tests pass; only allowlisted instruments can reach an `APPROVE`; every decision is traceable; the first paper order is separately owner-approved.
+- **Latest completed bars (18 November 2026):** SPY close `730.2`, 10-session return `-4.7743248%`, SMA50 `762.2828597323`, annualised volatility `22.8820254%`. Under the **pre-simplification risk-v2 tiers** (HISTORICAL: 20%/40–60%/80–100%/100–150%) this was BEARISH with an SH target of **−60% signed exposure**; the genuine three-agent run `qoder-4e73fe0c-6d70-4722-84ac-aaf0f9dc1b3e` proposed BUY 1,764 SH. The 15:02Z broker-backed supervised preview estimated $59,561.46 at SH 33.765 (−59.5668% exposure) and rejected missing exact-order approval; actual writes remained disabled. This is not a fill or guaranteed acceptance. **Under risk-v3 the same measurements map to the `3–5%` MODERATE band: −25% base, −40% trend-confirmed (close is below the SMA50, so the bearish trend confirms).** The current decision is regenerated by the standard workflow before any proposal — see `docs/evidence.md`.
+- **HISTORICAL inputs:** 370 completed bars each for SPY/UPRO/SH/SPXU through 17 November, in `evidence/current-market/2026-11-17/daily-bars.json` and [`backend/tests/fixtures/moomoo_directional_etf_bars_2026-11-17.json`](../backend/tests/fixtures/moomoo_directional_etf_bars_2026-11-17.json). The prior IWM/QQQ/SPY snapshot remains as `daily-bars-iwm-qqq-spy-prior.json`.
+- **HISTORICAL rejected decision:** 17 November close `732.44`, return `-2.90%`, SMA50 `762.89`, volatility `23.06%` → SH, 147 shares at retired 5% sizing. The real gate rejected it (`R002`, stale post-close quote, non-regular session, `R010`, `R014`). Do not treat it as an executable v2 proposal.
+- **HISTORICAL sanity check, not v2 performance:** 12 August 2025 to 17 November 2026 at the frozen old rules and 5% sizing produced `-0.40%` total return, `0.42%` annualised volatility, `-0.75` Sharpe, `0.59%` maximum drawdown, `41.07%` of sessions exposed, 35 trades and a `41.18%` win rate. SPY buy-and-hold returned `+15.47%` with `8.88%` maximum drawdown. These unchanged results underperformed; they are neither alpha nor paper-account evidence and were not optimised.
+- **HISTORICAL genuine read-only demo:** `qoder-328aefff-7dde-4a98-ac76-99b3e0e33728` (18 November 2026) recorded that SH proposal and rejection, not the latest −60% v2 target. It placed no order. See [`evidence/qoder/`](../evidence/qoder/).
+- **Forward strategy paper validation** is pending. QQQ diagnostic BUY `3115842` and SELL `3115920` both filled and reconciled on 18 November, but are not strategy performance or SPY/SH acceptance.
+- **Acceptance requirements:** only explicitly eligible instruments may reach `APPROVE`; every decision is traceable; EVERY supervised BUY/SELL has its own exact-proposal/key owner approval. Current test results, verified SPY/SH capacity and the genuine submission-disabled SH preview are recorded in `docs/evidence.md`.
 - **Rejection:** negative net return over a 20-trade forward sample, drawdown beyond policy, repeated inability to produce traceable decisions, or failure to beat cash/exposure-matched benchmarks. Thresholds must not be tuned on backtest outcomes.
 
 ### Retired strategies and simplification audit
@@ -121,48 +120,44 @@ Breach policy: exposure, duration and open-order breaches are **reported only** 
 - **Removed:** the event archive, event module, synthetic event fixture, old demo/report generators, momentum deployable-limit study, catalyst study, Moomoo-signal observation script, obsolete archive types and their strategy-specific tests.
 - **Retained as historical evidence:** prior research artifacts and Qoder runs under `evidence/`, the ETF baseline study/comparator, buy-and-hold and cash baselines, risk/execution history and supervised diagnostic records.
 - **Reused:** `MarketHistory`, read-only Moomoo feeds, the dry-run harness, Qoder tool boundary, deterministic `RiskGate`, paper executor, ledger, reconciliation and the existing dashboard.
-- **Not changed:** OAuth scopes, broker adapter, order transport, supervised execution workflow, kill switch, dashboard structure or agent count.
+- **HISTORICAL cleanup scope:** that strategy cleanup did not change OAuth scopes, broker adapter, order transport, supervised workflow, kill switch, dashboard structure or agent count. The current mandate separately requires every-order approval and the exact proposal-file handoff described above.
 
-## Preliminary hard constraints
+## Active hard constraints
 
-| Rule ID | Starting limit | On breach |
+| Rule ID | Limit | On breach |
 |---|---|---|
-| R001 | Account must be the exact verified competition paper account (masked id + fingerprint, simulated source) | Reject and disable order writes |
-| R002 | Symbols restricted to the pinned activation's allowlist (risk-v1: SPY/SH; risk-v2: SPY/SH/UPRO/SPXU) | Reject |
-| R003 | Long-only, cash-only; no options or short selling; leverage beyond 3x blocked | Reject |
-| R004 | risk-v1: per-instrument exposure <= 10% of equity (post-order, effective exposure) | Reduce/reject by deterministic sizing policy |
-| R005 | risk-v1: total gross exposure <= 30% equity (effective exposure) | Reduce/reject by deterministic sizing policy |
-| R006 | Daily equity drawdown >= 2% from the trading day's starting equity | Pause new buying; leave liquidation to a separate documented policy |
-| R007 | Quote / account snapshot missing, stale, invalid or contradictory | Reject/abstain |
-| R008 | Insufficient unlevered cash after fees/buffer | Reject |
+| R001 | Exact verified competition paper account (masked id + fingerprint, simulated source) | Reject and disable order writes |
+| R002 | Execution allowlist is SPY/SH only; the risk-v3 universe contains no other symbols | Reject |
+| R003 | Long-only, cash-only; no options, short selling, margin or leveraged funds | Reject |
+| R006 | Daily equity drawdown >= 2% from the trading day's starting equity | Pause new buying; no implicit liquidation |
+| R007 | Missing/invalid/contradictory inputs, quote >300s or account snapshot >60s | Reject/abstain |
+| R008 | Insufficient unlevered cash after US$5 buffer | Reject |
 | R009 | Reconciliation mismatch, unknown order or unreadable broker state | Halt new submissions |
 | R010 | Persistent kill switch on, circuit breaker open or writes disabled | Reject all submissions |
 | R011 | Duplicate run/approved proposal/order key | No duplicate submit |
 | R012 | Exchange/session constraints or ineligible order type | Reject |
-| R013 | Post-order open positions > 1 directional position (risk-v2) / > 3 distinct instruments (risk-v1) | Reject new buying |
-| R014 | First paper order without explicit, durable owner approval | Reject before broker call |
-| R015 | Leveraged instrument without the risk-v2 activation (`allow_leveraged`); leverage > 3x | Reject before broker call |
-| R016 | risk-v2: submitted direction expresses < 20% effective exposure of equity | Reject |
-| R017 | risk-v2: post-order signed effective exposure > 150% of equity | Reject |
-| R018 | risk-v2: initial BUY quantity deviates > 5 points from the declared target exposure | Reject |
+| R013 | Post-order positions >1 distinct instrument; strategy separately allows only one directional position | Reject new buying |
+| R014 | Any BUY or SELL without a durable exact-proposal/key owner approval (supervised) or a valid, unexpired risk-v3 activation pin bound to the account fingerprint, strategy version, symbol allowlist and limits (autonomous; never on the supervised gate) | Reject before broker call |
+| R015 | Leverage above the approved 1x daily maximum | Reject before broker call |
+| R016 | Research exposure floor 10%; skipped only in the supervised path | Reject when applicable |
+| R017 | Magnitude of post-order signed-effective exposure >40% of equity | Reject |
+| R018 | Initial BUY differs from declared signed target by >5 percentage points | Reject |
+| R019 | Post-order single-security exposure >40% of equity — competition stock/ETF concentration cap, entry-enforced and verified from the official handbook 20 Nov 2026; counts the existing position and same-symbol pending BUYs, exempt for SELLs | Reject |
 
+Retired risk-v1 rule IDs and limits may appear in **HISTORICAL** artifacts; they are not selectable executable policy. No LLM, agent administrator or dashboard button may bypass current controls. Limit or permission changes require explicit owner approval and audit evidence.
 
-Limits are conservative **initial choices**, not necessarily optimal. No LLM, agent administrator or dashboard button may silently bypass them. Changes must be versioned and audited; actual competition rules take precedence.
-
-**Cash-only note:** the competition US paper account may be margin-type. R008 uses `min(cash, buying_power) - buffer`, so broker margin is never used even when reported buying power exceeds cash.
+**Cash-only note:** the competition account may be margin-type. R008 uses `min(cash, buying_power) − US$5 buffer`, so broker margin is never used.
 
 ### How quantity is computed
 
-1. Resolve the exact competition account by masked id + SHA-256 fingerprint; reject live, other-paper and market-only matches.
-2. Get broker-confirmed equity, day-start equity, current holdings, pending orders and buying power.
-3. Compute available headroom under `R004`, `R005` and `R013` using **post-order** positions and pending exposure.
-4. Apply strategy's smaller preferred position size if defined.
-5. Subtract conservative transaction-cost/buying-power buffer if available.
-6. Floor to valid integer share quantity and verify minimum/lot size constraints.
-7. If `< 1` valid share or the resulting trade is below applicable minimum, abstain with reason.
-8. Bind approval to current account snapshot; expire and recompute if conditions change.
+1. Resolve the exact competition paper account by trusted metadata, masked id and SHA-256 fingerprint.
+2. Get fresh broker-confirmed equity, day-start equity, holdings, pending orders and buying power.
+3. Compute the risk-v3 tiered signed target (0% or ±10%–±40%); select SPY or SH and floor `equity × |target| / price` to whole shares, then clamp the quantity to the competition 40% single-security cap (recomputing the declared target from the capped quantity). Research uses the completed bar close; execution rechecks using a fresh quote.
+4. Independently validate post-order signed-effective exposure, target consistency, position count and cash headroom including pending exposure; do not substitute retired single/gross caps.
+5. Abstain if fewer than one valid share or any applicable rule fails. Only the supervised path skips the floor; other safeguards remain.
+6. Bind the risk decision to the current proposal/account snapshot and re-evaluate after its 30-second TTL or a state change.
 
-The first paper order additionally requires a durable owner approval tied to its `client_order_key` (`R014`). The command records approval only; it never submits an order.
+EVERY supervised BUY and SELL also requires durable owner approval for the exact proposal and `client_order_key` (`R014`). The historical CLI name `approve-first-order` remains, but is used for each order. **Owner approval does not expire with the 30-second risk TTL**; it never authorises another proposal/key or submits an order. In `AUTO_PAPER` only, a valid unexpired risk-v3 activation pin (time-limited, bound to the account fingerprint, strategy version, SPY/SH allowlist and the pinned 10%/40%/2% limits) replaces per-order approval; it is re-validated deterministically on every run and never satisfies `R014` on the supervised gate.
 
 ## Fail-closed order flow
 
@@ -178,7 +173,7 @@ Before any order can be submitted, the executor must obtain a fresh quote for th
 
 A timeout or malformed broker response is persisted as `UNKNOWN` before any further action. While any `UNKNOWN` submission exists, all new submissions are rejected (`R009`). Reconciliation queries three broker sources — today's orders, order history and the account snapshot/positions — and requires the snapshot's paper environment and account fingerprint to match the submission. It then matches exactly one broker order by the correlation tag carried in the documented `text` remark and validates symbol, side and quantity against the local request. Zero matches stays `UNKNOWN` (no match); more than one match is ambiguous and also stays `UNKNOWN`; an account mismatch stops reconciliation. Neither case retries the order. A unique match is written to the ledger only if the provider status transition is legal. The remark is a correlation aid, not a broker-enforced idempotency key.
 
-The order path remains a disabled prototype: `ORDER_WRITES_ENABLED=false`, the documented simulated-order transport is inactive and not runtime-wired, and the operator preview (`moomoo-preview-order`) evaluates the deterministic gate and prints the planned payload, safety checks and `submission_performed: false`. No order has been sent.
+Runtime remains `SUPERVISED_PAPER` with `ORDER_WRITES_ENABLED=false`. The guarded supervised transport has broker-observed QQQ diagnostic fills, not SPY/SH strategy acceptance. The prepared preview/execute `--proposal-file` handoff preserves the exact research timestamps, evidence and target, and rejects any required CLI-field mismatch. Preview reports per-rule states and current/post signed-effective exposure with `submission_performed: false`; it grants no approval and submits nothing. No new order or activation is claimed.
 
 ## Pausing vs killing
 
@@ -189,7 +184,7 @@ The order path remains a disabled prototype: `ORDER_WRITES_ENABLED=false`, the d
 
 ## Appendix: historical evidence for retired strategies
 
-> The sections below document evaluations of strategies that are **retired from the active product**. They are retained as historical evidence and research conclusions, not as descriptions of current behaviour. `spy-directional` is the only registered active strategy.
+> **HISTORICAL — retired, not executable.** The evaluations, limits, blockers and recommendations below describe their dates, not current behaviour. Results and frozen comparator sizing are unchanged. Risk-v1 cannot be selected or reactivated; its old limits are not active controls. `spy-directional` with risk-v2 is the only active strategy/policy.
 
 ## Evaluation metrics
 
@@ -251,10 +246,10 @@ This is not new out-of-sample evidence and the holdout was not re-tuned. Artifac
 
 ## ETF trend baseline (separate research study, 17 November 2026)
 
-`etf-trend-baseline-v1` is a deliberately simple, low-turnover comparator. It is not registered as an executable strategy and has no proposal builder or order path.
+`etf-trend-baseline-v1` is a **HISTORICAL**, frozen low-turnover comparator. Its 10% study sizing is unchanged, not executable risk-v1 or an active RiskGate limit. It has no registered strategy, proposal builder or order path.
 
-- At each completed month-end, hold `SPY` only if its close is above its 200-session SMA; otherwise hold cash.
-- Execute a changed signal at the next session open. Maximum `10%` of equity at entry, preserving `R004`; 2 bps per side; fractional shares.
+- At each completed month-end, the study holds `SPY` only above its 200-session SMA; otherwise cash.
+- The study executes a changed signal at the next session open, maximum `10%` of equity at entry; 2 bps per side; fractional shares.
 - No parameter search was performed. The 200-session and monthly choices were fixed before producing this study.
 
 | Series | Period | Entries | Total return | Max drawdown | Avg exposure | Turnover |
@@ -350,11 +345,13 @@ Two independent AI reviews were run against the frozen protocol. The research re
 
 ### Recommendation
 
-This recommendation was made before the 18 November 2026 pivot, when `momentum-v1` was still the active rule. Its successor, `spy-directional`, is the only registered strategy: it keeps the same 2% drawdown pause, 10%/30% exposure caps and cash-only constraints, but uses a 10-session return plus SMA50 direction rule. The Moomoo-signal candidate remains undeployed, the RiskGate allowlist remains `{SPY, QQQ, IWM}`, and it is not a capital-bearing paper strategy. The candidate has no historical validation, its defining entry condition produced zero signals on the only observed close, and the one historically auditable Moomoo signal (capital flow) did not add positive forward information. The observer script was removed during the 18 November 2026 cleanup; its recorded observations remain under `evidence/research/moomoo-signal-observation/` as a historical capability log, not evidence of alpha.
+**HISTORICAL recommendation:** this review preceded the 18 November pivot from `momentum-v1`. The then-successor `spy-directional` used the now-retired fixed-size policy and return-plus-SMA50 direction rule; those are not current v2 behaviour. The candidate was outside the then-allowlist `{SPY, QQQ, IWM}` and remains undeployed. Its defining entry condition produced zero signals on the only observed close, and capital flow did not add positive forward information. The observer script was removed during the 18 November cleanup; `evidence/research/moomoo-signal-observation/` remains a historical capability log, not alpha evidence. Current v2 controls and prepared SPY/SH-only execution defaults are specified above; retired policy cannot be reactivated.
 
 Implementation effort if this were ever revisited: low for a read-only observer, high for deployment because it requires an owner-approved universe change, an authorized write token and a separately verified broker lifecycle. The execution permission and broker-lifecycle blockers are unchanged.
 
-## Required unit/integration tests (current project)
+## HISTORICAL unit/integration coverage before the mandate change
+
+Checked items record the prior suite only; they do not establish that the new v2-only/per-order-approval changes pass. Current verification requirements follow below.
 
 - [x] Wrong or unverified account cannot submit.
 - [x] Live account, other paper account and market-only selection are rejected.
@@ -390,12 +387,21 @@ Implementation effort if this were ever revisited: low for a read-only observer,
 - [x] Accepted-but-timed-out submissions persist `UNKNOWN`, block new submissions, reconcile from today/history/positions and are never retried automatically.
 - [x] Leveraged instruments are rejected by default (`R015`) and checked on effective exposure only when explicitly opted in.
 - [x] Unexpected broker response objects or mismatched keys become `UNKNOWN` instead of fills.
-- [x] Tier calculation maps SPY return/trend/volatility to the documented exposure tiers, with the `40%` CASH gate and the `30%` leverage cap.
-- [x] ETF selection follows the target: `|target| <= 100%` → SPY/SH, above → UPRO/SPXU, with one directional position at a time.
-- [x] Leverage-aware sizing spends `|target| / leverage` of equity as cash and floors to whole shares at the bar close.
-- [x] risk-v2 gate enforces the 20% floor (`R016`), the 150% signed-effective ceiling (`R017`) and declared-target consistency (`R018`); risk-v1 `R004`/`R005`/`R015` behaviour is unchanged.
-- [x] Resize rules are deterministic: tier moves resize only on `>= 1` share and `>= 5%` relative deltas; direction flips SELL first; 3x holdings aged `>= 5` sessions force a full duration exit with a `±100%` re-entry cap.
+- [x] Tier calculation maps SPY return/trend/volatility to the documented risk-v3 exposure tiers — `<1.5%` → 0%, `1.5–3%` → 10%, `3–5%` → 25%/40% trend-confirmed, `5–8%` → 40%, `>= 8%` → 40% capped — with the `40%` CASH volatility gate and no leverage path.
+- [x] ETF selection follows the target: `f > 0` → SPY, `f < 0` → SH, one directional position at a time; UPRO/SPXU are outside the universe and rejected by default-deny validation.
+- [x] Sizing spends `|target|` of equity as cash and floors to whole shares at the bar close.
+- [x] HISTORICAL suite: risk-v2 floor (`R016`), signed-effective ceiling (`R017`) and target consistency (`R018`), plus then-retained risk-v1 regressions. This records prior coverage, not a current selectable v1 policy or verification of the new supervised floor handling.
+- [x] Resize rules are deterministic: tier moves resize only on `>= 1` share and `>= 5%` relative deltas; direction flips SELL first.
 - [x] The risk monitor's due-window resolution, drawdown, signed/unsigned exposure, holding-duration, open-order and ambiguous-submission checks, and its kill-switch policy (drawdown or pre-close unresolved only) are tested.
 - [x] The owner-operable kill-switch CLI requires explicit confirmation to engage or release and writes audit events; the persistent switch blocks new orders without liquidating holdings.
+- [x] risk-v3 focused coverage: WEAK/MODERATE/STRONG sizing (10%/25%/40% and the trend-confirmed 40% MODERATE), CASH at 0%, the 40% cap, UPRO/SPXU rejection (including attempted leverage permission), SPY/SH reversals after confirmed liquidation, preserved controls, stale-policy approval rejection and no submission from previews (suite green 20 November 2026, 558 backend tests + 19 frontend tests).
 
-Implemented in `backend/tests` (**400 tests on 19 November 2026**, including REST auth/read, execution-scope validation, quote/session execution preflight, disabled order-transport success/partial/rejection/timeout/duplicate/`UNKNOWN` mocks, order-correlation/reconciliation, Qoder runner/tool, four-ETF SPY signal/tier/HOLD/CASH/reversal/resize/duration tests, dual risk policy, risk monitor, kill-switch CLI, ETF baseline, scheduler catch-up/lock/interruption recovery, clock-skew handling and read-only dashboard API tests). The REST adapter also completed real read-only provider calls to the competition account: exact identity, 100,000 USD cash/equity, zero positions and orders, `reconciled=true`. The genuine current-market `spy-directional` run `qoder-328aefff-7dde-4a98-ac76-99b3e0e33728` recorded BEARISH target SH and a full `R002`/`R007`/`R012`/`R010`/`R014` rejection; earlier runs are retained as historical execution evidence. Provider timestamps within 5 seconds of local time are accepted as clock skew; larger skew fails closed, and stale quotes separately report their age. MCP adapter results remain provider-shaped fixtures. No Python transport connects the MCP adapter to cloud data, and no order was placed. Use mock responses for negative/failure-injection tests; avoid deliberately compromising the competition paper account.
+**HISTORICAL verification record:** the prior `backend/tests` suite recorded 400 tests on 19 November 2026, including the then-dual-policy implementation. That count is not a new result for the current mandate. Initial real REST reads observed the exact competition account at 100,000 USD with no positions/orders; later QQQ diagnostic BUY `3115842` and SELL `3115920` filled and reconciled on 18 November. The historical Qoder run `qoder-328aefff-7dde-4a98-ac76-99b3e0e33728` recorded the old SH proposal and rejection, not a v2 order. Provider clock skew ≤5s remains tolerated; larger skew fails closed, and stale quotes report age separately. MCP adapter results remain fixtures. Use mocks for negative tests, not unsafe competition-account experiments.
+
+**Current backend acceptance checks:** verified by focused risk, research, trading-flow and supervised CLI tests on 20 November after the risk-v3 simplification; overall suite results are recorded in `docs/evidence.md`.
+
+- [x] Risk-v1 cannot be selected/reactivated; active research and execution are risk-v3 only; pre-simplification risk-v2 decisions remain distinguishable as HISTORICAL.
+- [x] EVERY supervised BUY/SELL requires exact-proposal/key approval, including after prior fills; owner approval is independent of the 30-second risk TTL; stale-policy approvals cannot authorise an order and superseding preserves the historical row.
+- [x] Execution scope is SPY/SH only; UPRO/SPXU are rejected by `R002`/`R015` even when a leverage permission is attempted, and the supervised path skips the floor.
+- [x] Signed-effective 40% ceiling, ±5pp target tolerance, one-position gate, 2% drawdown, US$5 buffer and 300s/60s freshness remain enforced.
+- [x] `--proposal-file` preserves research timestamps/evidence/target and rejects mismatched required flags; supervised previews report per-rule states and current/post signed exposure without submission.

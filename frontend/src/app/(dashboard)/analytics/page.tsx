@@ -78,9 +78,11 @@ function datasetWindow(dataset: AnalyticsDataset) {
 
 function EquityChart({ dataset }: { dataset: AnalyticsDataset }) {
   const rows = useMemo(() => {
-    const dates = Array.from(
-      new Set(dataset.curves.flatMap((curve) => curve.points.map((point) => point.date)))
-    ).sort()
+    const dates = dataset.axis_dates?.length
+      ? dataset.axis_dates
+      : Array.from(
+          new Set(dataset.curves.flatMap((curve) => curve.points.map((point) => point.date)))
+        ).sort()
     return dates.map((date) => {
       const row: Record<string, string | number | null> = { date }
       for (const curve of dataset.curves) {
@@ -120,7 +122,7 @@ function EquityChart({ dataset }: { dataset: AnalyticsDataset }) {
               stroke={LINE_COLORS[index % LINE_COLORS.length]}
               strokeWidth={1.8}
               dot={false}
-              connectNulls
+              connectNulls={!dataset.axis_dates?.length}
               isAnimationActive={false}
             />
           ))}
@@ -157,17 +159,17 @@ export default function AnalyticsPage() {
 
       {!data.paper_account_performance.available ? (
         <InfoNote tone="warning">
-          <span className="font-medium">No paper-account performance yet.</span>{" "}
-          {data.paper_account_performance.reason} Results below are backtest research,
-          not account returns or broker fills.
+          <span className="font-medium">No paper-account equity observations yet.</span>{" "}
+          {data.paper_account_performance.reason} SPY below is the benchmark from
+          completed Moomoo daily bars.
         </InfoNote>
       ) : null}
 
       {!dataset ? (
         <PageState
           kind="empty"
-          title="No historical datasets"
-          description="No backtest or catalyst evidence is available."
+          title="No competition-period evidence yet"
+          description="Paper-account equity and completed SPY daily bars appear here once the competition period produces data."
         />
       ) : (
         <>
@@ -187,13 +189,13 @@ export default function AnalyticsPage() {
             </p>
           </div>
 
-          <Section title="Equity curves" description="Normalised to 100" flush>
+          <Section title="Equity curves" description="Normalised to 100 · competition period" flush>
             <div className="p-4">
               <EquityChart dataset={dataset} />
             </div>
           </Section>
 
-          <Section title="Strategy performance" flush>
+          <Section title="Competition performance" flush>
             <TableShell>
               <thead>
                 <tr>

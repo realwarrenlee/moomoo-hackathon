@@ -56,21 +56,6 @@ def _v2_activation(**overrides) -> TradingActivation:
     return activation.model_copy(update=overrides)
 
 
-def _v1_activation() -> TradingActivation:
-    return TradingActivation(
-        activated_at_utc=NOW,
-        activated_by="owner",
-        account_fingerprint=FINGERPRINT,
-        strategy_version="spy-directional",
-        allowed_symbols=("SPY", "SH"),
-        risk_policy_version="risk-v1",
-        max_single_exposure=Decimal("0.10"),
-        max_total_exposure=Decimal("0.30"),
-        position_fraction=Decimal("0.05"),
-        max_daily_drawdown=Decimal("0.02"),
-    )
-
-
 class FakeFeed:
     def __init__(self, days: tuple[date, ...]) -> None:
         self.days = sorted(set(days))
@@ -164,37 +149,70 @@ def test_drawdown_breach_threshold():
     assert risk_monitor._drawdown_breach(safe, Decimal("0.02")) is None
 
 
-def test_v2_exposure_breach_is_signed_and_effective():
-    spxu = _account(
-        positions=(Position(symbol="SPXU", quantity=1000, market_value=Decimal("60000")),)
+@pytest.mark.parametrize("symbol,sign", [("SPY", 1), ("SH", -1)])
+def test_v3_exposure_breach_is_signed_and_effective(symbol, sign):
+    account = _account(
+        positions=(Position(symbol=symbol, quantity=1000, market_value=Decimal("60000")),)
     )
-    breaches = risk_monitor._exposure_breaches(spxu, _v2_activation())
-    assert [item["type"] for item in breaches] == ["EFFECTIVE_EXPOSURE"]
-    spy = _account(
-        positions=(Position(symbol="SPY", quantity=100, market_value=Decimal("100000")),)
-    )
-    assert risk_monitor._exposure_breaches(spy, _v2_activation()) == []
+    breaches = risk_monitor._exposure_breaches(account, _v2_activation())
+    assert breaches == [{
+        "type": "EFFECTIVE_EXPOSURE",
+        "signed_effective": str(Decimal("60000") * sign),
+        "fraction": str(Decimal("0.6") * sign),
+        "limit": "45000.00",
+    }]
 
 
-def test_v1_exposure_breaches_use_unsigned_limits():
-    activation = _v1_activation()
-    single = _account(
-        positions=(Position(symbol="SPY", quantity=100, market_value=Decimal("11000")),)
+@pytest.mark.parametrize("symbol", ["SPY", "SH"])
+@pytest.mark.parametrize("market_value", ["11000", "40000", "45000"])
+def test_exposure_monitor_has_no_single_or_gross_caps(symbol, market_value):
+    account = _account(
+        positions=(Position(symbol=symbol, quantity=100, market_value=Decimal(market_value)),)
     )
-    assert [item["type"] for item in risk_monitor._exposure_breaches(single, activation)] == [
-        "SINGLE_EXPOSURE"
-    ]
-    gross = _account(
+    assert risk_monitor._exposure_breaches(account, _v2_activation()) == []
+
+
+def test_exposure_monitor_requires_an_executable_activation():
+    account = _account(
+        positions=(Position(symbol="SH", quantity=1000, market_value=Decimal("60000")),)
+    )
+    assert risk_monitor._exposure_breaches(account, None) == []
+
+
+def test_v3_exposure_monitor_nets_signed_holdings():
+    account = _account(
         positions=(
-            Position(symbol="SPY", quantity=100, market_value=Decimal("15000")),
-            Position(symbol="SH", quantity=100, market_value=Decimal("15500")),
+            Position(symbol="SPY", quantity=1000, market_value=Decimal("40000")),
+            Position(symbol="SH", quantity=1000, market_value=Decimal("40000")),
         )
     )
-    types = [item["type"] for item in risk_monitor._exposure_breaches(gross, activation)]
-    assert types == ["SINGLE_EXPOSURE", "SINGLE_EXPOSURE", "GROSS_EXPOSURE"]
+    assert risk_monitor._exposure_breaches(account, _v2_activation()) == []
 
 
-def test_duration_breach_counts_trading_sessions_after_entry(tmp_path):
+def test_exposure_monitor_skips_symbols_outside_the_universe():
+    account = _account(
+        positions=(Position(symbol="UPRO", quantity=1000, market_value=Decimal("60000")),)
+    )
+    assert risk_monitor._exposure_breaches(account, _v2_activation()) == []
+
+
+def test_v3_exposure_monitor_applies_pinned_ceiling_with_tolerance():
+    account = _account(
+        positions=(Position(symbol="SPY", quantity=100, market_value=Decimal("85000")),)
+    )
+    activation = _v2_activation(max_effective_exposure_fraction=Decimal("0.80"))
+    assert risk_monitor._exposure_breaches(account, activation) == []
+    over = _account(
+        positions=(Position(symbol="SPY", quantity=100, market_value=Decimal("85001")),)
+    )
+    assert [item["type"] for item in risk_monitor._exposure_breaches(over, activation)] == [
+        "EFFECTIVE_EXPOSURE"
+    ]
+
+
+def test_duration_breach_is_inert_for_the_v21_universe(tmp_path):
+    """risk-v3 trades 1x instruments only, so holding-duration breaches
+    cannot fire for SPY/SH, and symbols outside the universe are skipped."""
     ledger = SQLiteLedger(tmp_path / "ledger.db")
     now = datetime(2026, 11, 18, 16, 0, tzinfo=UTC)
     ledger.append_event(
@@ -202,18 +220,14 @@ def test_duration_breach_counts_trading_sessions_after_entry(tmp_path):
         now,
         None,
         "auto_paper_executor",
-        {"symbol": "UPRO", "session": "2026-11-10"},
+        {"symbol": "SPY", "session": "2026-11-10"},
     )
     sessions = (date(2026, 11, 10), date(2026, 11, 11), date(2026, 11, 12), date(2026, 11, 13), date(2026, 11, 16), date(2026, 11, 17), date(2026, 11, 18))
     feed = FakeFeed(sessions)
-    account = _account(positions=(Position(symbol="UPRO", quantity=100, market_value=Decimal("10000")),))
-    breach = risk_monitor._duration_breach(account, ledger, feed, date(2026, 11, 18))
-    assert breach is not None and breach["type"] == "LEVERAGED_HOLDING_DURATION"
-    assert breach["sessions_held"] == 6
-    short = risk_monitor._duration_breach(account, ledger, feed, date(2026, 11, 13))
-    assert short is None
-    one_x = _account(positions=(Position(symbol="SPY", quantity=100, market_value=Decimal("10000")),))
-    assert risk_monitor._duration_breach(one_x, ledger, feed, date(2026, 11, 18)) is None
+    held = _account(positions=(Position(symbol="SPY", quantity=100, market_value=Decimal("10000")),))
+    assert risk_monitor._duration_breach(held, ledger, feed, date(2026, 11, 18)) is None
+    legacy = _account(positions=(Position(symbol="UPRO", quantity=100, market_value=Decimal("10000")),))
+    assert risk_monitor._duration_breach(legacy, ledger, feed, date(2026, 11, 18)) is None
 
 
 def test_leftover_open_orders_reported(tmp_path):
@@ -242,22 +256,24 @@ def _run(tmp_path, window, *, account=None, reconciler=None, activation=None, fe
     return ledger, report
 
 
-def test_midday_drawdown_breach_engages_kill_switch_once(tmp_path):
-    account = _account(equity=Decimal("97999"), day_start_equity=Decimal("100000"))
-    ledger, report = _run(tmp_path, "midday", account=account, activation=_v2_activation())
+@pytest.mark.parametrize("with_activation", [True, False])
+def test_midday_drawdown_breach_engages_kill_switch_once(tmp_path, with_activation):
+    account = _account(equity=Decimal("98000"), day_start_equity=Decimal("100000"))
+    activation = _v2_activation() if with_activation else None
+    ledger, report = _run(tmp_path, "midday", account=account, activation=activation)
     assert report["status"] == "COMPLETED"
     assert [item["type"] for item in report["breaches"]] == ["DAILY_DRAWDOWN"]
     assert ledger.kill_switch_engaged()
     assert "KILL_SWITCH_ENGAGED" in _events(ledger)
     first_count = _events(ledger).count("KILL_SWITCH_ENGAGED")
-    ledger2, report2 = _run(tmp_path, "midday", account=account, activation=_v2_activation())
+    ledger2, report2 = _run(tmp_path, "midday", account=account, activation=activation)
     assert report2["kill_switch"] == {"engaged": False, "reason": "daily drawdown threshold reached"}
     assert _events(ledger2).count("KILL_SWITCH_ENGAGED") == first_count
 
 
 def test_exposure_breach_reports_without_kill_switch(tmp_path):
     account = _account(
-        positions=(Position(symbol="SPXU", quantity=1000, market_value=Decimal("60000")),)
+        positions=(Position(symbol="SH", quantity=1000, market_value=Decimal("60000")),)
     )
     ledger, report = _run(tmp_path, "midday", account=account, activation=_v2_activation())
     assert report["status"] == "COMPLETED"
@@ -265,15 +281,9 @@ def test_exposure_breach_reports_without_kill_switch(tmp_path):
     assert not ledger.kill_switch_engaged()
 
 
-def test_pre_close_open_order_and_duration_breaches_do_not_engage(tmp_path):
+def test_pre_close_open_order_does_not_engage(tmp_path):
     ledger = SQLiteLedger(tmp_path / "ledger.db")
-    now = datetime(2026, 11, 18, 16, 0, tzinfo=UTC)
-    ledger.append_event(
-        "AUTO_PAPER_ENTRY", now, None, "auto_paper_executor",
-        {"symbol": "UPRO", "session": "2026-11-10"},
-    )
     account = _account(
-        positions=(Position(symbol="UPRO", quantity=100, market_value=Decimal("10000")),),
         open_orders=(
             OpenOrder(symbol="SPY", side=OrderSide.BUY, remaining_quantity=10, reference_price=Decimal("500")),
         ),
@@ -291,7 +301,7 @@ def test_pre_close_open_order_and_duration_breaches_do_not_engage(tmp_path):
         session_iso="2026-11-18",
     )
     types = [item["type"] for item in report["breaches"]]
-    assert set(types) == {"LEVERAGED_HOLDING_DURATION", "OPEN_ORDER_AT_PRE_CLOSE"}
+    assert set(types) == {"OPEN_ORDER_AT_PRE_CLOSE"}
     assert not ledger.kill_switch_engaged()
 
 

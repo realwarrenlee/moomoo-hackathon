@@ -12,6 +12,7 @@ import os
 import webbrowser
 from collections.abc import Mapping, Sequence
 from datetime import UTC, datetime
+from decimal import Decimal
 from pathlib import Path
 
 from app.broker.account_lock import AccountLock, AccountLockError, fingerprint_account_id
@@ -28,6 +29,7 @@ from app.broker.moomoo_auth import (
 from app.broker.moomoo_orders import (
     MoomooSimulatedOrderAdapter,
     OrderAdapterError,
+    reconcile_unknown_order,
 )
 from app.broker.moomoo_quotes import MoomooQuoteFeed
 from app.broker.moomoo_rest import (
@@ -38,18 +40,25 @@ from app.broker.moomoo_rest import (
 )
 from app.ledger.store import SQLiteLedger
 from app.models.contracts import (
+    AccountSnapshot,
     ControlState,
     OrderRequest,
     OrderSide,
+    OrderStatus,
     PolicyDecision,
     ProposalAction,
+    Quote,
+    RiskDecision,
     TradeProposal,
     TradingActivation,
 )
-from app.risk.policy import RiskGate
+from app.research.instruments import INSTRUMENTS
+from app.research.strategy import STRATEGY_VERSION
+from app.risk.policy import POLICY_VERSION_V3, RiskGate
 from app.service import build_client_order_key
 from app.supervised import build_supervised_execution
 from app.trading_mode import (
+    SUPERVISED_EXECUTION_SYMBOLS,
     TradingModeError,
     build_auto_paper_activation,
     resolve_trading_mode,
@@ -169,6 +178,26 @@ def _supervised_stack(
 
 
 def _supervised_proposal(args, quote, now: datetime | None = None) -> TradeProposal:
+    if args.proposal_file:
+        try:
+            proposal = TradeProposal.model_validate_json(
+                Path(args.proposal_file).read_text(encoding="utf-8")
+            )
+        except (OSError, ValueError) as exc:
+            raise ValueError("Proposal file could not be read or is not a valid TradeProposal") from exc
+        expected = {
+            "symbol": args.symbol,
+            "action": ProposalAction(args.action),
+            "requested_quantity": args.quantity,
+            "proposal_id": args.proposal_id,
+            "strategy_version": args.strategy_version,
+            "thesis": args.thesis,
+            "invalidation": args.invalidation,
+        }
+        mismatches = [name for name, value in expected.items() if getattr(proposal, name) != value]
+        if mismatches:
+            raise ValueError("Proposal file does not match flags: " + ", ".join(mismatches))
+        return proposal
     decision_time = now or max(datetime.now(UTC), quote.as_of_utc)
     return TradeProposal(
         proposal_id=args.proposal_id,
@@ -184,6 +213,23 @@ def _supervised_proposal(args, quote, now: datetime | None = None) -> TradePropo
     )
 
 
+def _require_current_policy_proposal(proposal: TradeProposal) -> None:
+    """Refuse research proposals whose ID predates risk-v3.
+
+    risk-v3 embeds the policy version in spy-directional proposal IDs, so a
+    proposal without it (e.g. the superseded 576-SH BUY) can never be
+    submitted under the new tiers, even with a fresh approval attempt.
+    """
+    if (
+        proposal.strategy_version == STRATEGY_VERSION
+        and POLICY_VERSION_V3 not in proposal.proposal_id
+    ):
+        raise ValueError(
+            f"Proposal {proposal.proposal_id!r} predates {POLICY_VERSION_V3}; "
+            "generate a fresh proposal under the current policy."
+        )
+
+
 def _reconciliation_outcome(ledger: SQLiteLedger, proposal_id: str) -> str:
     events = [
         event
@@ -195,23 +241,108 @@ def _reconciliation_outcome(ledger: SQLiteLedger, proposal_id: str) -> str:
     return events[-1]["event_type"] if events else "NOT_ATTEMPTED"
 
 
+def _preview_rule_statuses(
+    proposal: TradeProposal,
+    decision: RiskDecision,
+    gate: RiskGate,
+    *,
+    hypothetical_writes_enabled: bool,
+) -> dict[str, object]:
+    checks = {
+        "R001": "Exact competition paper account",
+        "R002": "Approved instrument allowlist",
+        "R003": "Long-only order quantity",
+        "R006": "Daily drawdown",
+        "R007": "Fresh, valid account and quote data",
+        "R008": "Unlevered buying power after buffer",
+        "R009": "Clean reconciliation and no unknown submissions",
+        "R010": "Write controls, kill switch and circuit breaker",
+        "R011": "No duplicate submission",
+        "R012": "Regular exchange session",
+        "R013": "Post-order position count",
+        "R014": "Exact durable owner approval for this order",
+        "R015": "Separate leverage approval and maximum leverage",
+        "R016": "Minimum effective exposure floor",
+        "R017": "Maximum post-order signed effective exposure",
+        "R018": "Declared target exposure consistency",
+        "R019": "Competition single-security 40% concentration cap",
+    }
+    statuses = {}
+    for rule_id, label in checks.items():
+        failures = [reason.message for reason in decision.reasons if reason.rule_id == rule_id]
+        not_applicable = None
+        if proposal.action is ProposalAction.SELL and rule_id in {"R006", "R008", "R013", "R016", "R017", "R018", "R019"}:
+            not_applicable = "BUY-only check; not applied to SELL"
+        elif rule_id == "R016" and not gate.enforce_min_exposure:
+            not_applicable = "Exposure floor disabled for supervised orders"
+        elif rule_id == "R018" and proposal.target_exposure_fraction is None:
+            not_applicable = "No declared target exposure"
+        statuses[rule_id] = {
+            "status": "FAIL" if failures else "N/A" if not_applicable else "PASS",
+            "check": label,
+            "note": "; ".join(failures) if failures else not_applicable,
+        }
+    statuses["R010"].update({
+        "evaluated_order_writes_enabled": hypothetical_writes_enabled,
+        "actual_order_writes_enabled": False,
+        "scope": (
+            "Hypothetical writes enabled for risk evaluation; actual transport writes disabled"
+            if hypothetical_writes_enabled else "Actual writes disabled; no hypothetical override"
+        ),
+    })
+    return statuses
+
+
+def _preview_exposure(
+    proposal: TradeProposal, snapshot: AccountSnapshot, quote: Quote, gate: RiskGate
+) -> dict[str, object]:
+    def multiplier(symbol: str) -> Decimal:
+        direction = INSTRUMENTS[symbol].direction if symbol in INSTRUMENTS else Decimal("1")
+        return gate.leverage_by_symbol.get(symbol, Decimal("1")) * direction
+
+    def amounts(notional: Decimal, effective: Decimal) -> dict[str, object]:
+        return {
+            "notional": str(notional),
+            "equity_fraction": str(notional / snapshot.equity) if snapshot.equity > 0 else None,
+            "signed_effective_notional": str(effective),
+            "signed_effective_equity_fraction": (
+                str(effective / snapshot.equity) if snapshot.equity > 0 else None
+            ),
+        }
+
+    held_notional = sum((item.market_value for item in snapshot.positions), Decimal("0"))
+    held_effective = sum(
+        (item.market_value * multiplier(item.symbol) for item in snapshot.positions), Decimal("0")
+    )
+    pending_buys = [item for item in snapshot.open_orders if item.side is OrderSide.BUY]
+    pending_notional = sum(
+        (item.reference_price * item.remaining_quantity for item in pending_buys), Decimal("0")
+    )
+    pending_effective = sum(
+        (item.reference_price * item.remaining_quantity * multiplier(item.symbol) for item in pending_buys),
+        Decimal("0"),
+    )
+    current_notional = held_notional + pending_notional
+    current_effective = held_effective + pending_effective
+    delta = quote.price * proposal.requested_quantity * (1 if proposal.action is ProposalAction.BUY else -1)
+    effective_delta = delta * multiplier(proposal.symbol)
+    return {
+        "currency": "USD",
+        "equity": str(snapshot.equity),
+        "basis": (
+            "Positions plus pending BUY orders; pending SELL orders are not credited. "
+            "Post-order estimate assumes only the proposed order fills at the quote price, not a confirmed fill."
+        ),
+        "positions": amounts(held_notional, held_effective),
+        "pending_buys": amounts(pending_notional, pending_effective),
+        "current": amounts(current_notional, current_effective),
+        "proposed_delta": amounts(delta, effective_delta),
+        "post_order": amounts(current_notional + delta, current_effective + effective_delta),
+    }
+
+
 def _activation_policy_fields(activation: TradingActivation) -> dict[str, object]:
     return {
-        "max_single_exposure": (
-            str(activation.max_single_exposure)
-            if activation.max_single_exposure is not None
-            else None
-        ),
-        "max_total_exposure": (
-            str(activation.max_total_exposure)
-            if activation.max_total_exposure is not None
-            else None
-        ),
-        "position_fraction": (
-            str(activation.position_fraction)
-            if activation.position_fraction is not None
-            else None
-        ),
         "min_effective_exposure_fraction": (
             str(activation.min_effective_exposure_fraction)
             if activation.min_effective_exposure_fraction is not None
@@ -223,6 +354,11 @@ def _activation_policy_fields(activation: TradingActivation) -> dict[str, object
             else None
         ),
         "max_daily_drawdown": str(activation.max_daily_drawdown),
+        "expires_at_utc": (
+            activation.expires_at_utc.isoformat()
+            if activation.expires_at_utc is not None
+            else None
+        ),
     }
 
 
@@ -231,6 +367,7 @@ def _add_supervised_order_arguments(parser) -> None:
     parser.add_argument("--action", choices=["BUY", "SELL"], required=True)
     parser.add_argument("--quantity", type=int, required=True)
     parser.add_argument("--proposal-id", required=True)
+    parser.add_argument("--proposal-file", help="Exact TradeProposal JSON; order flags must match")
     parser.add_argument("--strategy-version", default="operator-supervised")
     parser.add_argument("--thesis", required=True)
     parser.add_argument("--invalidation", required=True)
@@ -253,6 +390,18 @@ def main(argv: Sequence[str] | None = None) -> int:
     approve.add_argument("--strategy-version", required=True)
     approve.add_argument("--ledger")
     approve.add_argument("--approved-by", default="owner")
+
+    supersede_approval = commands.add_parser(
+        "moomoo-supersede-approval",
+        help="Mark one durable order approval superseded; never submits an order",
+    )
+    supersede_approval.add_argument("--proposal-id", required=True)
+    supersede_approval.add_argument("--strategy-version", required=True)
+    supersede_approval.add_argument("--confirm-supersede", action="store_true")
+    supersede_approval.add_argument("--superseded-by", default="owner")
+    supersede_approval.add_argument("--reason", required=True)
+    supersede_approval.add_argument("--env-file", default=".env")
+    supersede_approval.add_argument("--ledger")
 
     login = commands.add_parser(
         "moomoo-login",
@@ -344,6 +493,19 @@ def main(argv: Sequence[str] | None = None) -> int:
     supervised_reconcile.add_argument("--env-file", default=".env")
     supervised_reconcile.add_argument("--ledger")
 
+    resolve_unknown = commands.add_parser(
+        "moomoo-supervised-resolve-unknown",
+        help=(
+            "Resolve one UNKNOWN submission to REJECTED after re-verifying the broker "
+            "has no matching order. Requires explicit confirmation; never submits."
+        ),
+    )
+    resolve_unknown.add_argument("--client-order-key", required=True)
+    resolve_unknown.add_argument("--confirm-resolve", action="store_true")
+    resolve_unknown.add_argument("--store")
+    resolve_unknown.add_argument("--env-file", default=".env")
+    resolve_unknown.add_argument("--ledger")
+
     auto_paper_status = commands.add_parser(
         "moomoo-auto-paper-status",
         help="Show the trading mode, write flag and durable AUTO_PAPER activation state",
@@ -362,6 +524,10 @@ def main(argv: Sequence[str] | None = None) -> int:
     )
     auto_paper_activate.add_argument("--confirm-auto-paper", action="store_true")
     auto_paper_activate.add_argument("--authorized-by", default="owner")
+    auto_paper_activate.add_argument(
+        "--expires-at",
+        help="Optional ISO 8601 UTC deadline after which the pin stops authorising execution",
+    )
     auto_paper_activate.add_argument("--env-file", default=".env")
     auto_paper_activate.add_argument("--ledger")
 
@@ -381,6 +547,15 @@ def main(argv: Sequence[str] | None = None) -> int:
     kill_switch.add_argument("--ledger")
 
     args = parser.parse_args(argv)
+    file_proposal = None
+    if args.command in {"moomoo-supervised-preview", "moomoo-supervised-execute"} and args.proposal_file:
+        try:
+            # Validate once before any ledger or broker access; preserve the
+            # exact file proposal through the later fresh-quote risk check.
+            file_proposal = _supervised_proposal(args, None)
+        except ValueError as exc:
+            print(f"Supervised proposal failed closed: {exc}")
+            return 1
 
     if args.command == "fingerprint-account":
         account_id = getpass.getpass("Moomoo acc_id (hidden): ").strip()
@@ -631,8 +806,7 @@ def main(argv: Sequence[str] | None = None) -> int:
                 lock.expected_fingerprint, identity.market_id
             )
             prepared = adapter.prepare(request, snapshot)
-            first_order = ledger.submission_count() == 0
-            approval_ok = not first_order or ledger.is_first_order_approved(
+            approval_ok = ledger.is_first_order_approved(
                 client_order_key, proposal.proposal_id
             )
             control = ControlState(
@@ -640,9 +814,13 @@ def main(argv: Sequence[str] | None = None) -> int:
                 kill_switch_engaged=ledger.kill_switch_engaged(),
                 first_order_approved=approval_ok,
             )
-            decision = RiskGate(
-                expected_account_fingerprint=lock.expected_fingerprint
-            ).evaluate(
+            risk_gate = RiskGate(
+                expected_account_fingerprint=lock.expected_fingerprint,
+                policy_version=POLICY_VERSION_V3,
+                allowed_symbols=frozenset(SUPERVISED_EXECUTION_SYMBOLS),
+                enforce_min_exposure=False,
+            )
+            decision = risk_gate.evaluate(
                 proposal=proposal,
                 account=snapshot,
                 quote=quote,
@@ -700,6 +878,11 @@ def main(argv: Sequence[str] | None = None) -> int:
             "proposal": proposal.model_dump(mode="json"),
             "risk_decision": decision.model_dump(mode="json"),
             "risk_approved": risk_approved,
+            "rule_statuses": _preview_rule_statuses(
+                proposal, decision, risk_gate, hypothetical_writes_enabled=False
+            ),
+            "exposure": _preview_exposure(proposal, snapshot, quote, risk_gate),
+            "approval": {"required": True, "found": approval_ok, "durable": True},
             "all_safety_checks_pass": risk_approved,
             "safety_checks": {
                 "order_writes_enabled": False,
@@ -739,7 +922,8 @@ def main(argv: Sequence[str] | None = None) -> int:
             now = datetime.now(UTC)
             quote = stack.quote_feed.get_quote(args.symbol, now)
             decision_time = max(datetime.now(UTC), quote.as_of_utc)
-            proposal = _supervised_proposal(args, quote, decision_time)
+            proposal = file_proposal or _supervised_proposal(args, quote, decision_time)
+            _require_current_policy_proposal(proposal)
             client_order_key = build_client_order_key(
                 proposal.strategy_version, proposal.proposal_id
             )
@@ -755,8 +939,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             prepared = MoomooSimulatedOrderAdapter(
                 lock.expected_fingerprint, identity.market_id
             ).prepare(request, snapshot)
-            first_order = ledger.submission_count() == 0
-            approval_ok = not first_order or ledger.is_first_order_approved(
+            approval_ok = ledger.is_first_order_approved(
                 client_order_key, proposal.proposal_id
             )
             decision = stack.risk_gate.evaluate(
@@ -791,7 +974,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             "order_writes_enabled": False,
             "order_transport_installed": True,
             "risk_decision_scope": (
-                "evaluated with writes enabled and the current durable approval; "
+                "evaluated with writes hypothetically enabled and the current durable approval; "
                 "no transport submission occurred"
             ),
             "granted_scopes": scope_summary(record.scope),
@@ -835,7 +1018,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             "proposal": proposal.model_dump(mode="json"),
             "client_order_key": client_order_key,
             "approval": {
-                "required": first_order,
+                "required": True,
                 "found": approval_ok,
                 "identifier": client_order_key if approval_ok else None,
                 "durable": True,
@@ -847,6 +1030,10 @@ def main(argv: Sequence[str] | None = None) -> int:
             },
             "risk_decision": decision.model_dump(mode="json"),
             "risk_approved": risk_approved,
+            "rule_statuses": _preview_rule_statuses(
+                proposal, decision, stack.risk_gate, hypothetical_writes_enabled=True
+            ),
+            "exposure": _preview_exposure(proposal, snapshot, quote, stack.risk_gate),
             "all_safety_checks_pass": (
                 risk_approved
                 and approval_ok
@@ -890,12 +1077,11 @@ def main(argv: Sequence[str] | None = None) -> int:
             stack, lock, ledger, record = _supervised_stack(
                 args, order_writes_enabled=True, require_write=True
             )
-            first_order = ledger.submission_count() == 0
-            if first_order and not ledger.is_first_order_approved(
+            if not ledger.is_first_order_approved(
                 client_order_key, args.proposal_id
             ):
                 print(
-                    "Refusing: the first paper order has no durable approval for "
+                    "Refusing: this paper order has no durable approval for "
                     "this exact proposal."
                 )
                 return 2
@@ -906,7 +1092,8 @@ def main(argv: Sequence[str] | None = None) -> int:
             now = datetime.now(UTC)
             quote = stack.quote_feed.get_quote(args.symbol, now)
             decision_time = max(datetime.now(UTC), quote.as_of_utc)
-            proposal = _supervised_proposal(args, quote, decision_time)
+            proposal = file_proposal or _supervised_proposal(args, quote, decision_time)
+            _require_current_policy_proposal(proposal)
             submissions_before = ledger.submission_count()
             result = stack.service.execute(proposal, quote, decision_time)
             submission_attempted = ledger.submission_count() > submissions_before
@@ -1028,6 +1215,85 @@ def main(argv: Sequence[str] | None = None) -> int:
         print(json.dumps(report, indent=2, ensure_ascii=True))
         return 0 if reconciled is not None else 1
 
+    if args.command == "moomoo-supervised-resolve-unknown":
+        try:
+            stack, lock, ledger, record = _supervised_stack(
+                args, order_writes_enabled=False, require_write=False
+            )
+            local = ledger.order_for_key(args.client_order_key)
+            if local is None:
+                print("No local supervised order matches that client order key.")
+                return 1
+            if local.status is not OrderStatus.UNKNOWN:
+                print(
+                    f"Refusing to resolve: local order status is "
+                    f"{local.status.value}, not UNKNOWN. Nothing was written."
+                )
+                return 2
+            now = datetime.now(UTC)
+            verdict = reconcile_unknown_order(local, stack.reads, now)
+            if verdict.outcome != "NO_MATCH":
+                print(
+                    f"Refusing to resolve ({verdict.outcome}): {verdict.detail}. "
+                    "Run `moomoo-supervised-reconcile` instead if a broker order "
+                    "now exists. Nothing was written."
+                )
+                return 2
+            if not args.confirm_resolve:
+                print(
+                    "Broker re-verification passed (no matching order), but "
+                    "--confirm-resolve is required. Nothing was written."
+                )
+                return 2
+            resolved = local.model_copy(
+                update={
+                    "status": OrderStatus.REJECTED,
+                    "last_broker_sync_utc": now,
+                }
+            )
+            ledger.record_order(resolved)
+            ledger.append_event(
+                "UNKNOWN_RESOLVED",
+                now,
+                local.proposal_id,
+                "resolve_unknown_cli",
+                {
+                    "client_order_key": args.client_order_key,
+                    "reason": (
+                        "broker has no matching order; transport failure before "
+                        "acknowledgement"
+                    ),
+                    "today_orders": verdict.today_orders,
+                    "history_orders": verdict.history_orders,
+                },
+                local.proposal_id,
+            )
+        except (
+            MoomooAuthError,
+            MoomooRestError,
+            AccountLockError,
+            OrderAdapterError,
+            ValueError,
+        ) as exc:
+            print(f"Unknown-order resolution failed closed: {exc}")
+            return 1
+        report = {
+            "mode": "PAPER",
+            "read_only_resolution": True,
+            "order_writes_enabled": False,
+            "granted_scopes": scope_summary(record.scope),
+            "client_order_key": args.client_order_key,
+            "previous_status": "UNKNOWN",
+            "resolved_status": "REJECTED",
+            "broker_evidence": {
+                "today_orders": verdict.today_orders,
+                "history_orders": verdict.history_orders,
+                "detail": verdict.detail,
+            },
+        }
+        print(json.dumps(report, indent=2, ensure_ascii=True))
+        return 0
+
     if args.command == "moomoo-auto-paper-status":
         load_local_env(Path(args.env_file))
         ledger = SQLiteLedger(args.ledger or ledger_path_from_env(os.environ))
@@ -1091,12 +1357,29 @@ def main(argv: Sequence[str] | None = None) -> int:
             )
             return 2
         fingerprint = os.environ.get("COMPETITION_ACCOUNT_FINGERPRINT", "").strip()
+        if args.expires_at is not None:
+            try:
+                expires_at = datetime.fromisoformat(
+                    args.expires_at.replace("Z", "+00:00")
+                )
+            except ValueError:
+                print("Refusing: --expires-at must be an ISO 8601 UTC timestamp")
+                return 2
+            if expires_at.tzinfo is None:
+                print("Refusing: --expires-at must include a UTC offset")
+                return 2
+            if expires_at <= datetime.now(UTC):
+                print("Refusing: --expires-at must be in the future")
+                return 2
+        else:
+            expires_at = None
         ledger = SQLiteLedger(args.ledger or ledger_path_from_env(os.environ))
         try:
             activation = build_auto_paper_activation(
                 fingerprint,
                 datetime.now(UTC),
                 activated_by=args.authorized_by,
+                expires_at_utc=expires_at,
             )
         except TradingModeError as exc:
             print(f"Refusing: {exc}")
@@ -1191,6 +1474,42 @@ def main(argv: Sequence[str] | None = None) -> int:
         }, indent=2, ensure_ascii=True))
         return 0
 
+    if args.command == "moomoo-supersede-approval":
+        load_local_env(Path(args.env_file))
+        ledger = SQLiteLedger(args.ledger or ledger_path_from_env(os.environ))
+        client_order_key = build_client_order_key(args.strategy_version, args.proposal_id)
+        if not args.confirm_supersede:
+            print("Refusing: --confirm-supersede is required. Nothing was written.")
+            return 2
+        now = datetime.now(UTC)
+        superseded = ledger.supersede_order_approval(
+            client_order_key, now, args.superseded_by, args.reason
+        )
+        if superseded:
+            ledger.append_event(
+                "APPROVAL_SUPERSEDED",
+                now,
+                None,
+                "operator-cli",
+                {
+                    "client_order_key": client_order_key,
+                    "proposal_id": args.proposal_id,
+                    "superseded_by": args.superseded_by,
+                    "reason": args.reason,
+                },
+            )
+        print(json.dumps({
+            "mode": "PAPER",
+            "superseded": superseded,
+            "client_order_key": client_order_key,
+            "proposal_id": args.proposal_id,
+            "note": (
+                "The approval row remains in the ledger as historical evidence "
+                "but can no longer authorise an order under any policy."
+            ),
+        }, indent=2, ensure_ascii=True))
+        return 0
+
     ledger_path = args.ledger or ledger_path_from_env(os.environ)
     client_order_key = build_client_order_key(args.strategy_version, args.proposal_id)
     ledger = SQLiteLedger(ledger_path)
@@ -1201,6 +1520,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         args.approved_by,
     )
     print(f"Recorded approval for client_order_key={client_order_key}")
+    print(f"Policy version: {POLICY_VERSION_V3}")
     print("No order was submitted. Order writes remain disabled unless separately enabled.")
     return 0
 

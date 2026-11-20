@@ -63,7 +63,7 @@ export type SafetyView = {
   trading_mode: string
   order_writes_enabled: boolean
   kill_switch_engaged: boolean
-  first_order_approval_count: number
+  first_order_approval_count: number // Legacy field name; count never approves a new order.
   submission_count: number
   unknown_submissions: boolean
   broker_order_endpoint_available: boolean
@@ -238,14 +238,12 @@ export type RiskResponse = {
   generated_at_utc: string
   mode: "PAPER"
   read_only: boolean
-  policy_version: string
+  policy_version: "risk-v3"
   limits: {
-    max_single_exposure_pct?: number | null
-    max_total_exposure_pct?: number | null
-    min_effective_exposure_pct?: number | null
-    max_effective_exposure_pct?: number | null
-    max_leverage?: number | null
-    max_open_positions: number
+    min_effective_exposure_pct: number // Research floor; skipped by the supervised path.
+    max_effective_exposure_pct: number
+    max_leverage: number // Policy ceiling, not current leveraged execution permission.
+    max_open_positions: number // RiskGate maximum; strategy separately permits one holding.
     max_daily_drawdown_pct: number
     max_quote_age_seconds: number
     max_account_age_seconds: number
@@ -258,6 +256,13 @@ export type RiskResponse = {
   account: AccountView | null
   quotes: QuoteView[]
   last_real_preflight: PreflightView | null
+  activation?: {
+    policy_version?: string | null
+    allowed_symbols?: string[] | null
+    activated_at_utc?: string | null
+    expires_at_utc?: string | null
+    status?: string | null
+  } | null
   warnings: string[]
 }
 
@@ -295,6 +300,7 @@ export type AnalyticsDataset = {
   curves: Curve[]
   metrics: MetricRow[]
   limitations: string[]
+  axis_dates?: string[] | null
   provenance: Provenance
 }
 
@@ -590,8 +596,6 @@ export const RISK_RULES: Record<string, string> = {
   R001: "Account verification",
   R002: "Execution allowlist",
   R003: "No short positions",
-  R004: "Single-position exposure",
-  R005: "Gross exposure",
   R006: "Daily drawdown stop",
   R007: "Quote freshness",
   R008: "Cash-only buying power",
@@ -600,16 +604,22 @@ export const RISK_RULES: Record<string, string> = {
   R011: "Duplicate submission",
   R012: "Regular trading session",
   R013: "Position count",
-  R014: "First-order approval",
+  R014: "Approval or autonomous authorization",
   R015: "Leverage limit",
   R016: "Minimum exposure floor",
   R017: "Maximum effective exposure",
   R018: "Declared target consistency",
 }
 
+// Retired checks remain readable in recorded preflight and audit evidence only.
+const HISTORICAL_RISK_RULES: Record<string, string> = {
+  R004: "Single-position exposure",
+  R005: "Gross exposure",
+}
+
 export function ruleLabel(ruleId?: string | null): string {
   if (!ruleId) return "Rule"
-  return RISK_RULES[ruleId] ?? ruleId
+  return RISK_RULES[ruleId] ?? HISTORICAL_RISK_RULES[ruleId] ?? ruleId
 }
 
 export function riskDecisionLabel(decision?: string | null): string {

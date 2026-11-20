@@ -1,3 +1,4 @@
+from dataclasses import replace
 from datetime import UTC, date, datetime, timedelta
 from decimal import Decimal
 from pathlib import Path
@@ -26,13 +27,12 @@ from app.research.evaluate import INITIAL_EQUITY, buy_and_hold, cash_baseline, s
 from app.research.instruments import (
     CANDIDATE_SYMBOLS,
     INSTRUMENTS,
-    select_instrument,
     select_instrument_for_exposure,
 )
 from app.risk.policy import RiskGate
 from app.research.strategy import (
-    EXPOSURE_POLICY_V1,
-    EXPOSURE_POLICY_V2,
+    EXPOSURE_POLICY_V3,
+    ExposurePolicy,
     MIN_COMPLETED_SESSIONS,
     STRATEGY_VERSION,
     decide,
@@ -117,36 +117,24 @@ def flat_account(now: datetime, *, equity: Decimal = Decimal("100000")) -> Accou
     )
 
 
-def test_universe_has_exactly_four_directional_etfs():
-    assert CANDIDATE_SYMBOLS == ("SPY", "UPRO", "SH", "SPXU")
+def test_universe_has_exactly_two_directional_etfs():
+    assert CANDIDATE_SYMBOLS == ("SPY", "SH")
     assert INSTRUMENTS["SPY"].effective_exposure == Decimal("1")
-    assert INSTRUMENTS["UPRO"].effective_exposure == Decimal("3")
     assert INSTRUMENTS["SH"].effective_exposure == Decimal("-1")
-    assert INSTRUMENTS["SPXU"].effective_exposure == Decimal("-3")
     assert not INSTRUMENTS["SPY"].leveraged
     assert not INSTRUMENTS["SH"].leveraged
-    assert INSTRUMENTS["UPRO"].leveraged
-    assert INSTRUMENTS["SPXU"].leveraged
-
-
-def test_instrument_mapping_prefers_leverage_only_when_approved():
-    assert select_instrument(1, False, False) == "SPY"
-    assert select_instrument(1, True, False) == "SPY"
-    assert select_instrument(1, True, True) == "UPRO"
-    assert select_instrument(-1, False, False) == "SH"
-    assert select_instrument(-1, True, False) == "SH"
-    assert select_instrument(-1, True, True) == "SPXU"
-    assert select_instrument(0, True, True) is None
+    assert "UPRO" not in INSTRUMENTS
+    assert "SPXU" not in INSTRUMENTS
 
 
 def test_instrument_selection_follows_the_signed_exposure_target():
     assert select_instrument_for_exposure(1, Decimal("0")) is None
+    assert select_instrument_for_exposure(1, Decimal("0.10")) == "SPY"
     assert select_instrument_for_exposure(1, Decimal("0.40")) == "SPY"
-    assert select_instrument_for_exposure(1, Decimal("1.00")) == "SPY"
-    assert select_instrument_for_exposure(1, Decimal("1.50")) == "UPRO"
-    assert select_instrument_for_exposure(-1, Decimal("-0.60")) == "SH"
-    assert select_instrument_for_exposure(-1, Decimal("-1.00")) == "SH"
-    assert select_instrument_for_exposure(-1, Decimal("-1.50")) == "SPXU"
+    assert select_instrument_for_exposure(1, Decimal("1.50")) == "SPY"
+    assert select_instrument_for_exposure(-1, Decimal("-0.10")) == "SH"
+    assert select_instrument_for_exposure(-1, Decimal("-0.40")) == "SH"
+    assert select_instrument_for_exposure(-1, Decimal("-1.50")) == "SH"
     assert select_instrument_for_exposure(0, Decimal("0.5")) is None
 
 
@@ -162,51 +150,38 @@ def test_bullish_and_bearish_signals_select_matching_unleveraged_etf():
     assert bearish.action == "BUY"
 
 
-def test_v1_policy_keeps_strong_signals_in_one_x_etfs():
-    strong = directional_history(Decimal("103.2"))
-    snapshot = screen(
-        strong,
-        datetime(2026, 3, 20, 21, 0, tzinfo=UTC),
-        exposure_policy=EXPOSURE_POLICY_V1,
-    )
-    assert snapshot.market_state == "STRONG_BULLISH"
-    assert snapshot.selected_symbol == "SPY"
-    assert snapshot.target_exposure_fraction is None
-
-    bearish = directional_history(Decimal("96.5"))
-    snapshot = screen(
-        bearish,
-        datetime(2026, 3, 20, 21, 0, tzinfo=UTC),
-        exposure_policy=EXPOSURE_POLICY_V1,
-    )
-    assert snapshot.market_state == "STRONG_BEARISH"
-    assert snapshot.selected_symbol == "SH"
+@pytest.mark.parametrize("version", ["risk-v1", "risk-v2", ""])
+def test_exposure_policy_rejects_unsupported_versions(version):
+    with pytest.raises(ValueError, match="unsupported exposure policy"):
+        replace(EXPOSURE_POLICY_V3, version=version)
+    with pytest.raises(ValueError, match="unsupported exposure policy"):
+        ExposurePolicy(version=version, allow_leveraged=True)
 
 
-def test_v2_strong_signal_maps_to_the_moderate_tier_and_one_x_etf():
+def test_v3_strong_signal_maps_to_the_moderate_tier_and_one_x_etf():
     strong = directional_history(Decimal("103.2"))  # 3.2% 10-session return
     snapshot = screen(strong, datetime(2026, 3, 20, 21, 0, tzinfo=UTC))
     assert snapshot.market_state == "STRONG_BULLISH"
     assert snapshot.exposure_tier == "MODERATE"
-    assert snapshot.target_exposure_fraction == Decimal("0.60")
+    assert snapshot.target_exposure_fraction == Decimal("0.40")
     assert snapshot.selected_symbol == "SPY"
 
 
-def test_v2_exceptional_signals_select_the_three_x_etf():
+def test_v3_exceptional_signals_stay_within_the_forty_percent_ceiling():
     bullish = ramped_history(1)  # +8% smooth ramp, low volatility
     snapshot = screen(bullish, datetime(2026, 3, 20, 21, 0, tzinfo=UTC))
     assert snapshot.exposure_tier == "EXCEPTIONAL"
-    assert snapshot.target_exposure_fraction == Decimal("1.50")
-    assert snapshot.selected_symbol == "UPRO"
+    assert snapshot.target_exposure_fraction == Decimal("0.40")
+    assert snapshot.selected_symbol == "SPY"
 
     bearish = ramped_history(-1)
     snapshot = screen(bearish, datetime(2026, 3, 20, 21, 0, tzinfo=UTC))
     assert snapshot.exposure_tier == "EXCEPTIONAL"
-    assert snapshot.target_exposure_fraction == Decimal("-1.50")
-    assert snapshot.selected_symbol == "SPXU"
+    assert snapshot.target_exposure_fraction == Decimal("-0.40")
+    assert snapshot.selected_symbol == "SH"
 
 
-def test_v2_high_volatility_caps_the_target_at_one_hundred_percent():
+def test_v3_high_volatility_below_the_directional_ceiling_keeps_the_forty_percent_target():
     downs = tuple(Decimal("100") * (Decimal("0.987") ** index) for index in range(1, 11))
     ups = tuple(
         downs[-1] * (Decimal("1.034") ** index) for index in range(1, 11)
@@ -215,7 +190,7 @@ def test_v2_high_volatility_caps_the_target_at_one_hundred_percent():
     snapshot = screen(synthetic_history(closes), datetime(2026, 3, 20, 21, 0, tzinfo=UTC))
     assert Decimal("0.30") < snapshot.spy_volatility_20d <= Decimal("0.40")
     assert snapshot.exposure_tier == "EXCEPTIONAL"
-    assert snapshot.target_exposure_fraction == Decimal("1.00")
+    assert snapshot.target_exposure_fraction == Decimal("0.40")
     assert snapshot.selected_symbol == "SPY"
 
 
@@ -251,33 +226,29 @@ def test_missing_target_bar_blocks_sizing():
     strong = ramped_history(1)
     now = session_close_utc(strong.session_dates()[-1])
     snapshot = screen(strong, now)
-    assert snapshot.selected_symbol == "UPRO"
-    without_upro = MarketHistory(
-        {"SPY": strong.bars("SPY"), "SH": strong.bars("SH"), "SPXU": strong.bars("SPXU")},
-        {},
-    )
-    adjusted, proposal = decide(snapshot, without_upro, flat_account(now))
+    assert snapshot.selected_symbol == "SPY"
+    without_spy = MarketHistory({"SH": strong.bars("SH")}, {})
+    adjusted, proposal = decide(snapshot, without_spy, flat_account(now))
     assert adjusted.action == "NO_TRADE"
     assert proposal is None
 
 
-def test_v1_flat_account_sizes_the_legacy_five_percent_position():
-    history = directional_history(Decimal("101.7"))
+def test_v3_bearish_flat_account_sizes_the_tier_target():
+    history = directional_history(Decimal("98.2"))  # WEAK tier: -10% target
     now = session_close_utc(history.session_dates()[-1])
-    snapshot = screen(history, now, exposure_policy=EXPOSURE_POLICY_V1)
-    adjusted, proposal = decide(
-        snapshot, history, flat_account(now), exposure_policy=EXPOSURE_POLICY_V1
-    )
+    snapshot = screen(history, now)
+    adjusted, proposal = decide(snapshot, history, flat_account(now))
     assert adjusted.action == "BUY"
     assert proposal is not None
-    assert proposal.symbol == "SPY"
+    assert proposal.symbol == "SH"
     assert proposal.action is ProposalAction.BUY
-    assert proposal.requested_quantity == 49
+    assert proposal.requested_quantity == 500  # floor(10% * 100k / 20)
+    assert proposal.target_exposure_fraction == Decimal("-0.10")
     assert proposal.run_id.startswith("dryrun-")
 
 
-def test_v2_bullish_flat_account_sizes_the_tier_target():
-    history = directional_history(Decimal("101.7"))  # WEAK tier: 20% target
+def test_v3_bullish_flat_account_sizes_the_tier_target():
+    history = directional_history(Decimal("101.7"))  # WEAK tier: 10% target
     now = session_close_utc(history.session_dates()[-1])
     snapshot = screen(history, now)
     assert snapshot.exposure_tier == "WEAK"
@@ -286,58 +257,118 @@ def test_v2_bullish_flat_account_sizes_the_tier_target():
     assert proposal is not None
     assert proposal.symbol == "SPY"
     assert proposal.action is ProposalAction.BUY
-    assert proposal.requested_quantity == 196  # floor(20% * 100k / 101.7)
-    assert proposal.target_exposure_fraction == Decimal("0.20")
+    assert proposal.requested_quantity == 98  # floor(10% * 100k / 101.7)
+    assert proposal.target_exposure_fraction == Decimal("0.10")
 
 
-def test_v2_exceptional_quantity_uses_leverage_aware_sizing():
-    history = ramped_history(1)  # EXCEPTIONAL tier: 150% via UPRO at 3x
+def test_v3_exceptional_quantity_caps_at_the_forty_percent_ceiling():
+    history = ramped_history(1)  # EXCEPTIONAL tier: 40% via SPY at 1x
     now = session_close_utc(history.session_dates()[-1])
     snapshot = screen(history, now)
     adjusted, proposal = decide(snapshot, history, flat_account(now))
-    assert adjusted.target_symbol == "UPRO"
+    assert adjusted.target_symbol == "SPY"
     assert proposal is not None
-    assert proposal.symbol == "UPRO"
-    assert proposal.requested_quantity == 1000  # floor(150% * 100k / (50 * 3))
-    assert proposal.target_exposure_fraction == Decimal("1.50")
-    assert (
-        Decimal(proposal.requested_quantity) * Decimal("50") * Decimal("3")
-        == Decimal("150000")
-    )
+    assert proposal.symbol == "SPY"
+    assert proposal.requested_quantity == 370  # floor(40% * 100k / 108)
+    assert proposal.target_exposure_fraction == Decimal("0.4000")
+    assert Decimal(proposal.requested_quantity) * Decimal("108") == Decimal("39960")
 
 
-def test_v1_matching_holding_is_hold_without_an_order():
-    history = directional_history(Decimal("101.7"))
+def test_v3_matching_holding_with_small_drift_is_hold_without_an_order():
+    history = directional_history(Decimal("101.7"))  # WEAK: 10% -> 98 SPY
     now = session_close_utc(history.session_dates()[-1])
-    snapshot = screen(history, now, exposure_policy=EXPOSURE_POLICY_V1)
+    snapshot = screen(history, now)
     account = flat_account(now).model_copy(
-        update={"positions": (Position(symbol="SPY", quantity=50, market_value=Decimal("5000")),)}
+        update={"positions": (Position(symbol="SPY", quantity=100, market_value=Decimal("10170")),)}
     )
-    adjusted, proposal = decide(snapshot, history, account, exposure_policy=EXPOSURE_POLICY_V1)
+    adjusted, proposal = decide(snapshot, history, account)
     assert adjusted.action == "HOLD"
     assert adjusted.current_symbol == "SPY"
     assert proposal is None
 
 
-def test_v2_holding_within_tolerance_is_hold_and_moves_resize():
-    history = directional_history(Decimal("101.7"))  # WEAK: 20% -> 196 SPY
+def test_v3_holding_within_tolerance_is_hold_and_moves_resize():
+    history = directional_history(Decimal("101.7"))  # WEAK: 10% -> 98 SPY
     now = session_close_utc(history.session_dates()[-1])
     snapshot = screen(history, now)
     account = flat_account(now).model_copy(
-        update={"positions": (Position(symbol="SPY", quantity=196, market_value=Decimal("19933")),)}
+        update={"positions": (Position(symbol="SPY", quantity=98, market_value=Decimal("9967")),)}
     )
     adjusted, proposal = decide(snapshot, history, account)
     assert adjusted.action == "HOLD"
     assert proposal is None
 
     smaller = flat_account(now).model_copy(
-        update={"positions": (Position(symbol="SPY", quantity=150, market_value=Decimal("15255")),)}
+        update={"positions": (Position(symbol="SPY", quantity=80, market_value=Decimal("8136")),)}
     )
     adjusted, proposal = decide(snapshot, history, smaller)
     assert adjusted.action == "BUY"
     assert proposal is not None
     assert proposal.symbol == "SPY"
-    assert proposal.requested_quantity == 46  # top-up to the tier target
+    assert proposal.requested_quantity == 18  # top-up to the tier target
+    assert proposal.target_exposure_fraction is None
+
+    larger = flat_account(now).model_copy(
+        update={"positions": (Position(symbol="SPY", quantity=120, market_value=Decimal("12204")),)}
+    )
+    adjusted, proposal = decide(snapshot, history, larger)
+    assert adjusted.action == "SELL"
+    assert proposal is not None
+    assert proposal.symbol == "SPY"
+    assert proposal.requested_quantity == 22  # reduce to the tier target
+    assert proposal.target_exposure_fraction is None
+
+
+@pytest.mark.parametrize("direction, symbol", [(1, "SPY"), (-1, "SH")])
+@pytest.mark.parametrize("holding_sessions", [4, 5, 9])
+def test_v3_one_x_holding_is_not_subject_to_the_leveraged_duration_limit(
+    direction, symbol, holding_sessions
+):
+    history = ramped_history(direction)
+    sessions = history.session_dates()
+    now = session_close_utc(sessions[-1])
+    snapshot = screen(history, now)
+    _, entry = decide(snapshot, history, flat_account(now))
+    assert entry is not None and entry.symbol == symbol
+    bar = history.bar_on(symbol, sessions[-1])
+    assert bar is not None
+    account = flat_account(now).model_copy(
+        update={
+            "positions": (
+                Position(
+                    symbol=symbol,
+                    quantity=entry.requested_quantity,
+                    market_value=bar.close * entry.requested_quantity,
+                ),
+            )
+        }
+    )
+    adjusted, proposal = decide(
+        snapshot,
+        history,
+        account,
+        holding_entry_session=sessions[-1 - holding_sessions].isoformat(),
+    )
+    assert adjusted.action == "HOLD"
+    assert not adjusted.duration_exit
+    assert proposal is None
+
+
+def test_moderate_bearish_sh_entry_hits_the_forty_percent_ceiling():
+    history = directional_history(Decimal("97"))  # -3% 10-session return, trend confirms
+    session = history.session_dates()[-1]
+    now = session_close_utc(session)
+    snapshot = screen(history, now)
+    assert snapshot.target_exposure_fraction == Decimal("-0.40")
+
+    adjusted, proposal = decide(snapshot, history, flat_account(now))
+
+    assert adjusted.action == "BUY"
+    assert proposal is not None and proposal.symbol == "SH"
+    price = history.bar_on("SH", session).close
+    expected = int(INITIAL_EQUITY * Decimal("0.40") / price)
+    assert proposal.requested_quantity == expected
+    assert proposal.target_exposure_fraction == Decimal("-0.4000")
 
 
 def test_neutral_flat_account_remains_in_cash():
@@ -394,11 +425,11 @@ def test_latest_real_spy_signal_is_bearish_and_targets_sh(history):
     assert decision.snapshot.spy_session_date == "2026-11-17"
     assert decision.snapshot.market_state == "BEARISH"
     assert decision.snapshot.exposure_tier == "WEAK"
-    assert decision.snapshot.target_exposure_fraction == Decimal("-0.20")
+    assert decision.snapshot.target_exposure_fraction == Decimal("-0.10")
     assert decision.snapshot.selected_symbol == "SH"
     assert decision.proposal is not None
     assert decision.proposal.symbol == "SH"
-    assert decision.proposal.target_exposure_fraction == Decimal("-0.20")
+    assert decision.proposal.target_exposure_fraction == Decimal("-0.10")
     assert decision.risk_decision is not None
     assert decision.risk_decision.decision is PolicyDecision.APPROVE
     assert decision.risk_decision.reasons == ()
@@ -425,7 +456,7 @@ def test_stale_quote_and_oversized_quantity_are_rejected(history):
     oversized = oversized_example(accepted, FINGERPRINT)
     assert oversized is not None and oversized.risk_decision is not None
     assert oversized.risk_decision.decision is PolicyDecision.REJECT
-    assert {rule.rule_id for rule in oversized.risk_decision.reasons} == {"R017", "R008"}
+    assert {rule.rule_id for rule in oversized.risk_decision.reasons} == {"R017", "R008", "R019"}
 
 
 def test_control_rejections_fail_closed(history):
@@ -451,64 +482,29 @@ def test_control_rejections_fail_closed(history):
     assert {rule.rule_id for rule in approval_missing.risk_decision.reasons} == {"R014"}
 
 
-def test_incumbent_v1_gate_rejects_a_three_x_proposal(history):
+def test_v3_gate_rejects_upro_and_spxu_as_outside_the_universe():
+    from app.models.contracts import Quote
     from app.research.dryrun import dry_run_control, judge
 
-    strong = ramped_history(1)
-    now = session_close_utc(strong.session_dates()[-1])
-    snapshot, proposal = decide(screen(strong, now), strong, flat_account(now))
-    assert proposal is not None and proposal.symbol == "UPRO"
-    proposal = proposal.model_copy(update={"requested_quantity": 30})
-    quote = strong.quote("UPRO", now)
-    assert quote is not None
-    gate = RiskGate(
-        expected_account_fingerprint=FINGERPRINT,
-        allowed_symbols=frozenset(CANDIDATE_SYMBOLS),
-        leverage_by_symbol={
-            symbol: item.leverage for symbol, item in INSTRUMENTS.items()
-        },
-    )
-    decision = judge(gate, proposal, quote, flat_account(now), dry_run_control(), now)
-    assert decision.decision is PolicyDecision.REJECT
-    assert {rule.rule_id for rule in decision.reasons} == {"R015"}
-
-
-def test_three_x_exposure_is_measured_effectively(history):
-    from app.research.dryrun import dry_run_control, judge
-
-    strong = ramped_history(1)
-    now = session_close_utc(strong.session_dates()[-1])
-    snapshot, proposal = decide(screen(strong, now), strong, flat_account(now))
-    assert proposal is not None
-    oversized = proposal.model_copy(
-        update={"requested_quantity": 1200, "target_exposure_fraction": None}
-    )
-    quote = strong.quote("UPRO", now)
-    assert quote is not None
-    gate = RiskGate(
-        expected_account_fingerprint=FINGERPRINT,
-        allowed_symbols=frozenset(CANDIDATE_SYMBOLS),
-        leverage_by_symbol={
-            symbol: item.leverage for symbol, item in INSTRUMENTS.items()
-        },
-        policy_version="risk-v2",
-        allow_leveraged=True,
-        enforce_min_exposure=True,
-    )
-    decision = judge(gate, oversized, quote, flat_account(now), dry_run_control(), now)
-    assert decision.decision is PolicyDecision.REJECT
-    assert {rule.rule_id for rule in decision.reasons} == {"R017"}
-
-    approved = judge(
-        gate,
-        proposal,
-        quote,
-        flat_account(now),
-        dry_run_control(),
-        now,
-    )
-    assert approved.decision is PolicyDecision.APPROVE
-    assert approved.approved_quantity == proposal.requested_quantity
+    now = datetime(2026, 3, 20, 21, 0, tzinfo=UTC)
+    history = directional_history(Decimal("103.2"))
+    _, base = decide(screen(history, now), history, flat_account(now))
+    assert base is not None and base.symbol == "SPY"
+    gate = _gate(FINGERPRINT)
+    for symbol, price in (("UPRO", Decimal("50")), ("SPXU", Decimal("10"))):
+        proposal = base.model_copy(
+            update={"symbol": symbol, "target_exposure_fraction": None}
+        )
+        quote = Quote(
+            symbol=symbol,
+            price=price,
+            currency="USD",
+            as_of_utc=now,
+            regular_session_open=True,
+        )
+        decision = judge(gate, proposal, quote, flat_account(now), dry_run_control(), now)
+        assert decision.decision is PolicyDecision.REJECT
+        assert "R002" in {rule.rule_id for rule in decision.reasons}
 
 
 def test_wrong_account_and_duplicate_submission_fail_closed(history):
@@ -545,8 +541,208 @@ def test_backtest_enters_after_the_signal_and_tracks_effective_exposure(history)
             assert trade.exit_date > trade.entry_date
     assert any(trade.symbol in {"SPY", "UPRO"} for trade in result.trades)
     assert any(trade.symbol in {"SH", "SPXU"} for trade in result.trades)
-    assert result.average_exposure <= 0.06
-    assert result.maximum_exposure <= 0.08
+    assert 0 < result.average_exposure <= result.maximum_exposure
+    assert result.maximum_exposure > 0.09  # tier sizing, not a fixed 5% allocation
+
+
+@pytest.mark.parametrize("direction", [1, -1])
+@pytest.mark.parametrize(
+    "move, trend_confirmed, fraction",
+    [
+        ("2", True, "0.10"),
+        ("2", False, "0.10"),
+        ("4", False, "0.25"),
+        ("4", True, "0.40"),
+        ("6", False, "0.40"),
+        ("6", True, "0.40"),
+        ("8", True, "0.40"),
+    ],
+)
+def test_backtest_sizes_current_v2_tiers(direction, move, trend_confirmed, fraction):
+    early_close = Decimal("100") if trend_confirmed else Decimal("140" if direction > 0 else "60")
+    steps = tuple(
+        Decimal("100") + direction * Decimal(move) * index / 10
+        for index in range(1, 11)
+    )
+    history = synthetic_history(
+        (early_close,) * 30 + (Decimal("100"),) * 11 + steps + (steps[-1],)
+    )
+    dates = history.session_dates()
+    snapshot = screen(history, session_close_utc(dates[50]))
+    assert snapshot.target_exposure_fraction == direction * Decimal(fraction)
+    symbol = snapshot.selected_symbol
+    assert symbol is not None
+    price = history.bar_on(symbol, dates[50]).close
+    leverage = INSTRUMENTS[symbol].leverage
+    quantity = min(
+        int(INITIAL_EQUITY * Decimal(fraction) / (price * leverage)),
+        int(INITIAL_EQUITY * Decimal("0.40") / price),
+    )
+
+    result = simulate_strategy(history, STRATEGY, cost_bps=Decimal("0"))
+
+    assert result.signals == 1
+    assert result.open_position == symbol
+    assert result.trades[0].signal_date == dates[50]
+    assert result.trades[0].entry_date == dates[51]
+    assert result.maximum_exposure == pytest.approx(float(quantity * price * leverage / INITIAL_EQUITY))
+    assert result.maximum_exposure > 0.09  # never the retired fixed 5% allocation
+    assert result.total_return == 0
+
+
+@pytest.mark.parametrize("future_close", [Decimal("80"), Decimal("150")])
+def test_backtest_sizes_at_signal_close_and_fills_only_at_next_open(future_close):
+    history = synthetic_history(
+        (Decimal("100"),) * 41 + (Decimal("101.7"),) * 10 + (future_close,)
+    )
+    bars = history.bars("SPY")
+    history = MarketHistory(
+        {
+            **{symbol: history.bars(symbol) for symbol in history.symbols},
+            "SPY": bars[:-1] + (replace(bars[-1], open=Decimal("95")),),
+        },
+        {},
+    )
+    result = simulate_strategy(history, STRATEGY)
+    trade = result.trades[0]
+    quantity = 98  # floor(100k * 10% / 101.7), independent of the next bar
+    fill_price = Decimal("95") * Decimal("1.0002")
+    assert trade.entry_price == fill_price
+    assert trade.entry_date == history.session_dates()[-1]
+    assert trade.entry_date > trade.signal_date
+    assert result.equity_curve[-1][1] == INITIAL_EQUITY + quantity * (future_close - fill_price)
+
+
+def test_backtest_never_executes_a_final_close_signal():
+    history = synthetic_history((Decimal("100"),) * 51 + (Decimal("102"),))
+    result = simulate_strategy(history, STRATEGY)
+    assert result.trades == ()
+    assert result.open_position is None
+    assert result.signals == 0
+    assert result.total_return == 0
+
+
+def test_backtest_unavailable_target_bar_cannot_size_an_entry():
+    history = synthetic_history(
+        (Decimal("100"),) * 41 + (Decimal("98.2"),) * 11
+    )
+    bars = history.bars("SH")
+    delayed = replace(bars[-2], available_at_utc=bars[-1].available_at_utc + timedelta(days=1))
+    history = MarketHistory(
+        {
+            **{symbol: history.bars(symbol) for symbol in history.symbols},
+            "SH": bars[:-2] + (delayed, bars[-1]),
+        },
+        {},
+    )
+    result = simulate_strategy(history, STRATEGY)
+    assert result.trades == ()
+    assert result.total_return == 0
+
+
+@pytest.mark.parametrize("missing", [False, True])
+def test_backtest_unavailable_holding_valuation_fails_closed(missing):
+    steps = tuple(Decimal("100") - Decimal("0.2") * index for index in range(1, 11))
+    history = synthetic_history(
+        (Decimal("100"),) * 41 + steps + (Decimal("97.9"), Decimal("97.8"))
+    )
+    bars = history.bars("SH")
+    delayed = replace(bars[-1], available_at_utc=bars[-1].available_at_utc + timedelta(days=1))
+    history = MarketHistory(
+        {
+            **{symbol: history.bars(symbol) for symbol in history.symbols},
+            "SH": bars[:-1] if missing else bars[:-1] + (delayed,),
+        },
+        {},
+    )
+    with pytest.raises(ValueError, match="unavailable SH valuation bar"):
+        simulate_strategy(history, STRATEGY)
+
+
+def test_backtest_resizes_at_next_open_and_accounts_for_the_whole_episode():
+    steps = tuple(Decimal("100") + Decimal("0.2") * index for index in range(1, 11))
+    history = synthetic_history(
+        (Decimal("100"),) * 41 + steps + tuple(map(Decimal, ("104", "102", "102", "102")))
+    )
+    bars = history.bars("SPY")
+    history = MarketHistory(
+        {
+            **{symbol: history.bars(symbol) for symbol in history.symbols},
+            "SPY": bars[:51] + tuple(
+                replace(bar, open=price)
+                for bar, price in zip(bars[51:], map(Decimal, ("102", "104", "102", "102")))
+            ),
+        },
+        {},
+    )
+    result = simulate_strategy(history, STRATEGY, cost_bps=Decimal("0"))
+    # Enter 98 at 102 (WEAK 10%); top up 287 at 104 (MODERATE trend-confirmed
+    # 40% cap, 385 total); reduce 288 at 102 (WEAK again); liquidate 97 at 102.
+    assert tuple(value for _, value in result.equity_curve) == tuple(
+        map(Decimal, ("100000", "100196", "99426", "99426", "99426"))
+    )
+    assert result.signals == 1
+    assert len(result.trades) == 1
+    assert result.open_position is None
+    trade = result.trades[0]
+    assert trade.entry_date == history.session_dates()[51]
+    assert trade.exit_date == history.session_dates()[54]
+    assert trade.entry_price == Decimal("39844") / 385
+    assert trade.exit_price == Decimal("102")
+    assert trade.return_pct == pytest.approx(float(Decimal("39270") / Decimal("39844") - 1))
+
+
+def test_backtest_reversal_waits_for_an_exit_and_later_decision():
+    steps = tuple(Decimal("100") + Decimal("0.2") * index for index in range(1, 11))
+    history = synthetic_history((Decimal("100"),) * 41 + steps + (Decimal("98"),) * 3)
+    result = simulate_strategy(history, STRATEGY, cost_bps=Decimal("0"))
+    first, second = result.trades
+    dates = history.session_dates()
+    assert first.symbol == "SPY"
+    assert first.entry_date == dates[51]
+    assert first.exit_date == dates[52]
+    assert second.symbol == "SH"
+    assert second.signal_date == first.exit_date
+    assert second.entry_date == dates[53]
+    assert result.open_position == "SH"
+    assert result.signals == 2
+    truncated = MarketHistory(
+        {symbol: history.bars(symbol)[:-1] for symbol in history.symbols}, {}
+    )
+    prefix = simulate_strategy(truncated, STRATEGY, cost_bps=Decimal("0"))
+    assert prefix.equity_curve == result.equity_curve[:-1]
+    assert prefix.trades == (first,)
+
+
+@pytest.mark.parametrize("growth, symbol", [("1.01", "SPY"), ("0.99", "SH")])
+def test_backtest_exceptional_episode_stays_in_the_one_x_instrument(growth, symbol):
+    history = synthetic_history(
+        tuple(Decimal("100") * Decimal(growth) ** index for index in range(53))
+    )
+    result = simulate_strategy(history, STRATEGY, cost_bps=Decimal("0"))
+    (trade,) = result.trades
+    dates = history.session_dates()
+    assert trade.symbol == symbol
+    assert trade.entry_date == dates[51]
+    # 1x holdings are never forced out by the leveraged duration limit.
+    assert trade.exit_date is None
+    assert result.open_position == symbol
+    assert result.signals == 1
+    assert result.maximum_exposure == pytest.approx(0.40, abs=0.01)
+
+
+def test_backtest_costs_and_opening_gaps_never_spend_more_than_cash():
+    steps = tuple(Decimal("100") + Decimal("0.6") * index for index in range(1, 11))
+    history = synthetic_history((Decimal("100"),) * 41 + steps + (Decimal("120"),))
+    result = simulate_strategy(history, STRATEGY)
+    fill_price = Decimal("120") * Decimal("1.0002")
+    signal_close = steps[-1]
+    quantity = int(INITIAL_EQUITY * Decimal("0.40") / signal_close)
+    cash = INITIAL_EQUITY - quantity * fill_price
+    assert cash >= 0
+    assert result.trades[0].entry_price == fill_price
+    assert result.equity_curve[-1][1] == cash + quantity * Decimal("120")
+    assert result.maximum_exposure <= 1
 
 
 def test_buy_and_hold_starts_after_the_minimum_history(history):

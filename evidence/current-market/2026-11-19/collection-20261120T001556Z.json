@@ -1,0 +1,110 @@
+{
+  "mode": "post-close",
+  "provenance": "CURRENT_MARKET_READ_ONLY",
+  "collected_at_utc": "2026-11-20T00:15:56.221159+00:00",
+  "us_eastern_time": "2026-11-19T19:15:56.221159-05:00",
+  "quotes": [
+    {
+      "symbol": "SPY",
+      "price": "715.87",
+      "data_time_utc": "2026-11-19T21:00:00.255000+00:00",
+      "age_seconds": 11756.0,
+      "sec_status": "NORMAL",
+      "suspended": false,
+      "market_state": "AFTER_HOURS_BEGIN",
+      "regular_session_open": false,
+      "provenance": "LIVE_BROKER_READ"
+    },
+    {
+      "symbol": "UPRO",
+      "price": "117.89",
+      "data_time_utc": "2026-11-19T21:00:00+00:00",
+      "age_seconds": 11756.2,
+      "sec_status": "NORMAL",
+      "suspended": false,
+      "market_state": "AFTER_HOURS_BEGIN",
+      "regular_session_open": false,
+      "provenance": "LIVE_BROKER_READ"
+    },
+    {
+      "symbol": "SH",
+      "price": "34.68",
+      "data_time_utc": "2026-11-19T20:59:59.685000+00:00",
+      "age_seconds": 11756.5,
+      "sec_status": "NORMAL",
+      "suspended": false,
+      "market_state": "AFTER_HOURS_BEGIN",
+      "regular_session_open": false,
+      "provenance": "LIVE_BROKER_READ"
+    },
+    {
+      "symbol": "SPXU",
+      "price": "41.74",
+      "data_time_utc": "2026-11-19T21:00:00.295000+00:00",
+      "age_seconds": 11755.9,
+      "sec_status": "NORMAL",
+      "suspended": false,
+      "market_state": "AFTER_HOURS_BEGIN",
+      "regular_session_open": false,
+      "provenance": "LIVE_BROKER_READ"
+    }
+  ],
+  "account": {
+    "masked_id": "****0101",
+    "equity": "99991.02",
+    "cash": "99991.02",
+    "buying_power": "99991.02",
+    "day_start_equity": "99991.02",
+    "positions_count": 0,
+    "open_orders_count": 0,
+    "reconciled": true,
+    "unknown_orders": 0,
+    "as_of_utc": "2026-11-20T00:15:58.462901+00:00",
+    "age_seconds": 0.0,
+    "provenance": "LIVE_BROKER_READ"
+  },
+  "positions": [],
+  "orders": {
+    "today_count": 0,
+    "history_count": 2,
+    "open_count": 0
+  },
+  "history": {
+    "path": "evidence\\current-market\\2026-11-19\\daily-bars.json",
+    "source": {
+      "provider": "Moomoo REST history-kline",
+      "endpoint": "/api/v1.0/quote/{code}/history-kline",
+      "arguments": {
+        "ktype": 2,
+        "autype": 1,
+        "extended_time": 0,
+        "num": 370
+      },
+      "fetched_at_utc": "2026-11-20T00:15:53.900173+00:00",
+      "last_completed_session": "20261119",
+      "note": "Read-only completed daily bars fetched from the documented Moomoo REST history-kline endpoint. No account identifiers or credentials are included."
+    },
+    "window": "post-close",
+    "today_session_et": "2026-11-19",
+    "last_completed_session": "2026-11-19",
+    "today_bar_available": true,
+    "expected_previous_session": "2026-11-18",
+    "bars_per_symbol": {
+      "SPY": 370,
+      "UPRO": 370,
+      "SH": 370,
+      "SPXU": 370
+    },
+    "fetch_age_hours": 0.0,
+    "complete": true
+  },
+  "validations": {
+    "account_verified_paper": true,
+    "account_reconciled": true,
+    "account_age_seconds": 0.0,
+    "regular_session_required": false,
+    "quotes_collected": 4,
+    "history_complete": true,
+    "order_writes_enabled": false
+  }
+}

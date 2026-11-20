@@ -15,14 +15,14 @@ from app.models.contracts import (
 from app.research.data import UNIVERSE, MarketHistory, session_close_utc
 from app.research.instruments import INSTRUMENTS
 from app.research.strategy import (
-    EXPOSURE_POLICY_V2,
+    EXPOSURE_POLICY_V3,
     MIN_COMPLETED_SESSIONS,
     ExposurePolicy,
     ResearchSnapshot,
     decide,
     screen,
 )
-from app.risk.policy import RiskGate
+from app.risk.policy import POLICY_VERSION_V3, RiskGate
 
 VERIFIED_EQUITY = Decimal("100000")
 
@@ -74,13 +74,12 @@ def dry_run_control(order_writes_enabled: bool = True, first_order_approved: boo
     )
 
 
-def _gate(fingerprint: str, policy_version: str = "risk-v2") -> RiskGate:
+def _gate(fingerprint: str, policy_version: str = POLICY_VERSION_V3) -> RiskGate:
     return RiskGate(
         expected_account_fingerprint=fingerprint,
         allowed_symbols=frozenset(UNIVERSE),
         leverage_by_symbol={symbol: item.leverage for symbol, item in INSTRUMENTS.items()},
         policy_version=policy_version,
-        allow_leveraged=policy_version != "risk-v1",
     )
 
 
@@ -130,7 +129,7 @@ def decide_at(
     now: datetime | None = None,
     control: ControlState | None = None,
     account: AccountSnapshot | None = None,
-    exposure_policy: ExposurePolicy = EXPOSURE_POLICY_V2,
+    exposure_policy: ExposurePolicy = EXPOSURE_POLICY_V3,
 ) -> DryRunDecision:
     gate = _gate(fingerprint, policy_version=exposure_policy.version)
     snapshot = screen(
@@ -234,7 +233,7 @@ def oversized_example(
         accepted.account.as_of_utc,
     )
     return DryRunDecision(
-        scenario="oversized quantity (200% of equity versus the 150% ceiling)",
+        scenario="oversized quantity (200% of equity versus the 40% ceiling)",
         snapshot=accepted.snapshot,
         proposal=proposal,
         quote=accepted.quote,

@@ -1,0 +1,18 @@
+{
+  "action": "BUY",
+  "data_as_of_utc": "2026-11-19T21:00:00Z",
+  "decision_time_utc": "2026-11-20T00:15:56.221159Z",
+  "evidence_ids": [
+    "bar:SPY:2026-11-19",
+    "bar:SH:20261119"
+  ],
+  "invalidation": "The tier is re-evaluated on every completed session: exit or reduce when the tier drops or the direction flips, and 3x holdings exit after the holding-duration limit. Overnight gaps can move the position beyond the 2% daily drawdown brake.",
+  "proposal_id": "spy-directional-2026-11-19-SH-BUY",
+  "requested_quantity": 576,
+  "run_id": "qoder-f2300dbe-76db-4266-b32a-7b867ebace5f",
+  "schema_version": "1",
+  "strategy_version": "spy-directional",
+  "symbol": "SH",
+  "target_exposure_fraction": "-0.20",
+  "thesis": "SPY closed at 715.87 with a 10-session return of -2.34%, a 50-session SMA of 761.48 and 23.45% annualized volatility. The WEAK tier sets a target of -20% of equity in S&P 500 exposure; SH at 1x daily leverage expresses it with about 20% of equity in cash."
+}

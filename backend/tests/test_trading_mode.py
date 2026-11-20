@@ -1,19 +1,23 @@
 from __future__ import annotations
 
 import json
-from datetime import UTC, datetime
+import sqlite3
+from datetime import UTC, datetime, timedelta
 from decimal import Decimal
 
 import pytest
+from pydantic import ValidationError
 
 from app.cli import main
 from app.ledger.store import SQLiteLedger
-from app.models.contracts import TradingMode
+from app.models.contracts import TradingActivation, TradingMode
+from app.research.strategy import EXPOSURE_POLICY_V3
 from app.trading_mode import (
     AUTO_PAPER_SYMBOLS,
     TradingModeError,
     auto_paper_active,
     build_auto_paper_activation,
+    exposure_policy_for_activation,
     resolve_trading_mode,
 )
 
@@ -46,14 +50,69 @@ def test_activation_pins_the_exact_strategy_and_limits():
     assert activation.account_fingerprint == FINGERPRINT
     assert activation.strategy_version == "spy-directional"
     assert activation.allowed_symbols == AUTO_PAPER_SYMBOLS
-    assert activation.risk_policy_version == "risk-v2"
-    assert activation.min_effective_exposure_fraction == Decimal("0.20")
-    assert activation.max_effective_exposure_fraction == Decimal("1.50")
-    assert activation.max_single_exposure is None
-    assert activation.max_total_exposure is None
-    assert activation.position_fraction is None
+    assert activation.risk_policy_version == "risk-v3"
+    assert activation.min_effective_exposure_fraction == Decimal("0.10")
+    assert activation.max_effective_exposure_fraction == Decimal("0.40")
+    assert not {"max_single_exposure", "max_total_exposure", "position_fraction"} & activation.model_dump().keys()
     assert activation.paper_only is True
     assert activation.order_writes_enabled is True
+
+
+@pytest.mark.parametrize("version", ["risk-v1", "risk-v2", ""])
+def test_activation_contract_rejects_non_v3_versions(version):
+    payload = build_auto_paper_activation(FINGERPRINT, NOW).model_dump()
+    payload["risk_policy_version"] = version
+    with pytest.raises(ValidationError):
+        TradingActivation.model_validate(payload)
+
+
+@pytest.mark.parametrize("field", ["max_single_exposure", "max_total_exposure", "position_fraction"])
+def test_activation_contract_has_no_legacy_runtime_fields(field):
+    payload = build_auto_paper_activation(FINGERPRINT, NOW).model_dump()
+    payload[field] = None
+    with pytest.raises(ValidationError, match="Extra inputs are not permitted"):
+        TradingActivation.model_validate(payload)
+
+
+@pytest.mark.parametrize("field", ["min_effective_exposure_fraction", "max_effective_exposure_fraction"])
+@pytest.mark.parametrize("value", [None, Decimal("0"), Decimal("-0.1"), Decimal("NaN"), Decimal("Infinity")])
+def test_activation_requires_positive_finite_effective_limits(field, value):
+    payload = build_auto_paper_activation(FINGERPRINT, NOW).model_dump()
+    payload[field] = value
+    with pytest.raises(ValidationError):
+        TradingActivation.model_validate(payload)
+
+
+@pytest.mark.parametrize("field", ["min_effective_exposure_fraction", "max_effective_exposure_fraction"])
+def test_activation_effective_limits_are_required(field):
+    payload = build_auto_paper_activation(FINGERPRINT, NOW).model_dump()
+    del payload[field]
+    with pytest.raises(ValidationError):
+        TradingActivation.model_validate(payload)
+
+
+@pytest.mark.parametrize("minimum,maximum", [("1.1", "1.5"), ("0.2", "0.2"), ("0.5", "0.2")])
+def test_activation_rejects_invalid_effective_range(minimum, maximum):
+    payload = build_auto_paper_activation(FINGERPRINT, NOW).model_dump()
+    payload.update(min_effective_exposure_fraction=minimum, max_effective_exposure_fraction=maximum)
+    with pytest.raises(ValidationError):
+        TradingActivation.model_validate(payload)
+
+
+@pytest.mark.parametrize("version", ["risk-v1", "risk-v2"])
+def test_non_v3_pin_is_not_executable_even_if_validation_was_bypassed(version):
+    activation = build_auto_paper_activation(FINGERPRINT, NOW).model_copy(
+        update={"risk_policy_version": version}
+    )
+    env = {"TRADING_MODE": "AUTO_PAPER", "ORDER_WRITES_ENABLED": "true"}
+    assert not auto_paper_active(env, activation, account_fingerprint=FINGERPRINT)
+    with pytest.raises(TradingModeError, match="unsupported risk policy"):
+        exposure_policy_for_activation(activation)
+
+
+def test_exposure_policy_is_v3_with_or_without_an_activation():
+    assert exposure_policy_for_activation(None) is EXPOSURE_POLICY_V3
+    assert exposure_policy_for_activation(build_auto_paper_activation(FINGERPRINT, NOW)) is EXPOSURE_POLICY_V3
 
 
 def test_activation_rejects_a_malformed_fingerprint():
@@ -84,6 +143,85 @@ def test_auto_paper_active_requires_env_and_pin_agreement():
     )
 
 
+@pytest.mark.parametrize("changes", [
+    {"allowed_symbols": ("SPY", "SH", "UPRO")},
+    {"strategy_version": "other-strategy"},
+    {"min_effective_exposure_fraction": Decimal("0.20")},
+    {"max_effective_exposure_fraction": Decimal("2.00")},
+    {"max_daily_drawdown": Decimal("0.03")},
+])
+def test_auto_paper_rejects_v3_pins_with_unapproved_limits(changes):
+    activation = build_auto_paper_activation(FINGERPRINT, NOW).model_copy(update=changes)
+    assert not auto_paper_active(
+        {"TRADING_MODE": "AUTO_PAPER", "ORDER_WRITES_ENABLED": "true"},
+        activation, account_fingerprint=FINGERPRINT,
+    )
+
+
+def test_auto_paper_active_honours_the_pin_expiry():
+    activation = build_auto_paper_activation(
+        FINGERPRINT, NOW, expires_at_utc=datetime.now(UTC) + timedelta(hours=1)
+    )
+    env = {"TRADING_MODE": "AUTO_PAPER", "ORDER_WRITES_ENABLED": "true"}
+    assert auto_paper_active(env, activation, account_fingerprint=FINGERPRINT) is True
+    expired = activation.model_copy(
+        update={"expires_at_utc": datetime.now(UTC) - timedelta(seconds=1)}
+    )
+    assert not auto_paper_active(env, expired, account_fingerprint=FINGERPRINT)
+
+
+def test_activation_rejects_expiry_at_or_before_activation_time():
+    with pytest.raises(ValidationError):
+        build_auto_paper_activation(FINGERPRINT, NOW, expires_at_utc=NOW)
+
+
+def test_activation_expiry_round_trips_through_the_ledger(tmp_path):
+    ledger = SQLiteLedger(tmp_path / "audit.db")
+    expiry = NOW + timedelta(days=2)
+    ledger.record_trading_activation(
+        build_auto_paper_activation(FINGERPRINT, NOW, expires_at_utc=expiry)
+    )
+    activation = ledger.latest_trading_activation()
+    assert activation is not None
+    assert activation.expires_at_utc == expiry
+
+
+def test_activate_cli_accepts_expires_at_and_rejects_past_expiry(tmp_path, monkeypatch, capsys):
+    monkeypatch.setenv("TRADING_MODE", "AUTO_PAPER")
+    monkeypatch.setenv("ORDER_WRITES_ENABLED", "true")
+    monkeypatch.setenv("COMPETITION_ACCOUNT_FINGERPRINT", FINGERPRINT)
+    ledger_path = tmp_path / "audit.db"
+    expiry = datetime.now(UTC) + timedelta(days=1)
+
+    result = main(
+        [
+            "moomoo-activate-auto-paper",
+            "--confirm-auto-paper",
+            "--expires-at",
+            expiry.isoformat(),
+            "--ledger",
+            str(ledger_path),
+        ]
+    )
+    assert result == 0
+    activation = SQLiteLedger(ledger_path).latest_trading_activation()
+    assert activation is not None
+    assert activation.expires_at_utc == expiry
+
+    result = main(
+        [
+            "moomoo-activate-auto-paper",
+            "--confirm-auto-paper",
+            "--expires-at",
+            (datetime.now(UTC) - timedelta(days=1)).isoformat(),
+            "--ledger",
+            str(ledger_path),
+        ]
+    )
+    assert result == 2
+    assert "--expires-at must be in the future" in capsys.readouterr().out
+
+
 def test_activation_round_trips_through_the_ledger_and_is_append_only(tmp_path):
     ledger = SQLiteLedger(tmp_path / "audit.db")
     assert ledger.latest_trading_activation() is None
@@ -97,18 +235,20 @@ def test_activation_round_trips_through_the_ledger_and_is_append_only(tmp_path):
     assert loaded.paper_only is True
     assert loaded.order_writes_enabled is True
 
-    import sqlite3
+    with reopened._connect() as connection:
+        row = connection.execute("SELECT * FROM trading_activations").fetchone()
+        assert all(row[field] is None for field in ("max_single_exposure", "max_total_exposure", "position_fraction"))
+    for statement in (
+        "UPDATE trading_activations SET activated_by = 'mallory'",
+        "DELETE FROM trading_activations",
+    ):
+        with pytest.raises(sqlite3.DatabaseError, match="append-only"):
+            with reopened._connect() as connection:
+                connection.execute(statement)
 
-    with pytest.raises(sqlite3.DatabaseError, match="append-only"):
-        with reopened._connect() as connection:
-            connection.execute(
-                "UPDATE trading_activations SET activated_by = 'mallory'"
-            )
 
-
-def test_pre_risk_v2_database_is_migrated_to_nullable_v1_limits(tmp_path):
+def test_pre_risk_v2_migration_preserves_non_executable_history(tmp_path):
     path = tmp_path / "audit.db"
-    import sqlite3
 
     with sqlite3.connect(path) as connection:
         connection.executescript(
@@ -159,32 +299,61 @@ def test_pre_risk_v2_database_is_migrated_to_nullable_v1_limits(tmp_path):
             ),
         )
 
+        connection.row_factory = sqlite3.Row
+        historical = dict(connection.execute("SELECT * FROM trading_activations").fetchone())
+
     ledger = SQLiteLedger(path)
-    legacy = ledger.latest_trading_activation()
-    assert legacy is not None
-    assert legacy.risk_policy_version == "risk-v1"
-    assert legacy.max_single_exposure == Decimal("0.10")
-    assert legacy.allowed_symbols == ("SPY", "SH")
+    assert ledger.latest_trading_activation() is None
+    assert not auto_paper_active(
+        {"TRADING_MODE": "AUTO_PAPER", "ORDER_WRITES_ENABLED": "true"},
+        ledger.latest_trading_activation(), account_fingerprint=FINGERPRINT,
+    )
 
+    activation = build_auto_paper_activation(FINGERPRINT, NOW)
+    ledger.record_trading_activation(activation)
+    assert SQLiteLedger(path).latest_trading_activation() == activation
+
+    with ledger._connect() as connection:
+        rows = connection.execute("SELECT * FROM trading_activations ORDER BY activated_at_utc").fetchall()
+        assert len(rows) == 2
+        assert {key: rows[0][key] for key in historical} == historical
+        assert rows[0]["min_effective_exposure_fraction"] is None
+        assert rows[0]["max_effective_exposure_fraction"] is None
+        assert all(rows[1][field] is None for field in ("max_single_exposure", "max_total_exposure", "position_fraction"))
+    for statement in (
+        "UPDATE trading_activations SET activated_by = 'mallory'",
+        "DELETE FROM trading_activations",
+    ):
+        with pytest.raises(sqlite3.DatabaseError, match="append-only"):
+            with ledger._connect() as connection:
+                connection.execute(statement)
+
+
+@pytest.mark.parametrize("version", ["risk-v1", "risk-v2"])
+def test_latest_non_v3_row_blocks_older_v3_pin_without_deleting_history(tmp_path, version):
+    path = tmp_path / "audit.db"
+    ledger = SQLiteLedger(path)
     ledger.record_trading_activation(build_auto_paper_activation(FINGERPRINT, NOW))
-
-    latest = SQLiteLedger(path).latest_trading_activation()
-    assert latest is not None
-    assert latest.risk_policy_version == "risk-v2"
-    assert latest.max_single_exposure is None
-    assert latest.position_fraction is None
-    assert latest.min_effective_exposure_fraction == Decimal("0.20")
-    assert latest.allowed_symbols == AUTO_PAPER_SYMBOLS
-
-    with sqlite3.connect(path) as connection:
-        rows = connection.execute("SELECT COUNT(*) FROM trading_activations").fetchone()
-        assert rows[0] == 2
-        columns = {
-            row[1] for row in connection.execute(
-                "PRAGMA table_info(trading_activations)"
-            )
-        }
-        assert "min_effective_exposure_fraction" in columns
+    with ledger._connect() as connection:
+        # Historical fixtures bypass the runtime contract, never reactivate v1.
+        connection.execute(
+            """
+            INSERT INTO trading_activations (
+                activation_id, activated_at_utc, activated_by, account_fingerprint,
+                strategy_version, allowed_symbols_json, risk_policy_version,
+                max_single_exposure, max_total_exposure, position_fraction,
+                max_daily_drawdown, paper_only, order_writes_enabled, schema_version
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            ("historical-pin", NOW.isoformat(), "owner", FINGERPRINT,
+             "spy-directional", '["SPY", "SH"]', version, "0.10", "0.30", "0.05",
+             "0.02", 1, 1, "1"),
+        )
+        before = [dict(row) for row in connection.execute("SELECT * FROM trading_activations ORDER BY rowid")]
+    reopened = SQLiteLedger(path)
+    assert reopened.latest_trading_activation() is None
+    with reopened._connect() as connection:
+        assert [dict(row) for row in connection.execute("SELECT * FROM trading_activations ORDER BY rowid")] == before
 
 
 def test_activate_cli_refuses_without_the_confirmation_flag(tmp_path, monkeypatch, capsys):
@@ -261,15 +430,15 @@ def test_activate_cli_records_the_pin_and_status_shows_it(tmp_path, monkeypatch,
     assert result == 0
     assert output["activation_recorded"] is True
     assert output["order_submitted"] is False
-    assert output["allowed_symbols"] == ["SPY", "UPRO", "SH", "SPXU"]
-    assert output["risk_policy_version"] == "risk-v2"
-    assert output["min_effective_exposure_fraction"] == "0.20"
-    assert output["max_effective_exposure_fraction"] == "1.50"
+    assert output["allowed_symbols"] == ["SPY", "SH"]
+    assert output["risk_policy_version"] == "risk-v3"
+    assert output["min_effective_exposure_fraction"] == "0.10"
+    assert output["max_effective_exposure_fraction"] == "0.40"
     assert output["account_fingerprint"] == FINGERPRINT
     ledger = SQLiteLedger(ledger_path)
     activation = ledger.latest_trading_activation()
     assert activation is not None
-    assert activation.allowed_symbols == ("SPY", "UPRO", "SH", "SPXU")
+    assert activation.allowed_symbols == ("SPY", "SH")
     assert {
         event["event_type"] for event in ledger.list_events()
     } == {"AUTO_PAPER_ACTIVATED"}
@@ -282,10 +451,10 @@ def test_activate_cli_records_the_pin_and_status_shows_it(tmp_path, monkeypatch,
     assert status["trading_mode"] == "AUTO_PAPER"
     assert status["order_writes_enabled_env"] is True
     assert status["kill_switch_engaged"] is False
-    assert status["activation"]["allowed_symbols"] == ["SPY", "UPRO", "SH", "SPXU"]
-    assert status["activation"]["risk_policy_version"] == "risk-v2"
-    assert status["activation"]["min_effective_exposure_fraction"] == "0.20"
-    assert status["activation"]["max_effective_exposure_fraction"] == "1.50"
+    assert status["activation"]["allowed_symbols"] == ["SPY", "SH"]
+    assert status["activation"]["risk_policy_version"] == "risk-v3"
+    assert status["activation"]["min_effective_exposure_fraction"] == "0.10"
+    assert status["activation"]["max_effective_exposure_fraction"] == "0.40"
     assert status["activation"]["paper_only"] is True
 
 

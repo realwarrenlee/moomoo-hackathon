@@ -1,0 +1,216 @@
+{
+  "mode": "PAPER",
+  "supervised_preview": true,
+  "submission_performed": false,
+  "order_writes_enabled": false,
+  "order_transport_installed": true,
+  "risk_decision_scope": "evaluated with writes hypothetically enabled and the current durable approval; no transport submission occurred",
+  "granted_scopes": {
+    "quote:read": true,
+    "trade:read": true,
+    "trade:write": true,
+    "account_scope": true
+  },
+  "account_exclusive_write_scope_verified": false,
+  "account": {
+    "masked_id": "****0101",
+    "market_id": 100,
+    "account_type": 2,
+    "account_title": "Moomoo x Qoder AI Paper Trading Agent Challenge",
+    "fingerprint_matches": true,
+    "equity": "99991.02",
+    "cash": "99991.02",
+    "buying_power": "99991.02",
+    "positions": [],
+    "open_orders": 0,
+    "as_of_utc": "2026-11-19T15:30:39.779473+00:00",
+    "age_seconds": 0.126912,
+    "reconciled": true,
+    "unknown_orders": 0
+  },
+  "instrument": {
+    "symbol": "SH",
+    "action": "BUY",
+    "quantity": 1764,
+    "estimated_notional": "60002.460"
+  },
+  "quote": {
+    "price": "34.015",
+    "as_of_utc": "2026-11-19T15:30:29.054000+00:00",
+    "age_seconds": 10.852385,
+    "regular_session_open": true
+  },
+  "proposal": {
+    "schema_version": "1",
+    "proposal_id": "spy-directional-2026-11-18-SH-BUY",
+    "run_id": "qoder-0f52e80a-8eab-486e-8056-d947b83eff8a",
+    "strategy_version": "spy-directional",
+    "decision_time_utc": "2026-11-19T15:29:11.289187Z",
+    "data_as_of_utc": "2026-11-18T21:00:00Z",
+    "symbol": "SH",
+    "action": "BUY",
+    "requested_quantity": 1764,
+    "thesis": "SPY closed at 730.2 with a 10-session return of -4.77%, a 50-session SMA of 762.28 and 22.88% annualized volatility. The MODERATE tier sets a target of -60% of equity in S&P 500 exposure; SH at 1x daily leverage expresses it with about 60% of equity in cash.",
+    "invalidation": "The tier is re-evaluated on every completed session: exit or reduce when the tier drops or the direction flips, and 3x holdings exit after the holding-duration limit. Overnight gaps can move the position beyond the 2% daily drawdown brake.",
+    "evidence_ids": [
+      "bar:SPY:2026-11-18",
+      "bar:SH:20261118"
+    ],
+    "target_exposure_fraction": "-0.60"
+  },
+  "client_order_key": "mootrade-e45e952fec59fe7cd580b32cec481d08f8bfa3966a66291568c5648274741a84",
+  "approval": {
+    "required": true,
+    "found": false,
+    "identifier": null,
+    "durable": true,
+    "expires_at_utc": null,
+    "note": "Approval is durable and exact-proposal bound; the risk decision is recomputed at submission."
+  },
+  "risk_decision": {
+    "proposal_id": "spy-directional-2026-11-18-SH-BUY",
+    "policy_version": "risk-v2",
+    "decision": "REJECT",
+    "reasons": [
+      {
+        "rule_id": "R014",
+        "message": "This paper order requires explicit owner approval",
+        "details": {}
+      }
+    ],
+    "approved_quantity": 0,
+    "account_snapshot_id": "mm-9649035d9287093edaf9",
+    "expires_at_utc": "2026-11-19T15:31:09.906385Z"
+  },
+  "risk_approved": false,
+  "rule_statuses": {
+    "R001": {
+      "status": "PASS",
+      "check": "Exact competition paper account",
+      "note": null
+    },
+    "R002": {
+      "status": "PASS",
+      "check": "Approved instrument allowlist",
+      "note": null
+    },
+    "R003": {
+      "status": "PASS",
+      "check": "Long-only order quantity",
+      "note": null
+    },
+    "R006": {
+      "status": "PASS",
+      "check": "Daily drawdown",
+      "note": null
+    },
+    "R007": {
+      "status": "PASS",
+      "check": "Fresh, valid account and quote data",
+      "note": null
+    },
+    "R008": {
+      "status": "PASS",
+      "check": "Unlevered buying power after buffer",
+      "note": null
+    },
+    "R009": {
+      "status": "PASS",
+      "check": "Clean reconciliation and no unknown submissions",
+      "note": null
+    },
+    "R010": {
+      "status": "PASS",
+      "check": "Write controls, kill switch and circuit breaker",
+      "note": null,
+      "evaluated_order_writes_enabled": true,
+      "actual_order_writes_enabled": false,
+      "scope": "Hypothetical writes enabled for risk evaluation; actual transport writes disabled"
+    },
+    "R011": {
+      "status": "PASS",
+      "check": "No duplicate submission",
+      "note": null
+    },
+    "R012": {
+      "status": "PASS",
+      "check": "Regular exchange session",
+      "note": null
+    },
+    "R013": {
+      "status": "PASS",
+      "check": "Post-order position count",
+      "note": null
+    },
+    "R014": {
+      "status": "FAIL",
+      "check": "Exact durable owner approval for this order",
+      "note": "This paper order requires explicit owner approval"
+    },
+    "R015": {
+      "status": "PASS",
+      "check": "Separate leverage approval and maximum leverage",
+      "note": null
+    },
+    "R016": {
+      "status": "N/A",
+      "check": "Minimum effective exposure floor",
+      "note": "Exposure floor disabled for supervised orders"
+    },
+    "R017": {
+      "status": "PASS",
+      "check": "Maximum post-order signed effective exposure",
+      "note": null
+    },
+    "R018": {
+      "status": "PASS",
+      "check": "Declared target exposure consistency",
+      "note": null
+    }
+  },
+  "exposure": {
+    "currency": "USD",
+    "equity": "99991.02",
+    "basis": "Positions plus pending BUY orders; pending SELL orders are not credited. Post-order estimate assumes only the proposed order fills at the quote price, not a confirmed fill.",
+    "positions": {
+      "notional": "0",
+      "equity_fraction": "0E+2",
+      "signed_effective_notional": "0",
+      "signed_effective_equity_fraction": "0E+2"
+    },
+    "pending_buys": {
+      "notional": "0",
+      "equity_fraction": "0E+2",
+      "signed_effective_notional": "0",
+      "signed_effective_equity_fraction": "0E+2"
+    },
+    "current": {
+      "notional": "0",
+      "equity_fraction": "0E+2",
+      "signed_effective_notional": "0",
+      "signed_effective_equity_fraction": "0E+2"
+    },
+    "proposed_delta": {
+      "notional": "60002.460",
+      "equity_fraction": "0.6000784870481369226956580701",
+      "signed_effective_notional": "-60002.460",
+      "signed_effective_equity_fraction": "-0.6000784870481369226956580701"
+    },
+    "post_order": {
+      "notional": "60002.460",
+      "equity_fraction": "0.6000784870481369226956580701",
+      "signed_effective_notional": "-60002.460",
+      "signed_effective_equity_fraction": "-0.6000784870481369226956580701"
+    }
+  },
+  "all_safety_checks_pass": false,
+  "documented_order_payload_preview": {
+    "market": 100,
+    "symbol": "US.SH",
+    "order_type": 3,
+    "order_side": 1,
+    "qty": "1764",
+    "text": "MTP1-e45e952fec59fe7cd580b32cec481d08f8bfa3966a66291568c5648274741a84",
+    "order_trade_time_type": 1
+  }
+}

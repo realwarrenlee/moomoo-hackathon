@@ -12,6 +12,7 @@ from app.dashboard.api import create_app
 from app.dashboard.data import DashboardAuthRequired, DashboardPaths, DashboardService
 from app.ledger.store import SQLiteLedger
 from app.models.contracts import AccountSnapshot, OrderSide, Position, TradingActivation
+from app.trading_mode import build_auto_paper_activation
 
 NOW = datetime(2026, 11, 17, 15, 0, tzinfo=UTC)
 TOKEN = "test-dashboard-token"
@@ -208,29 +209,17 @@ def test_trading_mode_is_reported_from_environment(tmp_path: Path, monkeypatch) 
     assert overview["safety"]["order_writes_enabled"] is False
 
 
-def test_auto_paper_pin_enables_reported_order_writes(tmp_path: Path, monkeypatch) -> None:
+def test_historical_auto_pin_does_not_enable_reported_order_writes(tmp_path: Path, monkeypatch) -> None:
     monkeypatch.setenv("TRADING_MODE", "AUTO_PAPER")
     monkeypatch.setenv("ORDER_WRITES_ENABLED", "false")
     client, ledger = build_client(tmp_path)
-    ledger.record_trading_activation(
-        TradingActivation(
-            activated_at_utc=NOW,
-            activated_by="owner",
-            account_fingerprint="f" * 64,
-            strategy_version="spy-directional",
-            allowed_symbols=("SPY", "UPRO", "SH", "SPXU"),
-            risk_policy_version="risk-v2",
-            min_effective_exposure_fraction=Decimal("0.20"),
-            max_effective_exposure_fraction=Decimal("1.50"),
-            max_daily_drawdown=Decimal("0.02"),
-        )
-    )
+    ledger.record_trading_activation(build_auto_paper_activation("f" * 64, NOW))
     overview = client.get("/api/v1/overview", headers=headers()).json()
     assert overview["safety"]["trading_mode"] == "AUTO_PAPER"
-    assert overview["safety"]["order_writes_enabled"] is True
+    assert overview["safety"]["order_writes_enabled"] is False
     health = client.get("/api/v1/health", headers=headers()).json()
     assert health["trading_mode"] == "AUTO_PAPER"
-    assert health["order_writes_enabled"] is True
+    assert health["order_writes_enabled"] is False
 
 
 def test_stale_quotes_are_labelled_and_risk_is_locked(tmp_path: Path) -> None:
@@ -255,61 +244,162 @@ def _activation(**overrides):
         activated_by="owner",
         account_fingerprint="f" * 64,
         strategy_version="spy-directional",
-        allowed_symbols=("SPY", "SH", "UPRO", "SPXU"),
-        risk_policy_version="risk-v2",
-        min_effective_exposure_fraction=Decimal("0.20"),
-        max_effective_exposure_fraction=Decimal("1.50"),
+        allowed_symbols=("SPY", "SH"),
+        risk_policy_version="risk-v3",
+        min_effective_exposure_fraction=Decimal("0.10"),
+        max_effective_exposure_fraction=Decimal("0.40"),
         max_daily_drawdown=Decimal("0.02"),
     )
     fields.update(overrides)
     return TradingActivation(**fields)
 
 
-def test_risk_limits_default_to_risk_v1_without_activation(tmp_path: Path) -> None:
-    client, _ = build_client(tmp_path)
-    risk = client.get("/api/v1/risk", headers=headers()).json()
-    assert risk["policy_version"] == "risk-v1"
-    limits = risk["limits"]
-    assert limits["max_single_exposure_pct"] == 10.0
-    assert limits["max_total_exposure_pct"] == 30.0
-    assert limits["max_open_positions"] == 3
-    assert limits["min_effective_exposure_pct"] is None
-    assert limits["max_effective_exposure_pct"] is None
-    assert limits["max_leverage"] is None
-
-
-def test_risk_limits_follow_the_pinned_risk_v2_activation(tmp_path: Path) -> None:
+def test_risk_limits_default_to_v3_without_implying_activation(
+    tmp_path: Path, monkeypatch,
+) -> None:
+    monkeypatch.setenv("TRADING_MODE", "SUPERVISED_PAPER")
+    monkeypatch.setenv("ORDER_WRITES_ENABLED", "false")
     client, ledger = build_client(tmp_path)
-    ledger.record_trading_activation(_activation())
+    response = client.get("/api/v1/risk", headers=headers())
+    assert response.status_code == 200
+    risk = response.json()
+    assert risk["policy_version"] == "risk-v3"
+    assert risk["limits"] == {
+        "min_effective_exposure_pct": 10.0,  # Strategy floor; supervised path skips R016.
+        "max_effective_exposure_pct": 40.0,
+        "max_leverage": 1.0,  # Policy ceiling, not current leverage permission.
+        "max_open_positions": 1,
+        "max_daily_drawdown_pct": 2.0,
+        "max_quote_age_seconds": 300,
+        "max_account_age_seconds": 60,
+        "buying_power_buffer_usd": 5.0,
+    }
+    assert risk["allowed_symbols"] == ["SPY", "SH"]
+    assert risk["execution_locked"] is True
+    assert risk["controls"]["trading_mode"] == "SUPERVISED_PAPER"
+    assert risk["controls"]["order_writes_enabled"] is False
+    assert "No risk-v3 activation is pinned." not in risk["lock_reasons"]
+    assert any("EVERY supervised BUY and SELL" in reason for reason in risk["lock_reasons"])
+    assert risk["activation"] is None
+    assert ledger.latest_trading_activation() is None
+
+
+def test_historical_pin_cannot_expand_supervised_execution_scope(tmp_path: Path, monkeypatch) -> None:
+    monkeypatch.setenv("TRADING_MODE", "SUPERVISED_PAPER")
+    monkeypatch.setenv("ORDER_WRITES_ENABLED", "false")
+    client, ledger = build_client(tmp_path)
+    activation = _activation()
+    ledger.record_trading_activation(activation)
     risk = client.get("/api/v1/risk", headers=headers()).json()
-    assert risk["policy_version"] == "risk-v2"
+    assert risk["policy_version"] == "risk-v3"
     limits = risk["limits"]
-    assert limits["min_effective_exposure_pct"] == 20.0
-    assert limits["max_effective_exposure_pct"] == 150.0
-    assert limits["max_leverage"] == 3.0
+    assert limits["min_effective_exposure_pct"] == 10.0
+    assert limits["max_effective_exposure_pct"] == 40.0
+    assert limits["max_leverage"] == 1.0
     assert limits["max_open_positions"] == 1
-    assert limits["max_single_exposure_pct"] is None
-    assert limits["max_total_exposure_pct"] is None
+    assert limits["max_daily_drawdown_pct"] == 2.0
+    assert "max_single_exposure_pct" not in limits
+    assert "max_total_exposure_pct" not in limits
+    assert risk["allowed_symbols"] == ["SPY", "SH"]
+    assert risk["execution_locked"] is True
+    assert risk["controls"]["order_writes_enabled"] is False
+    assert risk["controls"]["broker_order_endpoint_available"] is False
+    assert risk["activation"]["status"] == "ACTIVE"
+    assert risk["activation"]["policy_version"] == "risk-v3"
+    assert risk["activation"]["allowed_symbols"] == ["SPY", "SH"]
+    assert any(
+        "authorises the scheduled autonomous executor" in warning
+        and "read-only and never submits" in warning
+        for warning in risk["warnings"]
+    )
+    assert ledger.latest_trading_activation() == activation
+    assert ledger.submission_count() == 0
 
 
-def test_risk_limits_reflect_the_pinned_risk_v1_activation(tmp_path: Path) -> None:
+def test_expired_activation_pin_grants_no_execution_authority(tmp_path: Path, monkeypatch) -> None:
+    monkeypatch.setenv("TRADING_MODE", "SUPERVISED_PAPER")
+    monkeypatch.setenv("ORDER_WRITES_ENABLED", "false")
     client, ledger = build_client(tmp_path)
     ledger.record_trading_activation(
         _activation(
-            risk_policy_version="risk-v1",
-            max_single_exposure=Decimal("0.10"),
-            max_total_exposure=Decimal("0.30"),
-            position_fraction=Decimal("0.05"),
-            min_effective_exposure_fraction=None,
-            max_effective_exposure_fraction=None,
+            activated_at_utc=NOW - timedelta(hours=2),
+            expires_at_utc=NOW - timedelta(hours=1),
         )
     )
     risk = client.get("/api/v1/risk", headers=headers()).json()
-    assert risk["policy_version"] == "risk-v1"
-    limits = risk["limits"]
-    assert limits["max_single_exposure_pct"] == 10.0
-    assert limits["max_total_exposure_pct"] == 30.0
-    assert limits["min_effective_exposure_pct"] is None
+    assert risk["activation"]["status"] == "EXPIRED"
+    assert risk["execution_locked"] is True
+    assert any(
+        "expired" in warning and "grants no execution authority" in warning
+        for warning in risk["warnings"]
+    )
+
+
+def test_historical_pin_cannot_override_current_policy_limits(tmp_path: Path) -> None:
+    client, ledger = build_client(tmp_path)
+    ledger.record_trading_activation(
+        _activation(
+            allowed_symbols=("SPY", "SH"),
+            min_effective_exposure_fraction=Decimal("0.25"),
+            max_effective_exposure_fraction=Decimal("1.20"),
+            max_daily_drawdown=Decimal("0.015"),
+        )
+    )
+    risk = client.get("/api/v1/risk", headers=headers()).json()
+    assert risk["policy_version"] == "risk-v3"
+    assert risk["limits"]["min_effective_exposure_pct"] == 10.0
+    assert risk["limits"]["max_effective_exposure_pct"] == 40.0
+    assert risk["limits"]["max_daily_drawdown_pct"] == 2.0
+    assert risk["allowed_symbols"] == ["SPY", "SH"]
+    assert {quote["symbol"] for quote in risk["quotes"]} == {"SPY", "SH"}
+
+
+def test_prior_approval_does_not_remove_every_order_approval_requirement(tmp_path: Path, monkeypatch) -> None:
+    monkeypatch.setenv("TRADING_MODE", "SUPERVISED_PAPER")
+    monkeypatch.setenv("ORDER_WRITES_ENABLED", "false")
+    client, ledger = build_client(tmp_path)
+    ledger.approve_first_order("prior-key", "prior-proposal", NOW, "owner")
+    risk = client.get("/api/v1/risk", headers=headers()).json()
+    assert risk["controls"]["first_order_approval_count"] == 1
+    assert risk["execution_locked"] is True
+    assert any(
+        "EVERY supervised BUY and SELL" in reason and "exact proposal and client order key" in reason
+        for reason in risk["lock_reasons"]
+    )
+    assert not any("first-order" in reason for reason in risk["lock_reasons"])
+    assert ledger.order_approval_count() == 1
+    assert ledger.submission_count() == 0
+
+
+def test_risk_api_schema_exposes_only_v3_limits(tmp_path: Path) -> None:
+    client, _ = build_client(tmp_path)
+    schemas = client.get("/api/openapi.json", headers=headers()).json()["components"]["schemas"]
+    properties = schemas["RiskLimits"]["properties"]
+    assert "max_single_exposure_pct" not in properties
+    assert "max_total_exposure_pct" not in properties
+    assert {"min_effective_exposure_pct", "max_effective_exposure_pct", "max_leverage"} <= set(
+        schemas["RiskLimits"]["required"]
+    )
+    assert schemas["RiskResponse"]["properties"]["policy_version"]["const"] == "risk-v3"
+
+
+def test_historical_v1_audit_rules_remain_readable(tmp_path: Path) -> None:
+    client, ledger = build_client(tmp_path)
+    ledger.append_event(
+        "POLICY_REJECTED", NOW, "historical-run", "risk_gate",
+        {
+            "policy_version": "risk-v1",
+            "decision": "REJECT",
+            "reasons": [{"rule_id": "R004"}, {"rule_id": "R005"}],
+        },
+    )
+    before = ledger.list_events()
+    audit = client.get("/api/v1/audit", headers=headers()).json()
+    event = next(event for event in audit["events"] if event["run_id"] == "historical-run")
+    assert event["summary"] == "Risk decision REJECT; rules R004, R005."
+    assert event["provenance"] == "LOCAL_LEDGER"
+    assert ledger.list_events() == before
+    assert ledger.latest_trading_activation() is None
 
 
 def test_portfolio_and_audit_return_broker_and_ledger_data(tmp_path: Path) -> None:
@@ -329,7 +419,7 @@ def test_portfolio_and_audit_return_broker_and_ledger_data(tmp_path: Path) -> No
     assert ledger.submission_count() == 0
 
 
-def test_agents_and_analytics_are_labelled_historical(tmp_path: Path) -> None:
+def test_agents_are_labelled_historical(tmp_path: Path) -> None:
     evidence = tmp_path / "evidence"
     (evidence / "qoder").mkdir(parents=True)
     historical = [
@@ -339,7 +429,6 @@ def test_agents_and_analytics_are_labelled_historical(tmp_path: Path) -> None:
     ]
     assert historical, "historical Qoder artifact fixture missing"
     shutil.copy(historical[0], evidence / "qoder" / historical[0].name)
-    shutil.copytree(PROJECT_ROOT / "evidence" / "research", evidence / "research")
     client, _ = build_client(tmp_path, evidence_dir=evidence)
     agents = client.get("/api/v1/agents", headers=headers()).json()
     assert agents["state"] == "HISTORICAL"
@@ -347,12 +436,90 @@ def test_agents_and_analytics_are_labelled_historical(tmp_path: Path) -> None:
     assert agents["runs"][0]["provenance"] == "HISTORICAL_QODER_RUN"
     assert "Not current market data" in agents["notice"]
 
+
+def _write_daily_bars(evidence: Path) -> None:
+    folder = evidence / "current-market" / "2026-11-19"
+    folder.mkdir(parents=True)
+    bars = {
+        "schema_version": "1",
+        "source": {"provider": "fixture", "last_completed_session": "20261119"},
+        "symbols": {
+            "SPY": [
+                {"date": "20261117", "close": 600.0},
+                {"date": "20261118", "close": 606.0},
+                {"date": "20261119", "close": 603.0},
+            ]
+        },
+    }
+    (folder / "daily-bars.json").write_text(json.dumps(bars), encoding="utf-8")
+
+
+def test_analytics_shows_competition_period_without_paper_equity(tmp_path: Path) -> None:
+    evidence = tmp_path / "evidence"
+    _write_daily_bars(evidence)
+    client, _ = build_client(tmp_path, evidence_dir=evidence)
     analytics = client.get("/api/v1/analytics", headers=headers()).json()
-    assert analytics["state"] == "HISTORICAL"
+    assert analytics["state"] == "EMPTY"
     assert analytics["paper_account_performance"]["available"] is False
-    assert analytics["datasets"]
-    assert all(item["provenance"] == "HISTORICAL_BACKTEST" for item in analytics["datasets"])
-    assert all(point["value"] for curve in analytics["datasets"][0]["curves"] for point in curve["points"])
+    assert len(analytics["datasets"]) == 1
+    dataset = analytics["datasets"][0]
+    assert dataset["id"] == "competition-period"
+    assert dataset["label"] == "Competition period"
+    assert dataset["period"] == {"start": "2026-11-17", "end": "2026-11-30"}
+    assert dataset["axis_dates"] == [
+        "2026-11-17",
+        "2026-11-18",
+        "2026-11-19",
+        "2026-11-20",
+        "2026-11-23",
+        "2026-11-24",
+        "2026-11-25",
+        "2026-11-27",
+        "2026-11-30",
+    ]
+    assert dataset["provenance"] == "CURRENT_MARKET_READ_ONLY"
+    labels = {curve["label"] for curve in dataset["curves"]}
+    assert labels == {"SPY", "Cash"}
+    spy = next(curve for curve in dataset["curves"] if curve["key"] == "spy")
+    assert [point["date"] for point in spy["points"]] == [
+        "2026-11-17",
+        "2026-11-18",
+        "2026-11-19",
+    ]
+    assert spy["points"][0]["value"] == 100.0
+    assert spy["points"][-1]["value"] == 100.5
+    cash = next(curve for curve in dataset["curves"] if curve["key"] == "cash")
+    assert all(point["value"] == 100.0 for point in cash["points"])
+    spy_metric = next(metric for metric in dataset["metrics"] if metric["strategy"] == "spy")
+    assert spy_metric["provenance"] == "CURRENT_MARKET_READ_ONLY"
+    assert spy_metric["period"] == "2026-11-17 to 2026-11-30"
+    assert spy_metric["total_return_pct"] == 0.5
+    cash_metric = next(metric for metric in dataset["metrics"] if metric["strategy"] == "cash")
+    assert cash_metric["total_return_pct"] == 0.0
+    assert cash_metric["max_drawdown_pct"] == 0.0
+
+
+def test_analytics_reports_ledger_equity_within_competition_period(tmp_path: Path) -> None:
+    client, ledger = build_client(tmp_path)
+    ledger.observe_equity("f" * 64, Decimal("100000"), NOW)
+    ledger.observe_equity("f" * 64, Decimal("99991.02"), NOW + timedelta(days=1))
+    analytics = client.get("/api/v1/analytics", headers=headers()).json()
+    assert analytics["state"] == "LIVE"
+    assert analytics["paper_account_performance"]["available"] is True
+    dataset = analytics["datasets"][0]
+    assert dataset["provenance"] == "LIVE_BROKER_READ"
+    labels = {curve["label"] for curve in dataset["curves"]}
+    assert labels == {"Paper account", "SPY", "Cash"}
+    paper = next(curve for curve in dataset["curves"] if curve["key"] == "paper_account")
+    assert [point["date"] for point in paper["points"]] == ["2026-11-17", "2026-11-18"]
+    assert paper["points"][0]["value"] == 100.0
+    assert abs(paper["points"][1]["value"] - 99.991) < 0.001
+    paper_metric = next(
+        metric for metric in dataset["metrics"] if metric["strategy"] == "paper_account"
+    )
+    assert paper_metric["provenance"] == "LIVE_BROKER_READ"
+    assert paper_metric["total_return_pct"] == round((99991.02 / 100000 - 1) * 100, 4)
+    assert paper_metric["annualized_volatility_pct"] is None
 
 
 def _write_current_agent_artifact(tmp_path: Path, *, account: object) -> None:
@@ -479,6 +646,7 @@ def test_current_agent_run_is_labelled_and_sanitized(tmp_path: Path) -> None:
     assert run["proposal"]["symbol"] == "SH"
     assert run["proposal"]["action"] == "BUY"
     assert run["risk_decision"]["decision"] == "REJECT"
+    assert run["risk_decision"]["policy_version"] == "risk-v1"  # Recorded evidence, not current policy.
     assert {reason["rule_id"] for reason in run["risk_decision"]["reasons"]} == {"R010", "R014"}
     assert run["candidates"][0]["symbol"] == "SH"
     assert run["candidates"][0]["direction"] == -1

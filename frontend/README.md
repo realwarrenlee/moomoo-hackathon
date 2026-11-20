@@ -63,9 +63,3 @@ npx pnpm@10 run build
 - Historical research and backtests are never displayed as realised paper performance.
 - Full account IDs, OAuth tokens, fingerprints and raw agent logs are not sent to the browser.
 - A broker acknowledgement is not treated as a fill.
-
-## Attribution
-
-The visual system and application shell are adapted from the MIT-licensed [Shadcn Fintech](https://github.com/abderrahimghazali/shadcn-fintech) template by Abderrahim Ghazali. See [ATTRIBUTION.md](ATTRIBUTION.md) and [LICENSE](LICENSE). Banking features, routes and seed data were removed; all MooTrade pages and data contracts are new.
-
-The upstream template README warns that a third-party re-upload (`Weebapp003/shadcn-fintech-template`) contains malware-associated dependencies. This project came from the official repository URL above and does not include those packages.

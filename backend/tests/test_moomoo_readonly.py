@@ -255,8 +255,7 @@ def test_margin_buying_power_is_not_propagated_and_risk_gate_uses_cash(
     )
     gate = RiskGate(
         expected_account_fingerprint=account_fingerprint,
-        max_single_exposure=Decimal("10"),
-        max_total_exposure=Decimal("10"),
+        max_effective_exposure_fraction=Decimal("1.50"),
     )
     control = ControlState(order_writes_enabled=True, first_order_approved=True)
     decision = gate.evaluate(

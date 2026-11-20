@@ -1,6 +1,18 @@
-from app.cli import main
+from app.cli import _activation_policy_fields, main
 from app.ledger.store import SQLiteLedger
 from app.service import build_client_order_key
+from app.trading_mode import build_auto_paper_activation
+
+
+def test_activation_report_contains_only_v3_policy_fields(account_fingerprint, now):
+    activation = build_auto_paper_activation(account_fingerprint, now)
+
+    assert _activation_policy_fields(activation) == {
+        "min_effective_exposure_fraction": "0.10",
+        "max_effective_exposure_fraction": "0.40",
+        "max_daily_drawdown": "0.02",
+        "expires_at_utc": None,
+    }
 
 
 def test_approve_first_order_cli_records_durable_approval(tmp_path, proposal, capsys):

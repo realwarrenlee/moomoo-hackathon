@@ -119,6 +119,9 @@ class ControlState(ContractModel):
     kill_switch_engaged: bool = False
     circuit_breaker_open: bool = False
     first_order_approved: bool = False
+    # Mode-aware R014: a valid, unexpired autonomous policy activation replaces
+    # exact-order approval. The risk gate re-validates it deterministically.
+    autonomous_activation: "TradingActivation | None" = None
 
 
 class TradingActivation(ContractModel):
@@ -128,61 +131,27 @@ class TradingActivation(ContractModel):
     account_fingerprint: str = Field(min_length=64, max_length=64)
     strategy_version: str = Field(min_length=1)
     allowed_symbols: tuple[str, ...]
-    risk_policy_version: str = Field(min_length=1)
-    # risk-v1 exposure limits (the incumbent activation's fixed-allocation model)
-    max_single_exposure: Decimal | None = None
-    max_total_exposure: Decimal | None = None
-    position_fraction: Decimal | None = None
-    # risk-v2 exposure limits (tier-based effective-exposure model)
-    min_effective_exposure_fraction: Decimal | None = None
-    max_effective_exposure_fraction: Decimal | None = None
+    risk_policy_version: Literal["risk-v3"]
+    min_effective_exposure_fraction: Decimal = Field(gt=0, le=1)
+    max_effective_exposure_fraction: Decimal = Field(gt=0)
     max_daily_drawdown: Decimal
     paper_only: Literal[True] = True
     order_writes_enabled: Literal[True] = True
+    expires_at_utc: AwareDatetime | None = None
 
     @model_validator(mode="after")
     def validate_limits(self) -> Self:
-        if self.risk_policy_version == "risk-v1":
-            for field in ("max_single_exposure", "max_total_exposure", "position_fraction"):
-                value = getattr(self, field)
-                if value is None:
-                    raise ValueError(f"{field} is required for risk-v1 activations")
-                if value <= 0 or value > 1:
-                    raise ValueError(f"{field} must be within (0, 1]")
-            if (
-                self.min_effective_exposure_fraction is not None
-                or self.max_effective_exposure_fraction is not None
-            ):
-                raise ValueError("risk-v2 exposure fields must be absent for risk-v1 activations")
-        elif self.risk_policy_version == "risk-v2":
-            if self.min_effective_exposure_fraction is None:
-                raise ValueError("minimum effective exposure fraction is required for risk-v2")
-            if self.max_effective_exposure_fraction is None:
-                raise ValueError("maximum effective exposure fraction is required for risk-v2")
-            if (
-                self.min_effective_exposure_fraction <= 0
-                or self.min_effective_exposure_fraction > 1
-            ):
-                raise ValueError("minimum effective exposure fraction must be within (0, 1]")
-            if self.max_effective_exposure_fraction <= 0:
-                raise ValueError("maximum effective exposure fraction must be positive")
-            if (
-                self.min_effective_exposure_fraction
-                >= self.max_effective_exposure_fraction
-            ):
-                raise ValueError("minimum exposure must be below the maximum")
-            if (
-                self.max_single_exposure is not None
-                or self.max_total_exposure is not None
-                or self.position_fraction is not None
-            ):
-                raise ValueError("risk-v1 exposure fields must be absent for risk-v2 activations")
-        else:
-            raise ValueError("unsupported risk policy version")
+        if self.min_effective_exposure_fraction >= self.max_effective_exposure_fraction:
+            raise ValueError("minimum exposure must be below the maximum")
         if self.max_daily_drawdown <= 0 or self.max_daily_drawdown > 1:
             raise ValueError("max daily drawdown must be within (0, 1]")
         if len(self.allowed_symbols) == 0 or len(set(self.allowed_symbols)) != len(self.allowed_symbols):
             raise ValueError("allowed symbols must be a non-empty tuple of unique symbols")
+        if (
+            self.expires_at_utc is not None
+            and self.expires_at_utc <= self.activated_at_utc
+        ):
+            raise ValueError("activation expiry must be after the activation time")
         return self
 
 

@@ -145,6 +145,7 @@ def test_run_once_records_abstained_execution(tmp_path, monkeypatch):
         "_execute_phase",
         lambda session, output_dir: {"exit_code": 1},
     )
+    monkeypatch.setenv("TRADING_MODE", "AUTO_PAPER")
     event = schedule_auto_paper.run_once(
         datetime(2026, 11, 18, 9, 40, tzinfo=NY),
         config_path=_config(tmp_path),
@@ -225,7 +226,7 @@ def test_run_once_abandons_stale_running_record_then_executes(tmp_path, monkeypa
     assert "abandon_reason" in abandoned
 
 
-def test_execute_phase_scopes_writes_and_restores_env(monkeypatch, tmp_path):
+def test_execute_phase_scopes_writes_only_in_auto_paper_mode(monkeypatch, tmp_path):
     calls = []
 
     def fake_main(argv):
@@ -234,20 +235,43 @@ def test_execute_phase_scopes_writes_and_restores_env(monkeypatch, tmp_path):
 
     monkeypatch.setattr(schedule_auto_paper.auto_paper_run, "main", fake_main)
     monkeypatch.setenv("ORDER_WRITES_ENABLED", "false")
+    monkeypatch.setenv("TRADING_MODE", "AUTO_PAPER")
     result = schedule_auto_paper._execute_phase(date(2026, 11, 17), tmp_path)
     assert calls[0][1] == "true"
     assert os.environ["ORDER_WRITES_ENABLED"] == "false"
     assert result["exit_code"] == 0
+    assert result["order_writes_enabled_scoped"] is True
     args = calls[0][0]
     assert args.count("--bars") == 1
     assert args.count("--artifact-dir") == 1
     assert args.count("--output-dir") == 1
+    assert args.count("--expected-session") == 1
+    assert args[args.index("--expected-session") + 1] == "2026-11-17"
+
+
+def test_execute_phase_never_scopes_writes_for_supervised_mode(monkeypatch, tmp_path):
+    calls = []
+
+    def fake_main(argv):
+        calls.append(os.environ.get("ORDER_WRITES_ENABLED"))
+        return 0
+
+    monkeypatch.setattr(schedule_auto_paper.auto_paper_run, "main", fake_main)
+    monkeypatch.setenv("TRADING_MODE", "SUPERVISED_PAPER")
+    monkeypatch.setenv("ORDER_WRITES_ENABLED", "true")
+    result = schedule_auto_paper._execute_phase(date(2026, 11, 17), tmp_path)
+    assert calls == ["true"]
+    assert os.environ["ORDER_WRITES_ENABLED"] == "true"
+    assert result["order_writes_enabled_scoped"] is False
+    assert result["trading_mode"] == "SUPERVISED_PAPER"
 
 
 def test_execute_phase_removes_writes_flag_when_absent_before(monkeypatch, tmp_path):
     monkeypatch.delenv("ORDER_WRITES_ENABLED", raising=False)
+    monkeypatch.setenv("TRADING_MODE", "SUPERVISED_PAPER")
 
     def fake_main(argv):
+        assert "ORDER_WRITES_ENABLED" not in os.environ
         return 1
 
     monkeypatch.setattr(schedule_auto_paper.auto_paper_run, "main", fake_main)

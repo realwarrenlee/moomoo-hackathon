@@ -3,10 +3,18 @@
 Windows Task Scheduler invokes this module at 13:35Z and 14:35Z (09:35 ET in
 either US DST offset). The execution phase runs only inside the documented
 09:35-10:30 ET window, against the read-only scheduler's evening decision
-artifacts and daily bars, with ``ORDER_WRITES_ENABLED=true`` scoped to the
-executor subprocess only. Every miss fails closed: outside the window, no
-prior-session decision artifact, no AUTO_PAPER activation pin, an engaged kill
-switch or a market-closed quote all produce an abstention and no submission.
+artifacts and daily bars.
+
+- ``TRADING_MODE=SUPERVISED_PAPER``: the supervised decision phase runs with
+  writes disabled, records the deterministic decision and awaits exact-order
+  owner approval. No submission path exists in this mode.
+- ``TRADING_MODE=AUTO_PAPER``: ``ORDER_WRITES_ENABLED=true`` is scoped to the
+  executor subprocess only, and every submission still requires the durable
+  activation pin and all per-run checks.
+
+Every miss fails closed: outside the window, no prior-session decision
+artifact, no AUTO_PAPER activation pin, an engaged kill switch or a
+market-closed quote all produce an abstention and no submission.
 """
 
 from __future__ import annotations
@@ -70,7 +78,11 @@ def _window_open(now_et: datetime, start: tuple[int, int], end: tuple[int, int])
 def _execute_phase(session: date, output_dir: Path) -> dict[str, object]:
     bars_path = ROOT / "evidence" / "current-market" / session.isoformat() / "daily-bars.json"
     previous = os.environ.get("ORDER_WRITES_ENABLED")
-    os.environ["ORDER_WRITES_ENABLED"] = "true"
+    # Writes are scoped to the executor subprocess only in autonomous mode;
+    # the supervised decision phase runs with the runtime's disabled writes.
+    enable_writes = os.environ.get("TRADING_MODE", "").strip().upper() == "AUTO_PAPER"
+    if enable_writes:
+        os.environ["ORDER_WRITES_ENABLED"] = "true"
     try:
         buffer = StringIO()
         with redirect_stdout(buffer):
@@ -82,6 +94,8 @@ def _execute_phase(session: date, output_dir: Path) -> dict[str, object]:
                     str(DECISION_ARTIFACTS),
                     "--output-dir",
                     str(output_dir),
+                    "--expected-session",
+                    session.isoformat(),
                 ]
             )
     finally:
@@ -94,7 +108,8 @@ def _execute_phase(session: date, output_dir: Path) -> dict[str, object]:
         "session_date": session.isoformat(),
         "bars_path": str(bars_path.relative_to(ROOT)) if bars_path.exists() else None,
         "stdout": buffer.getvalue()[-4000:],
-        "order_writes_enabled_scoped": True,
+        "order_writes_enabled_scoped": enable_writes,
+        "trading_mode": os.environ.get("TRADING_MODE", "").strip().upper(),
     }
 
 
@@ -207,7 +222,9 @@ def run_once(
             "trigger": trigger,
             "started_at_utc": checked_at_utc,
             "scheduled_for_et": scheduled_for.isoformat(),
-            "order_writes_enabled_scoped": True,
+            "order_writes_enabled_scoped": (
+                os.environ.get("TRADING_MODE", "").strip().upper() == "AUTO_PAPER"
+            ),
         }
         history.append(event)
         _write_state(state_path, state)

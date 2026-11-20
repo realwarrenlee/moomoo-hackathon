@@ -1,4 +1,5 @@
 import assert from "node:assert/strict"
+import { readFileSync } from "node:fs"
 import test from "node:test"
 
 import {
@@ -18,6 +19,7 @@ import {
   percent,
   ratioPercent,
   riskDecisionLabel,
+  RISK_RULES,
   ruleLabel,
   shortDate,
   shortDateTime,
@@ -108,9 +110,33 @@ test("outcome labels and tones never present a policy rejection as success", () 
 
 test("risk rules and decisions use human labels", () => {
   assert.equal(ruleLabel("R007"), "Quote freshness")
+  assert.equal(ruleLabel("R014"), "Approval or autonomous authorization")
   assert.equal(ruleLabel("R999"), "R999")
   assert.equal(riskDecisionLabel("REJECT"), "Rejected")
   assert.equal(riskDecisionLabel(null), "Not evaluated")
+})
+
+test("current rule catalogue is v2-only while historical rule labels remain readable", () => {
+  assert.equal(RISK_RULES.R004, undefined)
+  assert.equal(RISK_RULES.R005, undefined)
+  assert.equal(ruleLabel("R004"), "Single-position exposure")
+  assert.equal(ruleLabel("R005"), "Gross exposure")
+  assert.equal(ruleLabel("R016"), "Minimum exposure floor")
+  assert.equal(ruleLabel("R017"), "Maximum effective exposure")
+  assert.equal(ruleLabel("R018"), "Declared target consistency")
+})
+
+test("risk page copy separates supervised permission from research and historical pins", () => {
+  // Source-copy regression, not a browser-render test.
+  const page = readFileSync(new URL("../app/(dashboard)/risk/page.tsx", import.meta.url), "utf8")
+  assert.match(page, /\["R002"[^\n]+SPY\/SH only[^\n]+an AUTO_PAPER pin never widens this allowlist/)
+  assert.match(page, /\["R013"[^\n]+at most 1 distinct position[^\n]+strategy separately permits only one/)
+  assert.match(page, /\["R014"[^\n]+EVERY supervised BUY and SELL[^\n]+exact proposal and client order key/)
+  assert.match(page, /\["R015"[^\n]+1x[^\n]+outside the universe and rejected regardless of size/)
+  assert.match(page, /\["R016"[^\n]+10% strategy floor[^\n]+skipped in the supervised path[^\n]+R017 and R018 still apply/)
+  assert.doesNotMatch(page, /First-order approval|initial paper order|Only symbols in the pinned/)
+  assert.match(page, /Prepared supervised execution allowlist/)
+  assert.match(page, /An active AUTO_PAPER pin authorises\r?\n\s+only the scheduled autonomous executor/)
 })
 
 test("audit event names are human-readable and tones stay semantic", () => {

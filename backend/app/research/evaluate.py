@@ -3,21 +3,16 @@ from __future__ import annotations
 import math
 import statistics
 from dataclasses import dataclass
-from datetime import date, datetime
+from datetime import date
 from decimal import ROUND_FLOOR, Decimal
 
+from app.models.contracts import AccountSnapshot, Position, ProposalAction, TradeProposal
 from app.research.data import MarketHistory, session_close_utc
 from app.research.instruments import INSTRUMENTS
-from app.research.strategy import (
-    EXPOSURE_POLICY_V1,
-    EXPOSURE_POLICY_V2,
-    MIN_COMPLETED_SESSIONS,
-    screen,
-)
+from app.research.strategy import EXPOSURE_POLICY_V3, MIN_COMPLETED_SESSIONS, decide, screen
 
 INITIAL_EQUITY = Decimal("100000")
 COST_BPS = Decimal("2")
-CASH_TARGET = "CASH"
 
 
 @dataclass(frozen=True)
@@ -110,52 +105,73 @@ def simulate_strategy(
     strategy_version: str,
     start_index: int = MIN_COMPLETED_SESSIONS,
     cost_bps: Decimal = COST_BPS,
-    allocation: Decimal = Decimal("0.05"),
-    whole_shares: bool = True,
-    allow_leveraged: bool = False,
 ) -> BacktestResult:
+    """Historical-only v2 replay, not a RiskGate or broker execution simulation.
+
+    The deterministic decision sizes whole shares at the completed close. Fills
+    occur at the next open, with per-side costs and a cash-only affordability cap.
+    A reversal cannot enter until a later close observes the simulated exit.
+    Resizes remain one holding episode; trade prices are quantity-weighted over
+    its buys and sells (including the final mark for an open episode).
+    """
     dates = history.session_dates()
     if start_index < MIN_COMPLETED_SESSIONS:
         raise ValueError(f"start_index must provide {MIN_COMPLETED_SESSIONS} completed sessions")
-    if not Decimal("0") < allocation <= Decimal("1"):
-        raise ValueError("allocation must be in (0, 1]")
+    if start_index >= len(dates):
+        raise ValueError("start_index must leave at least one execution session")
+    if not cost_bps.is_finite() or not Decimal("0") <= cost_bps < Decimal("10000"):
+        raise ValueError("cost_bps must be finite and in [0, 10000)")
     cost = cost_bps / Decimal("10000")
     cash = INITIAL_EQUITY
-    shares = Decimal("0")
+    shares = 0
     position_symbol: str | None = None
-    position_leverage = Decimal("1")
-    entry_price = Decimal("0")
+    bought_shares = 0
+    entry_cost = Decimal("0")
+    exit_proceeds = Decimal("0")
     entry_signal_date: date | None = None
     entry_date: date | None = None
-    pending_target: str | None = None
-    pending_signal_date: date | None = None
+    pending: TradeProposal | None = None
+    pending_duration_exit = False
+    leveraged_reentry_blocked_through: str | None = None
     trades: list[Trade] = []
-    curve: list[tuple[date, Decimal]] = [(dates[start_index - 1], INITIAL_EQUITY)]
-    exposures: list[Decimal] = [Decimal("0")]
+    curve: list[tuple[date, Decimal]] = []
+    exposures: list[Decimal] = []
     exposure_days = 0
     signals = 0
-    exposure_policy = EXPOSURE_POLICY_V2 if allow_leveraged else EXPOSURE_POLICY_V1
 
-    initial_signal = screen(
-        history,
-        session_close_utc(dates[start_index - 1]),
-        strategy_version,
-        exposure_policy=exposure_policy,
-    )
-    pending_target = initial_signal.selected_symbol or CASH_TARGET
-    pending_signal_date = dates[start_index - 1]
-
-    for index in range(start_index, len(dates)):
+    for index in range(start_index - 1, len(dates)):
         session = dates[index]
+        now = session_close_utc(session)
         bar_by_symbol = {symbol: history.bar_on(symbol, session) for symbol in INSTRUMENTS}
 
-        if pending_target is not None:
-            if position_symbol is not None:
-                if pending_target != position_symbol:
-                    exit_bar = bar_by_symbol.get(position_symbol)
-                    if exit_bar is not None:
-                        exit_price = exit_bar.open * (1 - cost)
-                        cash += shares * exit_price
+        if pending is not None:
+            fill_bar = bar_by_symbol[pending.symbol]
+            if fill_bar is not None:
+                if pending.action is ProposalAction.BUY:
+                    fill_price = fill_bar.open * (1 + cost)
+                    affordable = int((cash / fill_price).to_integral_value(rounding=ROUND_FLOOR))
+                    quantity = min(pending.requested_quantity, affordable)
+                    if quantity > 0:
+                        if position_symbol is None:
+                            position_symbol = pending.symbol
+                            entry_signal_date = pending.decision_time_utc.date()
+                            entry_date = session
+                            bought_shares = 0
+                            entry_cost = Decimal("0")
+                            exit_proceeds = Decimal("0")
+                            signals += 1
+                        shares += quantity
+                        bought_shares += quantity
+                        entry_cost += quantity * fill_price
+                        cash -= quantity * fill_price
+                else:
+                    quantity = min(pending.requested_quantity, shares)
+                    proceeds = quantity * fill_bar.open * (1 - cost)
+                    cash += proceeds
+                    exit_proceeds += proceeds
+                    shares -= quantity
+                    if shares == 0:
+                        assert position_symbol is not None
                         assert entry_signal_date is not None and entry_date is not None
                         trades.append(
                             Trade(
@@ -163,82 +179,75 @@ def simulate_strategy(
                                 signal_date=entry_signal_date,
                                 entry_date=entry_date,
                                 exit_date=session,
-                                entry_price=entry_price,
-                                exit_price=exit_price,
-                                return_pct=float(exit_price / entry_price - 1),
+                                entry_price=entry_cost / bought_shares,
+                                exit_price=exit_proceeds / bought_shares,
+                                return_pct=float(exit_proceeds / entry_cost - 1),
                             )
                         )
-                        shares = Decimal("0")
+                        if pending_duration_exit:
+                            # Cap the first post-exit close's entry proposal at 1x.
+                            leveraged_reentry_blocked_through = session.isoformat()
                         position_symbol = None
-                        entry_price = Decimal("0")
                         entry_signal_date = None
                         entry_date = None
-            elif pending_target != CASH_TARGET:
-                entry_bar = bar_by_symbol.get(pending_target)
-                if entry_bar is not None:
-                    entry_price = entry_bar.open * (1 + cost)
-                    leverage = INSTRUMENTS[pending_target].leverage
-                    raw_quantity = cash * allocation / (entry_price * leverage)
-                    quantity = (
-                        raw_quantity.to_integral_value(rounding=ROUND_FLOOR)
-                        if whole_shares
-                        else raw_quantity
-                    )
-                    if quantity > 0:
-                        shares = quantity
-                        cash -= shares * entry_price
-                        position_symbol = pending_target
-                        position_leverage = leverage
-                        entry_signal_date = pending_signal_date
-                        entry_date = session
-                        signals += 1
-            pending_target = None
-            pending_signal_date = None
+            pending = None
+            pending_duration_exit = False
 
-        close_prices = {
-            symbol: bar.close for symbol, bar in bar_by_symbol.items() if bar is not None
-        }
-        market_value = (
-            shares * close_prices[position_symbol]
-            if position_symbol is not None and position_symbol in close_prices
-            else Decimal("0")
-        )
+        market_value = Decimal("0")
+        positions = ()
         if position_symbol is not None:
+            held_bar = bar_by_symbol[position_symbol]
+            if held_bar is None or held_bar.available_at_utc > now:
+                raise ValueError(f"unavailable {position_symbol} valuation bar on {session}")
+            market_value = shares * held_bar.close
+            positions = (Position(symbol=position_symbol, quantity=shares, market_value=market_value),)
             exposure_days += 1
         equity = cash + market_value
-        exposures.append(
-            market_value * position_leverage / equity if equity else Decimal("0")
-        )
+        leverage = INSTRUMENTS[position_symbol].leverage if position_symbol else Decimal("1")
+        exposures.append(market_value * leverage / equity if equity else Decimal("0"))
         curve.append((session, equity))
 
         if index < len(dates) - 1:
-            snapshot = screen(
-                history,
-                session_close_utc(session),
-                strategy_version,
-                exposure_policy=exposure_policy,
+            # Truncate every symbol, not just SPY, to keep unavailable ETF bars
+            # out of both selection and sizing.
+            known_history = MarketHistory(
+                {symbol: history.bars_as_of(symbol, now) for symbol in history.symbols},
+                history.source,
             )
-            target = snapshot.selected_symbol or CASH_TARGET
-            if position_symbol is None and target != CASH_TARGET:
-                pending_target = target
-                pending_signal_date = session
-            elif position_symbol is not None and target != position_symbol:
-                pending_target = target
-                pending_signal_date = session
+            account = AccountSnapshot(
+                snapshot_id=f"historical-replay-{session}",
+                account_fingerprint="historical-replay-only",
+                environment="paper",
+                equity=equity,
+                day_start_equity=equity,
+                peak_equity=equity,
+                cash=cash,
+                buying_power=cash,
+                positions=positions,
+                as_of_utc=now,
+                reconciled=True,
+            )
+            snapshot, pending = decide(
+                screen(known_history, now, strategy_version, exposure_policy=EXPOSURE_POLICY_V3),
+                known_history,
+                account,
+                exposure_policy=EXPOSURE_POLICY_V3,
+                holding_entry_session=entry_date.isoformat() if entry_date else None,
+                leveraged_reentry_blocked_through=leveraged_reentry_blocked_through,
+            )
+            pending_duration_exit = snapshot.duration_exit
 
-    open_position = position_symbol
     if position_symbol is not None and entry_signal_date is not None and entry_date is not None:
-        last_close = history.bar_on(position_symbol, dates[-1])
-        assert last_close is not None
+        marked_proceeds = exit_proceeds + market_value
         trades.append(
             Trade(
                 symbol=position_symbol,
                 signal_date=entry_signal_date,
                 entry_date=entry_date,
                 exit_date=None,
-                entry_price=entry_price,
-                exit_price=last_close.close,
-                return_pct=float(last_close.close / entry_price - 1),
+                entry_price=entry_cost / bought_shares,
+                exit_price=marked_proceeds / bought_shares,
+                return_pct=float(marked_proceeds / entry_cost - 1),
             )
         )
     return _metrics(
@@ -247,7 +256,7 @@ def simulate_strategy(
         exposure_days,
         signals,
         trades,
-        open_position,
+        position_symbol,
         exposures,
     )
 

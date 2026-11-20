@@ -83,7 +83,7 @@ def test_accepted_proposal_uses_real_risk_gate(service, history):
     assert result["ok"] is True
     assert result["risk_decision"]["decision"] == "APPROVE"
     assert result["risk_decision"]["approved_quantity"] == research["proposal"]["requested_quantity"]
-    assert result["risk_decision"]["policy_version"] == "risk-v2"
+    assert result["risk_decision"]["policy_version"] == "risk-v3"
 
 
 def test_stale_quote_is_rejected(service, history):

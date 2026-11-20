@@ -162,8 +162,12 @@ class MoomooOrderTransport:
         if isinstance(ret_code, bool) or not isinstance(ret_code, int):
             raise OrderTransportError("order response has no integer ret_code")
         if ret_code != 0:
+            ret_msg = body.get("ret_msg")
+            detail = f" (ret_msg={ret_msg!r})" if isinstance(ret_msg, str) and ret_msg else ""
+            if not detail:
+                detail = f" (body={repr(body)[:200]})"
             raise OrderTransportError(
-                f"order submission was refused (ret_code={ret_code}); outcome is ambiguous"
+                f"order submission was refused (ret_code={ret_code}){detail}; outcome is ambiguous"
             )
         data = body.get("data")
         order_id = data.get("order_id") if isinstance(data, Mapping) else None

@@ -2,7 +2,9 @@
 
 **Purpose:** prevent development from assuming that an ordinary Moomoo paper account or public MCP is equivalent to the **competition-issued account**.
 
-## Verified competition facts (17 November 2026)
+**Current mandate:** risk-v3 only (20 November 2026 cutover); explicit durable owner approval for the exact proposal/key of **EVERY supervised BUY and SELL**. `TRADING_MODE=SUPERVISED_PAPER`, `ORDER_WRITES_ENABLED=false`. Execution scope is SPY/SH only; UPRO/SPXU were removed from the universe and are rejected by default-deny symbol validation (their read-only observations remain HISTORICAL evidence below); read-only MARKET capacity is verified (112 SPY / 2,476 SH cash-buy shares on 19 November), not guaranteed acceptance. This preparation adds no activation, permission or order. Historical risk-v1 and pre-simplification risk-v2 pins remain append-only evidence, not current unattended authority; risk-v1 is retired and cannot be reactivated. Acceptance never automatically restores `AUTO_PAPER`; autonomy requires separate explicit approval. The only demonstrated fills are the 18 November QQQ diagnostic BUY/SELL, both reconciled, not SPY/SH strategy fills.
+
+## HISTORICAL verified competition baseline (17 November 2026)
 
 - Masked account identity: `****0101` (full id intentionally withheld).
 - Starting equity: `100,000 USD`.
@@ -53,7 +55,7 @@ Authenticated read result from the product CLI (`moomoo-read`):
 | Is the MCP connection to the competition account? | Compare non-secret account metadata and balance with official competition portal | Do not enable order writes |
 | What are the exact tool names, parameters and response types? | Discover from the authorised MCP tool registry/docs | Implement adapter interface with mock provider |
 | Does the provider support client order IDs? | Inspect official tool spec and sandbox call behavior | Local durable de-duplication + reconciliation before retries |
-| What orders and instruments are eligible? | Check handbook and official competition tools | Use read-only SPY/QQQ/IWM analysis pending eligibility check |
+| What orders and instruments are eligible? | Check handbook, official competition tools and account-specific capacity | Research/execute SPY/SH only (risk-v3); read-only MARKET cash-buy capacity 112/2,476 verified 19 Nov; no guaranteed acceptance |
 | Are scheduling and reusable skills available in this Qoder account? | Confirm in account and one actual cloud run | Use only documented accessible features; explain restrictions |
 | Can orders be cancelled through the paper MCP? | Check documented tool and run a controlled test if permitted | Kill switch blocks new orders; document that cancellations are unavailable |
 | Are quotes delayed and which timestamps are available? | Inspect metadata on returned quotes | Mark data stale/unknown and abstain |
@@ -72,7 +74,7 @@ Authenticated read result from the product CLI (`moomoo-read`):
 
 ### Phase B — supervised paper order
 
-1. Owner explicitly approves enabling paper writes for a verified account.
+1. Owner explicitly approves the exact proposal and client order key for each supervised BUY/SELL on the verified competition paper account; prior consent, fills or pins are insufficient.
 2. Run local tests of position, drawdown, stale-data and kill-switch checks.
 3. Record strategy version and an order's unique idempotency key.
 4. Submit a small, permissible paper order with valid market/session checks.
@@ -82,7 +84,7 @@ Authenticated read result from the product CLI (`moomoo-read`):
 
 ### Phase C — scheduled autonomy
 
-The read-only local schedule is implemented; it has no order authority and never approves an order. Any order-capable autonomy remains gated on stable reconciliation, repeatable preflight checks, a persisted kill switch and a bounded retry policy. No automatic retry of unknown submission outcomes.
+The read-only local schedule is implemented and has no order authority. Order-capable autonomy is not currently authorised; it requires separate explicit owner approval in addition to stable reconciliation, repeatable preflight and a persistent kill switch. Historical pins or leveraged acceptance do not grant that scope. Unknown submissions are never automatically retried.
 
 ## Environment variables (internal names, not official Qoder/Moomoo schemas)
 
@@ -121,7 +123,7 @@ Two documented GET endpoints were verified against the competition token and add
 
 `backend/app/broker/moomoo_history.py` parses both strictly: integer dates, positive and internally consistent OHLC, non-negative integer volume, positive `time_key`, chronological ordering and no bar after the requested end. `snapshot(..., require_end_session=True)` requires the last bar to equal the requested session. Snapshots record provider, endpoint, args, fetch time and last completed session only; they contain no account identifiers.
 
-`backend/scripts/refresh_daily_bars.py` refreshes the four `spy-directional` candidates (SPY, UPRO, SH, SPXU) atomically into `evidence/current-market/<session>/daily-bars.json`. It refuses `ORDER_WRITES_ENABLED=true` and any stored `trade:write`. Verified real refresh on 17 November 2026: 370 bars per symbol, last completed session `20261116`, fetched `2026-11-17T14:17:20Z`.
+`backend/scripts/refresh_daily_bars.py` refreshes the two `spy-directional` candidates (SPY, SH) atomically into `evidence/current-market/<session>/daily-bars.json`. It refuses `ORDER_WRITES_ENABLED=true` and any stored `trade:write`. Verified real refresh on 17 November 2026: 370 bars per symbol, last completed session `20261116`, fetched `2026-11-17T14:17:20Z` (that snapshot also included the pre-simplification UPRO/SPXU series, which remain HISTORICAL fixtures).
 
 `backend/scripts/current_market_run.py` performs the read-only current-market collection and three-agent Qoder review. Session mode requires `MoomooQuoteFeed.get_quote` to return the regular-session state for every symbol; post-close mode records quote observations and requires bars from the last completed session. Both modes validate the competition paper account, freshness, completeness and zero order writes before any Qoder session starts.
 
@@ -133,13 +135,13 @@ Two documented GET endpoints were verified against the competition token and add
 powershell -ExecutionPolicy Bypass -File backend/scripts/register_readonly_task.ps1
 ```
 
-`backend/scripts/schedule_auto_paper.py` is the AUTO_PAPER execution-phase scheduler (`backend/config/auto_paper_schedule.json`, execution window `09:35`-`10:30` `America/New_York`). It is invoked by the Task Scheduler task `MooTrade Auto Paper Scheduler` through `backend/scripts/run_auto_paper_schedule.cmd`, registered by `backend/scripts/register_auto_paper_task.ps1` with two daily UTC triggers at `13:35Z` and `14:35Z` (covering 09:35 ET in both DST offsets). It consumes the read-only scheduler's evening decision artifacts (`evidence/qoder/`) and daily bars (`evidence/current-market/<session>/`), scopes `ORDER_WRITES_ENABLED=true` to the executor invocation only, and records a durable per-session history in `data/auto_paper_schedule.json` plus append-only events in `data/auto-scheduler-events.jsonl`. Outside the window, on non-trading days, after an already-attempted session or without an AUTO_PAPER activation pin it skips or abstains; no session is ever retried later the same day and no window is backfilled. Timer mechanics (WakeToRun, interactive DPAPI user session, Modern Standby limits) match the read-only task and were verified there on 18 November 2026.
+**HISTORICAL/dormant execution scheduler:** `backend/scripts/schedule_auto_paper.py` retains the earlier AUTO_PAPER design (`09:35`–`10:30 America/New_York`, `13:35Z`/`14:35Z` triggers, evening decision artifacts, fresh broker checks and invocation-scoped writes). Its per-session state is `data/auto_paper_schedule.json`, with append-only `data/auto-scheduler-events.jsonl`; no same-session retry or missed-window backfill is designed. Timer mechanics were verified on the read-only task on 18 November. This is not current order authority: runtime remains `SUPERVISED_PAPER` with writes disabled, and future autonomy requires separate explicit approval. Historical pins or leveraged acceptance cannot activate it.
 
 For a one-time timer validation, add `-ValidationDelayMinutes 2`; remove the validation trigger afterward with `Set-ScheduledTask` filtered to the daily triggers. Do not use a manual `--once` run as timer evidence.
 
 `backend/scripts/readonly_preflight.py` is the sanitised read-only preflight collector. It refuses `ORDER_WRITES_ENABLED=true` or a stored `trade:write`, validates the competition account and token scopes, observes SPY/QQQ/IWM, evaluates a diagnostic QQQ BUY 1 proposal through the deterministic `RiskGate`, and writes `evidence/preflight/preflight-<UTC>.json`. It never contacts an order endpoint.
 
-### Verified read-only evidence (17 November 2026)
+### HISTORICAL verified read-only evidence (17 November 2026)
 
 - Preflight `preflight-2026-11-17T155320Z.json`: quotes and account fresh (0s age), `AFTERNOON` session, risk decision `REJECT` with only `R010` (writes disabled) and `R014` (owner first-order approval missing). The earlier contradictory "future-dated / 58,150s old" display came from a recorded artifact captured before market open, not from current policy; stale and future messages are now distinct.
 - Current-market run `qoder-bc9eb9e3-8f3b-46f8-9f20-8f2eb94f541a`: regular-session quotes IWM 268.16, QQQ 647.65, SPY 727.71; competition account fresh and reconciled; completed daily bars through `2026-11-16`; three genuine sessions (coordinator, researcher, auditor); outcome `NO_TRADE` because SPY 739.95 closed below its 20-session SMA 757.695. No order was submitted.
@@ -191,7 +193,7 @@ The deny probe result: `sim_trade_input_order` was **not registered** in the ses
 
 1. Keep order submission outside every LLM agent. The Python executor must use a separately scoped tool/credential path, not an interactive or cloud agent session.
 2. Use the verified local REST OAuth path for Python reads. Qoder Vault tokens are injection-only and must not be extracted or reused; do not route orders through an LLM or cloud session.
-3. Observe a non-empty order-history response before relying on open-order reconciliation. The adapter validates the documented fields and fails closed on unknown statuses, but that shape remains unobserved.
+3. Preserve strict order-history validation and fail closed on unknown statuses. The previously unobserved non-empty shape was seen during the 18 November QQQ diagnostic reconciliation; partial-fill and modify/cancel lifecycles remain unobserved.
 
 ## Qoder custom client-side tools (verified 17 November 2026)
 
@@ -228,22 +230,26 @@ The official OpenAPI documents these read-only POSTs, now allowlisted explicitly
 
 - `POST /api/v1.0/quote/stock-quote` with `{"code_list":["US.QQQ"]}` returns `data.quote_list` with one row: `code`, integer `data_time` (Unix milliseconds), numeric `last_price`, `sec_status`, `suspension`.
 - `POST /api/v1.0/quote/market-state` with `code_list`, `is_contain_ba`, `is_contain_overnight` returns `data.market_state_list` with `code` and `market_state`.
-- Only `AFTERNOON` is documented as regular US trading hours (09:30–16:00 ET). Any other state, including extended-hours states, is treated as a closed regular session. A refused preflight is not an error; it produces no order.
+- Per the official Moomoo Q&A, `AFTERNOON` means the full regular US session, **09:30–16:00 ET**, not just the afternoon. Only that state is accepted; extended-hours and other states remain blocked. This clarification does not relax trading hours or any freshness check; refused preflight produces no order.
 
 `MoomooQuoteFeed` rejects a symbol that is not a US ticker shape, a missing/duplicate/wrong-code row, a missing or non-integer timestamp, a future timestamp, a quote older than 300 seconds, a non-positive or non-numeric price, `sec_status != "NORMAL"`, and `suspension != False`. Quote and market-state data must both succeed before execution can continue.
 
 ### Documented simulated-order contract
 
-- `POST /api/v1.0/sim-trade/{acc_id}/orders` requires `trade:write`; the separate execution consent now grants it, but no order endpoint has been contacted.
+- `POST /api/v1.0/sim-trade/{acc_id}/orders` requires `trade:write`; the separate execution consent grants it. The only observed submissions are the separately approved QQQ diagnostic BUY/SELL on 18 November; consent alone does not approve another order.
 - Request fields used by the prototype: `market` (the account's `market_id`, 100 for this US paper account), `symbol` (`US.QQQ`), `order_type` 3 (market), `order_side` 1 buy/2 sell, string `qty`, optional `price` (omitted for market orders), `text` ≤100 bytes, `order_trade_time_type` 1 (regular session only).
 - The request has no client order ID or idempotency key. The documentation states: "Orders are not idempotent: on timeout or an unknown result, check today's orders before retrying."
 - Success returns only `order_id`. Today's Orders and order history return `order_id`, status, side, symbol, quantities, prices, fill quantity, microsecond timestamps and the caller's `text` remark.
 - Documented status codes map to internal states as follows: 1/2 → acknowledged; 3 → partially filled; 4 → filled; 5/7 → cancelled; 6 → rejected. Unlisted codes fail closed. Acknowledgement is never reported as a fill.
 - Cancel is `POST /api/v1.0/sim-trade/{acc_id}/orders/{order_id}/cancel` and accepts only status 2 (`SUBMITTED`).
 
-**Implemented adaptation, not provider-tested:** `MoomooSimulatedOrderAdapter` encodes the durable `client_order_key` in the documented `text` field as `MTP1-<64 hex>` (69 bytes). The local ledger remains the sole idempotency authority: reserve before any broker call; on timeout or malformed response mark `UNKNOWN` and never retry; query Today's Orders, history and the account snapshot; accept only one exact tag match whose symbol, side and quantity match the local request. No match or more than one match remains `UNKNOWN` for operator reconciliation. `text` is a correlation aid, not broker-enforced uniqueness.
+**Correlation adaptation (QQQ lifecycle observed; ambiguity cases remain mocked):** `MoomooSimulatedOrderAdapter` encodes the durable `client_order_key` in the documented `text` field as `MTP1-<64 hex>` (69 bytes). The local ledger remains the sole idempotency authority: reserve before any broker call; on timeout or malformed response mark `UNKNOWN` and never retry; query Today's Orders, history and the account snapshot; accept only one exact tag match whose symbol, side and quantity match the local request. No match or more than one match remains `UNKNOWN` for operator reconciliation. `text` is a correlation aid, not broker-enforced uniqueness.
 
-**Disabled transport implemented, not provider-tested:** `MoomooOrderTransport` is the only order-call implementation. It validates the exact `/api/v1.0/sim-trade/{acc_id}/orders` path, refuses unless `ORDER_WRITES_ENABLED` is true, never retries, and raises an ambiguous-outcome error for any non-200, malformed response or transport failure. `MoomooPaperBroker` composes the read-only REST adapter, account lock, payload adapter and transport; `TradingService` accepts either that facade or `MockPaperBroker` through a protocol. The documented success response contains only an order id, so submission records `ACKNOWLEDGED` with no fills; fills require read-only reconciliation. Only `moomoo-supervised-execute`, after both CLI flags, an exact durable approval and every preflight check, constructs a transport with writes enabled; no real order endpoint has been contacted. `MoomooRestClient` still has no order path, and `moomoo-preview-order` still evaluates and prints only (`submission_performed` is always false). `TradingService` strict broker-response validation converts unexpected objects, key/proposal/fingerprint/request mismatches and illegal statuses into persisted `UNKNOWN`.
+**Live refusal observed (19 November 2026):** five sanctioned supervised submissions of the owner-approved SH BUY 1,764 (MARKET, regular session, exact documented payload) all returned HTTP 200 with `ret_code=-5`, `ret_msg='backend business error'`, while the 18 November QQQ diagnostic filled through the same transport, `max-buy-sell` reported sufficient SH cash-buy capacity (2,442), and static data showed SH `NORMAL`/ETF/lot 1. The `-5` envelope contains no field naming the business rule, so the refusal cannot be diagnosed further without an order that differs from the approved one. All five rows were re-verified broker-side and resolved `UNKNOWN → REJECTED`; no SH order id or fill exists. Details in `docs/evidence.md` (19 November section).
+
+**Refusal cause verified (20 November 2026):** the official participation handbook (https://moomoo-qoder-challenge-rgkelnyuzbm.qoder.website/, fetched 20 Nov 00:21Z) states the competition paper account is limited to US-listed stocks/ETFs/options with a hard rule: **"Exposure to stock/ETF may not exceed 40% of total initial account assets"**, enforced on entry (price-movement overshoot tolerated). The approved SH BUY 1,764 ≈ USD 59.5–60.1k ≈ 60% of the account violates the 40% cap (≈ USD 40k); the filled QQQ 1-share order (≈0.66%) does not. No inverse/leveraged-ETF restriction is stated in the handbook. `ret_code=-5`/`backend business error` was the generic envelope for this rule; `max-buy-sell` is cash-capacity only and not concentration-aware. Classification: `VERIFIED_CONCENTRATION_LIMIT`.
+
+**Guarded transport, disabled by default:** `MoomooOrderTransport` validates the exact `/api/v1.0/sim-trade/{acc_id}/orders` path, refuses disabled writes, never retries, and treats non-200, malformed or failed transport responses as ambiguous. `MoomooPaperBroker` composes read-only REST, account lock, payload adapter and transport; `TradingService` accepts it or `MockPaperBroker`. A success response contains only an order id: record `ACKNOWLEDGED`, never infer a fill. Fills require reconciliation. The supervised CLI enables a transport only for an approved invocation behind both flags, exact-proposal/key owner approval and every preflight check. The 18 November QQQ round trip is the only provider-observed submission evidence. `MoomooRestClient` still has no order path; preview always reports `submission_performed: false`. Strict broker-response validation converts unexpected objects, mismatched request/key/proposal/fingerprint and illegal statuses into persisted `UNKNOWN`.
 
 ### OAuth scope conclusion
 
@@ -258,12 +264,13 @@ Sources reviewed on 17 November 2026:
 
 **Conclusion.** Account-exclusive `trade:write` is **not confirmed**. A future `trade:write` consent must be treated as potentially account-wide. The existing read-only token has no `trade:write`, and `MoomooOAuth` rejects any `trade:write` grant.
 
-**Execution client authorized (18 November 2026), no order sent.** `MoomooExecutionOAuth` is a separate client with its own DPAPI-protected token file (`MOOTRADE_EXECUTION_OAUTH_STORE`, default `moomoo-execution-oauth.bin`). The owner completed browser consent for `quote:read trade:read trade:write` plus an account binding, and the access and refresh tokens are stored only in that separate file. `moomoo-execution-login` printed the account-exclusive-scope warning before consent; `moomoo-execution-status` reports the granted scopes without printing tokens; `moomoo-execution-check` used read-only calls only and verified the exact competition account with `order_endpoint_contacted: false` and `account_exclusive_write_scope_verified: false`. Account-exclusive write scope remains unverified and the consent is treated as potentially account-wide. The read-only client remains unchanged and still rejects `trade:write`.
+**HISTORICAL execution-client consent check (18 November 2026; this check sent no order).** `MoomooExecutionOAuth` is a separate client with its own DPAPI-protected token file (`MOOTRADE_EXECUTION_OAUTH_STORE`, default `moomoo-execution-oauth.bin`). The owner completed browser consent for `quote:read trade:read trade:write` plus an account binding, and the access and refresh tokens are stored only in that separate file. `moomoo-execution-login` printed the account-exclusive-scope warning before consent; `moomoo-execution-status` reports the granted scopes without printing tokens; `moomoo-execution-check` used read-only calls only and verified the exact competition account with `order_endpoint_contacted: false` and `account_exclusive_write_scope_verified: false`. Account-exclusive write scope remains unverified and the consent is treated as potentially account-wide. The read-only client remains unchanged and still rejects `trade:write`.
 
 **Supervised runtime boundary implemented (18 November 2026); first paper orders submitted and filled.** `backend/app/supervised.py` composes the existing execution OAuth, read-only REST broker, quote feed, paper-broker facade, `RiskGate`, ledger and `TradingService` without changing any policy. Three operator-only commands use it:
 
-- `moomoo-supervised-preview` requires the execution token, reads a fresh execution quote and reconciled account, evaluates the gate with writes hypothetically enabled and prints the exact documented payload. It always reports `submission_performed: false` and never constructs an enabled transport.
-- `moomoo-supervised-execute` requires both `--enable-order-writes` and the exact `--confirm-client-order-key`, plus a durable approval bound to that key and proposal. It submits at most once, never retries, marks ambiguous outcomes `UNKNOWN`, and performs one read-only reconciliation. Writes exist only in that process invocation.
+- `moomoo-supervised-preview` reads a fresh execution quote and reconciled account, evaluates with writes hypothetically enabled, and prints the documented payload, per-rule states and current/post-order signed-effective exposure. It always reports `submission_performed: false` and never constructs an enabled transport.
+- The prepared `--proposal-file` addition to preview/execute loads the exact research `TradeProposal`, preserving timestamps, evidence IDs and declared target. Existing required flags remain required and every value must match the file; mismatches fail closed. Proposal preservation and mismatch rejection are covered by the supervised CLI tests; see `docs/evidence.md` for observed results.
+- `moomoo-supervised-execute` requires `--enable-order-writes`, exact `--confirm-client-order-key` and a durable approval for **EVERY BUY/SELL proposal/key**. The retained `approve-first-order` command records approval for each order; its historical name does not limit enforcement to the first fill. Owner approval is durable; the separate risk decision has a 30-second TTL and must be refreshed on expiry or account-state change. Submission is at most once, ambiguity becomes `UNKNOWN` without retry, and one read-only reconciliation follows. Writes exist only in that approved invocation.
 - `moomoo-supervised-reconcile` is read-only and reports the local order plus the latest `RECONCILIATION_OK`/`MISMATCH` event.
 
 The CLI never accepts a token or full account id, and reports `account_exclusive_write_scope_verified: false`. Writes remain disabled by default and no Qoder/MCP agent session can invoke these commands.
@@ -290,18 +297,23 @@ Remaining unverified items:
 
 The first order failed closed with `R014` until a durable exact-proposal approval existed, and the execute command still requires `--enable-order-writes` plus the exact key confirmation.
 
-**Acceptance tests:** fresh quote and session checks pass with strict success/partial/filled/cancelled/rejected/unknown mapping; stale, future, suspended, wrong-symbol and malformed quote responses fail closed; POST-read allowlisting refuses order paths and refresh failure is fatal; the correlation tag is bounded and ambiguous matches are refused; the disabled transport sends nothing; a documented success response records acknowledgement without inventing a fill; partial fill and rejection arrive only through read-only reconciliation; transport timeout or malformed acknowledgement persists `UNKNOWN`, blocks new submissions and never retries; duplicate proposals send at most one request; an oversized order returns `R004` without a broker call; reconciliation queries all three broker sources and rejects account mismatch. The full backend suite passes (**313 tests**, 18 November 2026, including execution OAuth registration-only status rejection, scheduler catch-up, lock exclusion, abandoned-run recovery, interruption persistence, clock-skew acceptance, execution-transport mocks, supervised CLI guard tests, dashboard API tests and the three live-contract regression tests).
+**HISTORICAL acceptance-test record (18 November 2026):** 313 backend tests passed, including execution OAuth, scheduler recovery, clock skew, transport mocks, supervised CLI guards, dashboard API and provider-contract regressions. That retired-policy suite included an oversized-order `R004` rejection; it is not the active risk-v2 rule or evidence that mandate-change tests have passed. Freshness/session validation, POST-read allowlisting, strict status mapping, durable idempotency, `UNKNOWN`-never-retry and account-matched reconciliation remain required safeguards. Current v2-only verification results are recorded in `docs/evidence.md`; mock success is not broker acceptance.
 
-### UPRO/SPXU tradability verification (19 November 2026)
+### UPRO/SPXU tradability verification (19 November 2026, HISTORICAL since the risk-v3 cutover)
 
-Read-only probes against the competition token, no orders submitted (`TRADING_MODE=READ_ONLY` in force):
+Read-only probes against the competition token, no orders submitted (`TRADING_MODE=READ_ONLY` in force). Risk-v2.1 (20 November 2026) removed UPRO/SPXU from the universe; this section remains HISTORICAL evidence of their tradability only.
 
 - `quote_stock_quote` for `US.UPRO`, `US.SPXU`, `US.SPY`, `US.SH` returned live regular-session quotes: `sec_status=NORMAL`, `suspension=false` for all four. Last prices at probe time (2026-11-18 session data): UPRO 124.32, SPXU 39.64, SPY 728.88, SH 34.11.
 - `quote_market_state`: UPRO and SPXU both `AFTERNOON` (regular session 09:30–16:00 ET) on 20261118.
 - `quote_order_book`: both leveraged ETFs returned deep LV2 consolidated books on NASDAQ and ARCA. UPRO inside spread 124.67/124.73 (~5 bps) with thousands of visible shares on each side; SPXU 39.60/39.61 (~2.5 bps). No sign of illiquidity at these levels.
-- These probes also returned the 20-session average dollar volume recorded in `backend/app/research/instruments.py` (UPRO ~393M, SPXU ~415M).
+- These probes also returned the 20-session average dollar volume recorded in `backend/app/research/instruments.py` at the time (UPRO ~393M, SPXU ~415M); the current instruments module contains SPY/SH only.
 
-**Honest status:** quote, book and session access for UPRO/SPXU are verified read-only. Simulated-order *acceptance* for these two symbols is not yet demonstrated — no UPRO/SPXU order has been submitted. The same `US.{symbol}` market-day order path that filled the SPY/SH orders on this account is the documented transport, but broker acceptance of the leveraged symbols requires the supervised acceptance procedure at cutover (one small paper order each, with owner approval, before the new activation is authorised).
+**Honest status:** quote, book and session access for UPRO/SPXU are verified read-only, but they are no longer part of the strategy: risk-v3 rejects any UPRO/SPXU proposal by default-deny symbol validation. Simulated-order *acceptance* for these symbols was never demonstrated — no UPRO/SPXU order has been submitted. The documented `US.{symbol}` market-day path filled the diagnostic **QQQ** BUY `3115842` and SELL `3115920`, both reconciled on 18 November; it has not demonstrated SPY/SH fills. SPY/SH MARKET capacity was verified read-only on 19 November (112/2,476 cash-buy shares), not guaranteed order acceptance. Do not repeat diagnostics or invent new keys to manufacture acceptance. Every future supervised BUY/SELL requires its own exact-proposal/key approval, and no acceptance result authorises automatic return to `AUTO_PAPER`.
+
+### SPY/SH supervised verification (19 November 2026)
+
+- The documented read-only `GET /api/v1.0/sim-trade/{acc_id}/max-buy-sell` route returned HTTP 200 / `ret_code=0` for MARKET orders on the verified competition paper account at 14:53:27Z: SPY cash-buy capacity 112 shares, SH 2,476 shares, sell capacity zero while flat. The read token lacked `trade:write`; no order was submitted. [Sanitized capacity evidence](../evidence/current-market/2026-11-18/spy-sh-capacity-2026-11-19.json). Positive capacity is not guaranteed acceptance.
+- A genuine three-agent v2 run completed at 14:55:11Z with a 1,764-share SH BUY proposal. The [15:02Z operator preview](../evidence/current-market/2026-11-19/spy-directional-SH-supervised-preview.json) preserved its timestamps/evidence/−60% target and read fresh account/quote data. The hypothetical-writes risk evaluation rejected only R014; actual writes stayed disabled. Ledger counts were unchanged at two diagnostic submissions, two approvals and two historical activation records. See `docs/evidence.md` for run/session IDs, every-rule results and exposure estimates.
 
 ## Vibe-Trading research audit (18 November 2026)
 

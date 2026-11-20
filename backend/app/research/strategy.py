@@ -1,30 +1,26 @@
 """Deterministic daily SPY directional policy.
 
 The signal is evaluated only on completed SPY daily bars; a decision made after
-the close is eligible for the next open. Two exposure policies coexist:
-
-- ``risk-v1`` (incumbent activation): fixed 5% effective exposure, 1x ETFs only.
-- ``risk-v2`` (corrected model): a deterministic tier table maps the SPY
-  10-session return, 50-session trend and 20-session volatility to a signed
-  target S&P 500 exposure fraction (20% floor, 150% exceptional ceiling). The
-  instrument is chosen AFTER the target: |target| <= 100% uses SPY/SH, larger
-  targets use UPRO/SPXU. Leverage is an instrument for scaling exposure, not
-  the strategy itself.
+the close is eligible for the next open. Only ``risk-v3`` is supported: a
+deterministic tier table maps the SPY 10-session return, 50-session trend and
+20-session volatility to a signed target S&P 500 exposure fraction (0% cash or
+10%-40% exposure). SPY expresses bullish targets and SH expresses bearish
+targets with BUY orders; UPRO/SPXU are not part of the policy.
 
 The tier table:
 
     |return| band   trend not confirming   trend confirming        notes
     < 1.5%          0% (CASH)              0% (CASH)
-    1.5% - 3%       20%                    20%                     WEAK
-    3% - 5%         40%                    60%                     MODERATE
-    5% - 8%         80%                    100%                    STRONG
-    >= 8%           100%                   150%                    EXCEPTIONAL
+    1.5% - 3%       10%                    10%                     WEAK
+    3% - 5%         25%                    40%                     MODERATE
+    5% - 8%         40%                    40%                     STRONG
+    >= 8%           40%                    40%                     EXCEPTIONAL (capped at 40%)
 
-Volatility gates: annualized 20-session volatility above 40% forces CASH;
-above 30% caps the target at 100% (no 3x instruments). For risk-v2 the
-direction is taken from the 10-session return alone, and trend confirmation
-selects the higher value inside each band; the risk-v1 direction detection is
-unchanged.
+Volatility gates: annualized 20-session volatility above 40% forces CASH.
+Direction is taken from the 10-session return alone; trend confirmation may
+escalate the MODERATE band to the 40% ceiling. No band can exceed 40% of
+equity, so the whole-share 40% competition concentration cap (R019) is the
+binding ceiling.
 """
 
 from __future__ import annotations
@@ -37,14 +33,16 @@ from decimal import ROUND_FLOOR, Decimal
 
 from app.models.contracts import AccountSnapshot, ProposalAction, TradeProposal
 from app.research.data import MarketHistory
+from app.risk.policy import (
+    COMPETITION_MAX_SINGLE_SECURITY_EQUITY_FRACTION,
+    POLICY_VERSION_V3,
+)
 from app.research.instruments import (
     CANDIDATE_SYMBOLS,
     INSTRUMENTS,
     Instrument,
-    select_instrument,
     select_instrument_for_exposure,
 )
-from app.risk.policy import DEFAULT_BUYING_POWER_BUFFER, POLICY_VERSION_V1
 
 STRATEGY_VERSION = "spy-directional"
 RETURN_LOOKBACK = 10
@@ -56,11 +54,9 @@ STRONG_RETURN_THRESHOLD = Decimal("0.03")
 MAX_VOLATILITY_FOR_DIRECTION = Decimal("0.40")
 MAX_VOLATILITY_FOR_LEVERAGE = Decimal("0.30")
 
-# risk-v1 fixed allocation (incumbent activation, unchanged)
-POSITION_FRACTION = Decimal("0.05")
-# risk-v2 tier boundaries
-MIN_EXPOSURE_FRACTION = Decimal("0.20")
-MAX_EXPOSURE_FRACTION = Decimal("1.50")
+# risk-v3 tier boundaries: 0% cash or 10%-40% of equity
+MIN_EXPOSURE_FRACTION = Decimal("0.10")
+MAX_EXPOSURE_FRACTION = Decimal("0.40")
 RESIZE_MIN_RELATIVE_CHANGE = Decimal("0.05")
 DEFAULT_MAX_LEVERAGED_HOLDING_SESSIONS = 5
 
@@ -80,31 +76,29 @@ class ExposureBand:
 @dataclass(frozen=True)
 class ExposurePolicy:
     version: str
-    fixed_fraction: Decimal | None
     allow_leveraged: bool
     bands: tuple[ExposureBand, ...] = ()
     max_leveraged_holding_sessions: int | None = None
 
+    def __post_init__(self) -> None:
+        if self.version != POLICY_VERSION_V3:
+            raise ValueError(
+                f"unsupported exposure policy {self.version!r}; only {POLICY_VERSION_V3} is supported"
+            )
 
-EXPOSURE_POLICY_V1 = ExposurePolicy(
-    version=POLICY_VERSION_V1,
-    fixed_fraction=POSITION_FRACTION,
+
+EXPOSURE_POLICY_V3 = ExposurePolicy(
+    version=POLICY_VERSION_V3,
     allow_leveraged=False,
-)
-
-EXPOSURE_POLICY_V2 = ExposurePolicy(
-    version="risk-v2",
-    fixed_fraction=None,
-    allow_leveraged=True,
     bands=(
-        ExposureBand("WEAK", Decimal("0.015"), Decimal("0.03"), Decimal("0.20"), None),
+        ExposureBand("WEAK", Decimal("0.015"), Decimal("0.03"), Decimal("0.10"), None),
         ExposureBand(
-            "MODERATE", Decimal("0.03"), Decimal("0.05"), Decimal("0.40"), Decimal("0.60")
+            "MODERATE", Decimal("0.03"), Decimal("0.05"), Decimal("0.25"), Decimal("0.40")
         ),
         ExposureBand(
-            "STRONG", Decimal("0.05"), Decimal("0.08"), Decimal("0.80"), Decimal("1.00")
+            "STRONG", Decimal("0.05"), Decimal("0.08"), Decimal("0.40"), Decimal("0.40")
         ),
-        ExposureBand("EXCEPTIONAL", Decimal("0.08"), None, Decimal("1.00"), Decimal("1.50")),
+        ExposureBand("EXCEPTIONAL", Decimal("0.08"), None, Decimal("0.40"), Decimal("0.40")),
     ),
     max_leveraged_holding_sessions=DEFAULT_MAX_LEVERAGED_HOLDING_SESSIONS,
 )
@@ -214,8 +208,6 @@ def _target_exposure_fraction(
             )
             tier = band.tier
             break
-    if fraction > Decimal("1") and volatility > MAX_VOLATILITY_FOR_LEVERAGE:
-        fraction = Decimal("1")
     return Decimal(direction) * fraction, tier
 
 
@@ -270,7 +262,7 @@ def screen(
     decision_time_utc: datetime,
     strategy_version: str = STRATEGY_VERSION,
     *,
-    exposure_policy: ExposurePolicy = EXPOSURE_POLICY_V2,
+    exposure_policy: ExposurePolicy = EXPOSURE_POLICY_V3,
 ) -> ResearchSnapshot:
     if strategy_version != STRATEGY_VERSION:
         raise ValueError(f"unknown strategy {strategy_version!r}")
@@ -300,30 +292,8 @@ def screen(
     )
     if volatility > MAX_VOLATILITY_FOR_DIRECTION:
         reason += f" Volatility exceeds the {MAX_VOLATILITY_FOR_DIRECTION:.0%} directional ceiling; hold cash."
-    elif exposure_policy.version == POLICY_VERSION_V1:
-        # Incumbent detection: return AND trend must agree.
-        if return_10d >= DIRECTION_THRESHOLD and close > sma50:
-            direction = 1
-            market_state = "BULLISH"
-            if (
-                return_10d >= STRONG_RETURN_THRESHOLD
-                and volatility <= MAX_VOLATILITY_FOR_LEVERAGE
-            ):
-                market_state = "STRONG_BULLISH"
-            reason += f" Direction is {market_state.replace('_', ' ').lower()}; target long S&P 500 exposure."
-        elif return_10d <= -DIRECTION_THRESHOLD and close < sma50:
-            direction = -1
-            market_state = "BEARISH"
-            if (
-                return_10d <= -STRONG_RETURN_THRESHOLD
-                and volatility <= MAX_VOLATILITY_FOR_LEVERAGE
-            ):
-                market_state = "STRONG_BEARISH"
-            reason += f" Direction is {market_state.replace('_', ' ').lower()}; target inverse S&P 500 exposure."
-        else:
-            reason += " Direction is neutral; remain in cash."
     else:
-        # risk-v2 detection: direction comes from the return alone; trend
+        # risk-v3 detection: direction comes from the return alone; trend
         # confirmation raises the target inside each exposure band.
         if return_10d >= DIRECTION_THRESHOLD:
             direction = 1
@@ -346,22 +316,14 @@ def screen(
         else:
             reason += " Direction is neutral; remain in cash."
 
-    strong = market_state.startswith("STRONG_")
-    if exposure_policy.version == POLICY_VERSION_V1:
-        target = select_instrument(direction, strong, allow_leveraged=False)
-        target_fraction = None
-        tier = None
-        candidate_allow = False
-    else:
-        target_fraction, tier = _target_exposure_fraction(
-            direction, return_10d, trend_pct, volatility, exposure_policy
-        )
-        target = select_instrument_for_exposure(direction, target_fraction)
-        candidate_allow = True
-        reason += (
-            f" Exposure tier {tier} targets {target_fraction:+.0%} of equity"
-            f"{f' via {target}' if target else '; hold cash'}."
-        )
+    target_fraction, tier = _target_exposure_fraction(
+        direction, return_10d, trend_pct, volatility, exposure_policy
+    )
+    target = select_instrument_for_exposure(direction, target_fraction)
+    reason += (
+        f" Exposure tier {tier} targets {target_fraction:+.0%} of equity"
+        f"{f' via {target}' if target else '; hold cash'}."
+    )
     candidates = tuple(
         replace(
             _candidate(
@@ -371,7 +333,7 @@ def screen(
                 history.bar_on(symbol, spy_bars[-1].session_date).close
                 if history.bar_on(symbol, spy_bars[-1].session_date) is not None
                 else None,
-                candidate_allow,
+                True,
                 volatility,
             ),
             selected=symbol == target,
@@ -420,6 +382,7 @@ def _proposal(
     history: MarketHistory,
     account: AccountSnapshot,
     *,
+    policy_version: str,
     reentry_symbol: str | None,
     target_exposure_fraction: Decimal | None = None,
 ) -> TradeProposal:
@@ -428,7 +391,6 @@ def _proposal(
     evidence = (f"bar:SPY:{snapshot.spy_session_date}",)
     if bar is not None:
         evidence += (bar.evidence_id,)
-    exposure = instrument.effective_exposure
     if action is ProposalAction.SELL:
         thesis = (
             f"Exit {symbol} because the completed {snapshot.spy_session_date} SPY signal is "
@@ -438,18 +400,6 @@ def _proposal(
         invalidation = (
             "The exit must fill and reconcile before any opposite position is considered. "
             "The next run re-reads broker holdings and the SPY signal."
-        )
-    elif snapshot.exposure_tier is None:
-        thesis = (
-            f"SPY closed at {snapshot.spy_close} with a 10-session return of "
-            f"{snapshot.spy_return_10d:.2%}, a 50-session SMA of {snapshot.spy_sma50:.2f} "
-            f"and {snapshot.spy_volatility_20d:.2%} annualized volatility. "
-            f"{snapshot.market_state} targets {symbol} at {instrument.leverage}x daily "
-            f"leverage ({exposure:+} effective exposure), sized to 5% effective exposure."
-        )
-        invalidation = (
-            "Exit at the next open after a neutral, opposite or volatility-ceiling signal. "
-            "A leverage approval is required for UPRO or SPXU."
         )
     else:
         declared = snapshot.target_exposure_fraction
@@ -464,12 +414,14 @@ def _proposal(
         )
         invalidation = (
             "The tier is re-evaluated on every completed session: exit or reduce when the "
-            "tier drops or the direction flips, and 3x holdings exit after the "
-            "holding-duration limit. Overnight gaps can move the position beyond the 2% "
-            "daily drawdown brake."
+            "tier drops or the direction flips. Overnight gaps can move the position "
+            "beyond the 2% daily drawdown brake."
         )
     return TradeProposal(
-        proposal_id=f"{STRATEGY_VERSION}-{snapshot.spy_session_date}-{symbol}-{action.value}",
+        proposal_id=(
+            f"{STRATEGY_VERSION}-{policy_version}-{snapshot.spy_session_date}"
+            f"-{symbol}-{action.value}"
+        ),
         run_id=f"dryrun-{snapshot.decision_time_utc:%Y%m%dT%H%M%SZ}-{STRATEGY_VERSION}",
         strategy_version=STRATEGY_VERSION,
         decision_time_utc=snapshot.decision_time_utc,
@@ -497,6 +449,21 @@ def _target_quantity(
     )
 
 
+def _competition_capped_quantity(
+    account: AccountSnapshot, quantity: int, close: Decimal
+) -> int:
+    if account.equity <= 0 or close <= 0:
+        return 0
+    cap = int(
+        (
+            account.equity
+            * COMPETITION_MAX_SINGLE_SECURITY_EQUITY_FRACTION
+            / close
+        ).to_integral_value(rounding=ROUND_FLOOR)
+    )
+    return min(quantity, cap)
+
+
 def _no_trade(snapshot: ResearchSnapshot, failure: str) -> tuple[ResearchSnapshot, None]:
     return (
         replace(
@@ -519,7 +486,7 @@ def _sessions_since(
     return sum(
         1
         for session in history.session_dates()
-        if entry_session < session <= current_session
+        if entry_session < session.isoformat() <= current_session
     )
 
 
@@ -528,7 +495,7 @@ def decide(
     history: MarketHistory,
     account: AccountSnapshot,
     *,
-    exposure_policy: ExposurePolicy = EXPOSURE_POLICY_V2,
+    exposure_policy: ExposurePolicy = EXPOSURE_POLICY_V3,
     holding_entry_session: str | None = None,
     leveraged_reentry_blocked_through: str | None = None,
 ) -> tuple[ResearchSnapshot, TradeProposal | None]:
@@ -579,9 +546,9 @@ def decide(
         reentry_symbol=None,
     )
 
-    # risk-v2: after a leveraged holding-duration exit, 3x instruments are
-    # downgraded to the 1x equivalent for the following session.
-    if exposure_policy.version != POLICY_VERSION_V1 and leveraged_reentry_blocked_through is not None:
+    # risk-v3: 3x instruments are outside the universe; this leveraged
+    # re-entry downgrade path is inert.
+    if leveraged_reentry_blocked_through is not None:
         if (
             target is not None
             and INSTRUMENTS[target].leveraged
@@ -597,15 +564,16 @@ def decide(
                 base,
                 target_symbol=downgraded,
                 selected_symbol=downgraded,
+                target_effective_exposure=capped,
                 target_exposure_fraction=capped,
             )
             target = downgraded
 
     if current_symbol is not None:
-        # risk-v2: 3x holdings exit once the holding-duration limit is reached.
+        # risk-v3: inert — 3x instruments are outside the universe, so no
+        # holding ever reaches this leveraged duration exit.
         if (
-            exposure_policy.version != POLICY_VERSION_V1
-            and INSTRUMENTS[current_symbol].leveraged
+            INSTRUMENTS[current_symbol].leveraged
             and holding_entry_session is not None
             and exposure_policy.max_leveraged_holding_sessions is not None
         ):
@@ -620,6 +588,7 @@ def decide(
                     current_quantity,
                     history,
                     account,
+                    policy_version=exposure_policy.version,
                     reentry_symbol=None,
                 )
                 return (
@@ -636,18 +605,9 @@ def decide(
                     proposal,
                 )
         if target == current_symbol:
-            if exposure_policy.version == POLICY_VERSION_V1:
-                return (
-                    replace(
-                        base,
-                        action="HOLD",
-                        decision_reason=f"{target} already matches the target; hold and re-evaluate next session.",
-                    ),
-                    None,
-                )
-            # risk-v2: resize toward the current tier target when it moves
+            # risk-v3: resize toward the current tier target when it moves
             # outside the tolerance band.
-            if snapshot.target_exposure_fraction is None:
+            if base.target_exposure_fraction is None:
                 return (
                     replace(
                         base,
@@ -668,10 +628,14 @@ def decide(
                     ),
                     None,
                 )
-            target_quantity = _target_quantity(
+            target_quantity = _competition_capped_quantity(
                 account,
-                abs(snapshot.target_exposure_fraction),
-                INSTRUMENTS[target].leverage,
+                _target_quantity(
+                    account,
+                    abs(base.target_exposure_fraction),
+                    INSTRUMENTS[target].leverage,
+                    bar.close,
+                ),
                 bar.close,
             )
             difference = target_quantity - current_quantity
@@ -696,6 +660,7 @@ def decide(
                     -difference,
                     history,
                     account,
+                    policy_version=exposure_policy.version,
                     reentry_symbol=None,
                 )
                 return (
@@ -716,6 +681,7 @@ def decide(
                 difference,
                 history,
                 account,
+                policy_version=exposure_policy.version,
                 reentry_symbol=None,
             )
             return (
@@ -736,6 +702,7 @@ def decide(
             current_quantity,
             history,
             account,
+            policy_version=exposure_policy.version,
             reentry_symbol=target,
         )
         return (
@@ -768,29 +735,35 @@ def decide(
         failure = f"No completed bar is available for {target}; cannot size an order"
         return _no_trade(base, failure)
     leverage = INSTRUMENTS[target].leverage
-    if exposure_policy.version == POLICY_VERSION_V1:
-        assert exposure_policy.fixed_fraction is not None
-        quantity = _target_quantity(account, exposure_policy.fixed_fraction, leverage, bar.close)
-        if quantity < 1:
-            failure = (
-                f"{exposure_policy.fixed_fraction:.0%} effective exposure does not "
-                f"fund one {target} share"
-            )
-            return _no_trade(base, failure)
-        declared = None
-        sizing_note = f"{exposure_policy.fixed_fraction:.1%} effective exposure"
-    else:
-        fraction = snapshot.target_exposure_fraction
-        if fraction is None or fraction == 0:
-            return _no_trade(base, f"No exposure target is recorded for {target}")
-        quantity = _target_quantity(account, abs(fraction), leverage, bar.close)
-        if quantity < 1:
-            failure = f"{abs(fraction):.0%} effective exposure does not fund one {target} share"
-            return _no_trade(base, failure)
-        declared = fraction
-        sizing_note = (
-            f"{snapshot.exposure_tier} tier target of {fraction:+.0%} effective exposure"
+    fraction = base.target_exposure_fraction
+    if fraction is None or fraction == 0:
+        return _no_trade(base, f"No exposure target is recorded for {target}")
+    quantity = _target_quantity(account, abs(fraction), leverage, bar.close)
+    if quantity < 1:
+        failure = f"{abs(fraction):.0%} effective exposure does not fund one {target} share"
+        return _no_trade(base, failure)
+    declared = fraction
+    sizing_note = (
+        f"{snapshot.exposure_tier} tier target of {fraction:+.0%} effective exposure"
+    )
+    capped = _competition_capped_quantity(account, quantity, bar.close)
+    if capped < quantity:
+        instrument = INSTRUMENTS[target]
+        declared = (
+            Decimal(capped)
+            * bar.close
+            * leverage
+            * instrument.direction
+            / account.equity
+        ).quantize(Decimal("0.0001"))
+        sizing_note += (
+            f", capped to {declared:+.1%} by the competition 40% "
+            "single-security exposure limit"
         )
+        quantity = capped
+    if quantity < 1:
+        failure = f"The competition 40% single-security cap does not fund one {target} share"
+        return _no_trade(base, failure)
     proposal = _proposal(
         base,
         target,
@@ -798,6 +771,7 @@ def decide(
         quantity,
         history,
         account,
+        policy_version=exposure_policy.version,
         reentry_symbol=None,
         target_exposure_fraction=declared,
     )

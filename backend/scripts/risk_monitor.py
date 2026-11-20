@@ -32,7 +32,6 @@ from app.research.strategy import DEFAULT_MAX_LEVERAGED_HOLDING_SESSIONS
 from app.risk.policy import (
     DEFAULT_MAX_DAILY_DRAWDOWN,
     EXPOSURE_CONSISTENCY_TOLERANCE,
-    POLICY_VERSION_V1,
 )
 from app.supervised import SupervisedExecution, build_supervised_execution
 from scripts.schedule_readonly import (
@@ -154,38 +153,13 @@ def _exposure_breaches(account: AccountSnapshot, activation: TradingActivation |
     if activation is None:
         return []
     breaches: list[dict[str, object]] = []
-    if activation.risk_policy_version == POLICY_VERSION_V1:
-        assert activation.max_single_exposure is not None
-        assert activation.max_total_exposure is not None
-        gross = Decimal("0")
-        for item in account.positions:
-            effective = item.market_value * INSTRUMENTS[item.symbol].leverage
-            if effective > account.equity * activation.max_single_exposure:
-                breaches.append(
-                    {
-                        "type": "SINGLE_EXPOSURE",
-                        "symbol": item.symbol,
-                        "effective": str(effective),
-                        "limit": str(account.equity * activation.max_single_exposure),
-                    }
-                )
-            gross += effective
-        if gross > account.equity * activation.max_total_exposure:
-            breaches.append(
-                {
-                    "type": "GROSS_EXPOSURE",
-                    "effective": str(gross),
-                    "limit": str(account.equity * activation.max_total_exposure),
-                }
-            )
-        return breaches
-    assert activation.max_effective_exposure_fraction is not None
     signed = sum(
         (
             item.market_value
             * INSTRUMENTS[item.symbol].leverage
             * INSTRUMENTS[item.symbol].direction
             for item in account.positions
+            if item.symbol in INSTRUMENTS
         ),
         Decimal("0"),
     )
@@ -211,7 +185,9 @@ def _duration_breach(
     today: date,
 ) -> dict[str, object] | None:
     for item in account.positions:
-        if item.quantity <= 0 or not INSTRUMENTS[item.symbol].leveraged:
+        if item.quantity <= 0 or item.symbol not in INSTRUMENTS:
+            continue
+        if not INSTRUMENTS[item.symbol].leveraged:
             continue
         entry = ledger.latest_event_payload("AUTO_PAPER_ENTRY", item.symbol)
         exit_event = ledger.latest_event_payload("AUTO_PAPER_EXIT", item.symbol)

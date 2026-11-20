@@ -19,10 +19,10 @@ from app.broker.moomoo_orders import MoomooOrderTransport, MoomooPaperBroker
 from app.broker.moomoo_quotes import MoomooQuoteFeed
 from app.broker.moomoo_rest import MoomooRestBroker, MoomooRestClient
 from app.ledger.store import SQLiteLedger
-from app.research.data import UNIVERSE
 from app.research.instruments import INSTRUMENTS
-from app.risk.policy import RiskGate
+from app.risk.policy import POLICY_VERSION_V3, RiskGate
 from app.service import TradingService
+from app.trading_mode import SUPERVISED_EXECUTION_SYMBOLS
 
 
 @dataclass(frozen=True)
@@ -65,16 +65,16 @@ def build_supervised_execution(
         clock=clock,
     )
     if risk_gate is None:
-        # Supervised owner orders use the risk-v2 envelope without the
-        # autonomous 20% floor, so small acceptance tests stay possible.
+        # Supervised orders use risk-v3 without the autonomous 10% floor.
+        # The symbol set and leverage permission come from the single
+        # supervised execution policy in trading_mode.py.
         risk_gate = RiskGate(
             expected_account_fingerprint=account_lock.expected_fingerprint,
-            allowed_symbols=frozenset(UNIVERSE),
+            allowed_symbols=frozenset(SUPERVISED_EXECUTION_SYMBOLS),
             leverage_by_symbol={
                 symbol: instrument.leverage for symbol, instrument in INSTRUMENTS.items()
             },
-            policy_version="risk-v2",
-            allow_leveraged=True,
+            policy_version=POLICY_VERSION_V3,
             enforce_min_exposure=False,
         )
     service = TradingService(

@@ -20,29 +20,24 @@ import {
 } from "@/components/mootrade/primitives"
 import { useDashboard } from "@/components/mootrade/use-dashboard"
 import {
-  grossExposurePct,
   humanState,
-  investedValue,
   money,
   percent,
   ruleLabel,
   shortDateTime,
   signedPercent,
+  utcTimestamp,
   type RiskResponse,
 } from "@/lib/mootrade"
 
 const RESEARCH_UNIVERSE = [
   { symbol: "SPY", exposure: "1x long" },
-  { symbol: "UPRO", exposure: "3x long" },
   { symbol: "SH", exposure: "1x inverse" },
-  { symbol: "SPXU", exposure: "3x inverse" },
 ] as const
 
 function blockerText(reason: string): string {
   if (reason === "ORDER_WRITES_ENABLED=false")
     return "Order writes are disabled by configuration."
-  if (reason.includes("first-order"))
-    return "No first-order owner approval is recorded."
   if (reason.includes("fresh quote"))
     return "No quote is fresh enough to execute (300s window)."
   if (reason.includes("regular market session"))
@@ -52,49 +47,43 @@ function blockerText(reason: string): string {
   return reason
 }
 
-const V1_RULES: [string, string, string][] = [
-  ["R001", "Account verified", "Exact competition paper fingerprint and paper environment."],
-  ["R002", "Execution allowlist", "Only symbols in the pinned activation may execute. Anything else is rejected before sizing."],
-  ["R003", "No short positions", "NO_TRADE is never submitted; sell size cannot exceed holdings."],
-  ["R004", "Single-position exposure", "Post-order instrument exposure stays within the pinned single-position limit (10% of equity)."],
-  ["R005", "Gross exposure", "Post-order gross exposure stays within the pinned gross limit (30% of equity)."],
-  ["R006", "Daily drawdown stop", "New buying halts if daily drawdown reaches 2%."],
-  ["R007", "Quote freshness", "Quote ≤300s and account snapshot ≤60s; stale data fails closed."],
-  ["R008", "Cash-only buying power", "Unlevered cash after a US$5 buffer must cover the order."],
-  ["R009", "Reconciled broker state", "Broker state reconciles cleanly with zero unknown orders."],
-  ["R010", "Order control state", "Writes, kill switch and circuit breaker must permit execution."],
-  ["R011", "Duplicate submission", "A proposal with a durable submission record cannot repeat."],
-  ["R012", "Regular trading session", "Orders are limited to the regular exchange session."],
-  ["R013", "Position count", "Post-order open positions cannot exceed the pinned maximum."],
-  ["R014", "First-order approval", "The initial paper order requires explicit owner approval."],
-  ["R015", "Leverage limit", "Risk-v1 pins no leveraged instruments; any leveraged product is rejected."],
-]
+function activationLabel(activation: RiskResponse["activation"]): string {
+  if (!activation) return "None recorded"
+  const symbols = activation.allowed_symbols?.length
+    ? activation.allowed_symbols.join("/")
+    : "—"
+  if (activation.status === "ACTIVE") {
+    return `${activation.policy_version ?? "risk-v3"} · ${symbols} · until ${
+      activation.expires_at_utc ? utcTimestamp(activation.expires_at_utc) : "—"
+    }`
+  }
+  return `EXPIRED · ${symbols} · grants no execution authority`
+}
 
-const V2_RULES: [string, string, string][] = [
+const V3_RULES: [string, string, string][] = [
   ["R001", "Account verified", "Exact competition paper fingerprint and paper environment."],
-  ["R002", "Execution allowlist", "Only SPY, SH, UPRO and SPXU under the pinned risk-v2 activation."],
+  ["R002", "Execution allowlist", "Prepared supervised execution is SPY/SH only. Leveraged ETFs (UPRO/SPXU) are outside the risk-v3 universe; an AUTO_PAPER pin never widens this allowlist."],
   ["R003", "No short positions", "NO_TRADE is never submitted; sell size cannot exceed holdings."],
-  ["R006", "Daily drawdown stop", "New buying halts if daily drawdown reaches the pinned stop (2%)."],
+  ["R006", "Daily drawdown stop", "New buying halts if daily drawdown reaches the risk-v3 stop (2%)."],
   ["R007", "Quote freshness", "Quote ≤300s and account snapshot ≤60s; stale data fails closed."],
   ["R008", "Cash-only buying power", "Unlevered cash after a US$5 buffer must cover the order."],
   ["R009", "Reconciled broker state", "Broker state reconciles cleanly with zero unknown orders."],
   ["R010", "Order control state", "Writes, kill switch and circuit breaker must permit execution."],
   ["R011", "Duplicate submission", "A proposal with a durable submission record cannot repeat."],
   ["R012", "Regular trading session", "Orders are limited to the regular exchange session."],
-  ["R013", "Position count", "At most one directional position at a time."],
-  ["R014", "First-order approval", "The initial paper order requires explicit owner approval."],
-  ["R015", "Leverage limit", "Instrument leverage is capped at 3x (UPRO/SPXU) within the activation."],
-  ["R016", "Minimum exposure floor", "A submitted direction expresses at least 20% effective exposure of equity."],
-  ["R017", "Maximum effective exposure", "Post-order signed effective exposure stays within 150% of equity."],
+  ["R013", "Position count", "RiskGate permits at most 1 distinct position, including pending buys. The strategy separately permits only one directional holding."],
+  ["R014", "Approval or autonomous authorization", "EVERY supervised BUY and SELL requires durable owner approval for the exact proposal and client order key. In AUTO_PAPER, a valid unexpired risk-v3 activation pin (account, strategy, symbols and limits all bound) replaces per-order approval; it never applies on the supervised gate."],
+  ["R015", "Leverage limit", "The risk-v3 ceiling is 1x. Leveraged ETFs (UPRO/SPXU) are outside the universe and rejected regardless of size."],
+  ["R016", "Minimum exposure floor", "The 10% strategy floor is optional at the gate and skipped in the supervised path for small orders. R017 and R018 still apply."],
+  ["R017", "Maximum effective exposure", "Post-order signed effective exposure stays within 40% of equity."],
   ["R018", "Declared target consistency", "Order quantity must match the declared target exposure within a 5-point tolerance."],
 ]
 
-function RulesReference({ policyVersion }: { policyVersion: string }) {
-  const rules = policyVersion === "risk-v2" ? V2_RULES : V1_RULES
+function RulesReference() {
   return (
     <details className="group">
       <summary className="flex cursor-pointer list-none items-center justify-between gap-3 text-[13px] font-medium text-foreground">
-        Show rule catalogue ({rules.length} · {policyVersion === "risk-v2" ? "risk-v2" : "risk-v1"})
+        Show rule catalogue ({V3_RULES.length} · risk-v3)
         <ChevronDownIcon className="size-3.5 text-muted-foreground transition-transform group-open:rotate-180" />
       </summary>
       <div className="-mx-4 mt-3 border-t">
@@ -107,7 +96,7 @@ function RulesReference({ policyVersion }: { policyVersion: string }) {
             </tr>
           </thead>
           <tbody>
-            {rules.map(([id, name, description]) => (
+            {V3_RULES.map(([id, name, description]) => (
               <tr key={id}>
                 <Td className="font-mono text-xs text-muted-foreground">{id}</Td>
                 <Td className="font-medium">{name}</Td>
@@ -142,10 +131,7 @@ export default function RiskPage() {
 
   const account = data.account
   const controls = data.controls
-  const isV2 = data.policy_version === "risk-v2"
-  const grossExposure = grossExposurePct(account?.equity, account?.cash)
   const effectiveExposure = account?.effective_exposure_pct ?? null
-  const invested = investedValue(account?.equity, account?.cash)
   const equity = Number(account?.equity)
   const dayStart = Number(account?.day_start_equity)
   const dailyChangePct =
@@ -191,7 +177,9 @@ export default function RiskPage() {
       >
         <p className="text-[13px] text-muted-foreground">
           The deterministic RiskGate is the final authority on order eligibility.
-          Neither the agents nor this UI can override it.
+          Neither the agents nor this UI can override it. EVERY supervised BUY and
+          SELL also needs owner approval for its exact proposal and client order key;
+          a passing gate or prior fill is not that approval.
         </p>
 
         {data.lock_reasons.length > 0 ? (
@@ -256,40 +244,27 @@ export default function RiskPage() {
 
       <Section
         title="Exposure & limits"
-        description={
-          isV2
-            ? "Signed effective exposure under the risk-v2 activation."
-            : "Cash-only paper account under the risk-v1 activation."
-        }
+        description="Current risk-v3 reference limits. Prepared supervised scope is SPY/SH only, not order authorisation."
       >
         <div className="grid gap-6 lg:grid-cols-2">
           <div className="space-y-4">
-            {isV2 ? (
-              <Meter
-                label="Effective exposure (signed)"
-                value={
-                  effectiveExposure === null ||
-                  !data.limits.max_effective_exposure_pct
-                    ? null
-                    : (Math.abs(effectiveExposure) /
-                        data.limits.max_effective_exposure_pct) *
-                      100
-                }
-                display={`${effectiveExposure === null ? "—" : signedPercent(effectiveExposure)} / ±${percent(data.limits.max_effective_exposure_pct, 0)}`}
-                hint={
-                  effectiveExposure === null
-                    ? "No broker snapshot"
-                    : `Positive = bullish S&P 500 exposure, negative = bearish`
-                }
-              />
-            ) : (
-              <Meter
-                label="Gross exposure"
-                value={grossExposure === null ? null : (grossExposure / data.limits.max_total_exposure_pct!) * 100}
-                display={`${grossExposure === null ? "—" : `${grossExposure.toFixed(1)}%`} / ${percent(data.limits.max_total_exposure_pct, 0)}`}
-                hint={invested === null ? "No broker snapshot" : `${money(invested)} invested`}
-              />
-            )}
+            <Meter
+              label="Effective exposure (signed)"
+              value={
+                effectiveExposure === null ||
+                !data.limits.max_effective_exposure_pct
+                  ? null
+                  : (Math.abs(effectiveExposure) /
+                      data.limits.max_effective_exposure_pct) *
+                    100
+              }
+              display={`${effectiveExposure === null ? "—" : signedPercent(effectiveExposure)} / ±${percent(data.limits.max_effective_exposure_pct, 0)}`}
+              hint={
+                effectiveExposure === null
+                  ? "No broker snapshot"
+                  : "Positive = bullish S&P 500 exposure, negative = bearish"
+              }
+            />
             <Meter
               label="Open positions"
               value={
@@ -298,11 +273,7 @@ export default function RiskPage() {
                   : null
               }
               display={`${account?.positions_count ?? "—"} / ${data.limits.max_open_positions}`}
-              hint={
-                isV2
-                  ? "One directional position at a time"
-                  : "Cash-only, maximum three open positions"
-              }
+              hint="RiskGate maximum; strategy separately allows one directional holding"
             />
             <Meter
               label="Daily P&L"
@@ -333,40 +304,23 @@ export default function RiskPage() {
           </div>
 
           <div>
-            {isV2 ? (
-              <>
-                <KeyValue
-                  label="Minimum effective exposure"
-                  value={percent(data.limits.min_effective_exposure_pct, 0)}
-                  mono
-                />
-                <KeyValue
-                  label="Maximum effective exposure"
-                  value={`±${percent(data.limits.max_effective_exposure_pct, 0)}`}
-                  mono
-                />
-                <KeyValue
-                  label="Maximum leverage"
-                  value={`${data.limits.max_leverage}x`}
-                  mono
-                />
-              </>
-            ) : (
-              <>
-                <KeyValue
-                  label="Single-position limit"
-                  value={percent(data.limits.max_single_exposure_pct, 0)}
-                  mono
-                />
-                <KeyValue
-                  label="Gross exposure limit"
-                  value={percent(data.limits.max_total_exposure_pct, 0)}
-                  mono
-                />
-              </>
-            )}
             <KeyValue
-              label="Maximum positions"
+              label="Research exposure floor"
+              value={`${percent(data.limits.min_effective_exposure_pct, 0)} · skipped for supervised orders`}
+              mono
+            />
+            <KeyValue
+              label="Maximum effective exposure"
+              value={`±${percent(data.limits.max_effective_exposure_pct, 0)}`}
+              mono
+            />
+            <KeyValue
+              label="Policy leverage ceiling"
+              value={`${data.limits.max_leverage}x · no leveraged funds`}
+              mono
+            />
+            <KeyValue
+              label="RiskGate maximum positions"
               value={data.limits.max_open_positions}
               mono
             />
@@ -383,6 +337,11 @@ export default function RiskPage() {
             <KeyValue
               label="Cash buffer"
               value={money(data.limits.buying_power_buffer_usd)}
+              mono
+            />
+            <KeyValue
+              label="AUTO_PAPER activation pin"
+              value={activationLabel(data.activation)}
               mono
             />
           </div>
@@ -436,7 +395,7 @@ export default function RiskPage() {
         <div className="grid gap-5 sm:grid-cols-2">
           <div>
             <h3 className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
-              Execution allowlist
+              Prepared supervised execution allowlist
             </h3>
             <div className="mt-2 flex flex-wrap gap-1.5">
               {data.allowed_symbols?.length ? (
@@ -450,13 +409,16 @@ export default function RiskPage() {
                 ))
               ) : (
                 <span className="text-xs text-muted-foreground">
-                  No activation pinned.
+                  Execution scope unavailable; no permission implied.
                 </span>
               )}
             </div>
             <p className="mt-2 text-xs leading-relaxed text-muted-foreground">
-              Only these symbols can pass the gate. Anything else is rejected at R002
-              before sizing.
+              SPY/SH only. This prepared scope is not order approval or broker
+              acceptance. EVERY BUY/SELL still requires exact-proposal/key owner
+              approval and passing controls. An active AUTO_PAPER pin authorises
+              only the scheduled autonomous executor; it never expands supervised
+              scope or authorises this dashboard to trade.
             </p>
           </div>
           <div>
@@ -477,9 +439,9 @@ export default function RiskPage() {
               ))}
             </div>
             <p className="mt-2 text-xs leading-relaxed text-muted-foreground">
-              {isV2
-                ? "3x products are eligible within the activation's leverage cap and effective-exposure limits."
-                : "Leveraged products are rejected at R015 under the incumbent risk-v1 activation."}
+              Research coverage is not execution approval. Leveraged ETFs
+              (UPRO/SPXU) are outside the risk-v3 universe and rejected by
+              R002/R015. Acceptance never automatically restores AUTO_PAPER.
             </p>
           </div>
         </div>
@@ -595,8 +557,8 @@ export default function RiskPage() {
         </div>
       </details>
 
-      <Section title="Deterministic rule catalogue" description="Any single failure blocks execution.">
-        <RulesReference policyVersion={data.policy_version} />
+      <Section title="Deterministic rule catalogue" description="Any applicable rule failure blocks execution; R016 is skipped for supervised orders.">
+        <RulesReference />
       </Section>
     </PageContainer>
   )

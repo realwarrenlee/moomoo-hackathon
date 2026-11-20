@@ -1,18 +1,18 @@
 # Dashboard — implemented read-only surface
 
-**Status:** implemented 17 November 2026 as six read-only pages. The UI is adapted from the MIT-licensed [Shadcn Fintech](https://github.com/abderrahimghazali/shadcn-fintech) template (commit `a905058`). Banking routes, components, mock data and decorative 3D assets were removed. Attribution is preserved in `frontend/LICENSE` and `frontend/ATTRIBUTION.md`.
+**Status:** implemented 17 November 2026 as six read-only pages.
 
-**Safety boundary:** the dashboard has no order-capable route. It cannot enable writes, approve an order, cancel an order, liquidate a position, change a risk limit or edit Qoder evidence. `ORDER_WRITES_ENABLED=true` causes the API to refuse startup. On 18 November 2026 the owner removed the header `PAPER` badge and “Competition account · read-only” caption; the persistent sidebar account card remains the in-shell paper-mode indicator. Since 19 November 2026 that indicator reports the **actual recorded trading mode** (`PAPER · READ ONLY` / `PAPER · SUPERVISED` / `PAPER · AUTO_PAPER`) and the detail sheet reports the effective order-write state, derived from the environment flag or the AUTO_PAPER activation pin, per the production deployment directive.
+**Safety boundary:** the dashboard has no order-capable route. It cannot enable writes, approve an order, cancel an order, liquidate a position, change a risk limit or edit Qoder evidence. `ORDER_WRITES_ENABLED=true` causes the API to refuse startup. On 18 November 2026 the owner removed the header `PAPER` badge and “Competition account · read-only” caption; the persistent sidebar account card remains the in-shell paper-mode indicator. It reports the actual mode; an active risk-v3 AUTO_PAPER pin (expires 2026-11-27T18:00Z) authorises only the scheduled autonomous executor, and supervised BUY/SELL still require explicit durable owner approval for the exact proposal/key. Expired or historical AUTO_PAPER pins are evidence, not current write authority. Risk-v2.1 is the only active policy (20 November 2026 cutover); risk-v1 and pre-simplification risk-v2 are retired and cannot be selected or reactivated. Execution scope is SPY/SH only; UPRO/SPXU were removed from the universe and are rejected by default-deny symbol validation, with their historical records preserved. Read-only capacity and current verification results are recorded in `docs/evidence.md`; this preparation is not activation or guaranteed broker acceptance.
 
 ## Pages
 
 | Route | Purpose | Sources |
 |---|---|---|
 | `/dashboard` | Overview: account, market tape, latest Qoder run, controls, recent ledger events | Broker read, Qoder artifact, local controls, ledger |
-| `/agents` | Qoder sessions, role summaries, SPY signal, thesis, target/current position, four-ETF candidates, risk verdict and evidence timestamps | Sanitised Qoder evidence only |
+| `/agents` | Qoder sessions, role summaries, SPY signal, thesis, target/current position, SPY/SH candidates, risk verdict and evidence timestamps | Sanitised Qoder evidence only |
 | `/portfolio` | Positions, open orders, today's orders, history and reconciliation | Broker read only |
 | `/risk` | Locked state, limits, current inputs, rule catalogue, recorded real preflight | Local controls, broker read, recorded preflight |
-| `/analytics` | Historical normalised curves, metrics and limitations | Historical research evidence only |
+| `/analytics` | Competition-period curves (paper-account day-start equity vs SPY benchmark and cash baseline), metrics and limitations | Ledger equity observations + completed Moomoo daily bars |
 | `/audit` | Append-only ledger timeline with filters | SQLite ledger |
 
 ## Backend API
@@ -24,9 +24,9 @@ FastAPI application: `backend/app/dashboard/api.py`.
 | `GET /api/v1/health` | Auth presence, masked-scope state, trading mode, effective order-write state, ledger availability |
 | `GET /api/v1/overview` | Account, quote observations, safety, latest Qoder run, warnings |
 | `GET /api/v1/portfolio` | Account snapshot, positions, open orders, today/history orders |
-| `GET /api/v1/risk` | Pinned policy version, versioned limits (risk-v1 single/gross caps or risk-v2 effective-exposure floor/ceiling/leverage), allowlisted symbols, broker-derived gross/signed-effective exposure, lock reasons, current inputs, recorded real preflight |
+| `GET /api/v1/risk` | Active risk-v3 limits, execution allowlist, broker-derived gross/signed-effective exposure, lock reasons, current inputs and recorded preflight; historical pins are not selectable policy or write authority |
 | `GET /api/v1/agents` | Latest sanitised Qoder dry-run artifact |
-| `GET /api/v1/analytics` | Historical datasets, server-normalised base-100 curves, metrics |
+| `GET /api/v1/analytics` | Competition-period dataset (17 Nov to 30 Nov 2026): paper-account day-start equity, SPY benchmark and cash baseline as base-100 curves with descriptive metrics; axis fixed to the nine competition trading days |
 | `GET /api/v1/audit` | Reverse-chronological ledger summaries |
 
 Only `GET`, `HEAD` and `OPTIONS` reach the API. Other methods return `405` before a route is resolved. Non-loopback binding requires `MOOTRADE_DASHBOARD_TOKEN`; otherwise the middleware only accepts loopback clients. The Next.js server route (`frontend/src/app/api/mootrade/[...path]/route.ts`) has its own six-path allowlist and attaches the optional token server-side, so no token reaches browser code.
@@ -36,14 +36,16 @@ Only `GET`, `HEAD` and `OPTIONS` reach the API. Other methods return `405` befor
 Every displayed section carries one of:
 
 - `LIVE_BROKER_READ` — a current read-only Moomoo REST response, displayed as “Broker-verified PAPER”.
-- `HISTORICAL_BACKTEST` — frozen research evidence, never paper-account performance.
+- `HISTORICAL_BACKTEST` — frozen research evidence, never paper-account performance or a return attributed to the active v2 policy merely because the dashboard displays it.
 - `HISTORICAL_QODER_RUN` — a completed Qoder dry run, not current market data.
 - `CURRENT_MARKET_READ_ONLY` — a completed Qoder run over independently validated current read-only broker/session evidence. Still not an order, fill or owner approval.
 - `RECORDED_REAL_PREFLIGHT` — a real execution-time preflight that submitted nothing.
 - `LOCAL_LEDGER` — append-only SQLite events.
 - `LOCAL_CONTROLS` — local knobs and persistent safety state.
 
-There is no `MOCK` data in the dashboard. The deliberate absence is visible as an empty state rather than invented values.
+There is no `MOCK` data in the dashboard. Missing data is an explicit empty state, never invented values. The QQQ diagnostic BUY `3115842` and SELL `3115920` filled and reconciled on 18 November; they are not SPY/SH fills or strategy returns. Historical fixed-size strategy curves and the frozen 10% ETF comparator remain **HISTORICAL**, not risk-v3 performance or executable risk-v1. The 18 November bars implied an SH −60% target under the pre-simplification tiers (HISTORICAL), not a submitted order or a new genuine cloud run; only recorded run evidence may populate that claim.
+
+The active risk view enforces the risk-v3 one-position RiskGate limit (matching the strategy's one-position rule), the 40% signed-effective ceiling, ±5pp target tolerance, 2% daily drawdown, US$5 cash buffer, quote 300s and account 60s limits, and the 40% competition single-security concentration cap (`R019`). Only the supervised path skips the 10% research floor; a prepared preview's per-rule states and current/post-order signed exposure are not approval or fills.
 
 ## Time and number formatting
 
@@ -63,7 +65,7 @@ There is no `MOCK` data in the dashboard. The deliberate absence is visible as a
 | Empty positions/orders | Explicit observed-empty panel sourced from broker response |
 | API disconnected | Error panel with retry; last successful data retained on background failure |
 | Reconciliation attention | Amber status; backend still reports execution locked |
-| Historical analytics | Persistent `HISTORICAL · NOT LIVE` label and limitation list |
+| Competition analytics | `EMPTY` until the first broker-observed equity day; x-axis stays fixed to the nine competition trading days (17 Nov – 30 Nov) and lines end at the last real observation |
 | No Qoder evidence | Empty state; no synthetic agent summary |
 
 ## Display quote separation

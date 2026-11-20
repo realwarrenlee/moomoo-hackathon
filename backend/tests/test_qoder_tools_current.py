@@ -153,3 +153,18 @@ def test_bar_validation_rejects_current_session_and_requires_prior_session(histo
     friday = datetime(2026, 11, 20, 23, 0, tzinfo=UTC)
     with pytest.raises(CollectionError, match="expected the prior completed session"):
         _load_bars(path, friday)
+
+
+def test_bar_validation_accepts_calendar_resolved_expected_session(history):
+    path = FIXTURES / "moomoo_directional_etf_bars_2026-11-17.json"
+    last = history.session_dates()[-1]
+    # Simulates the Friday-after-Thanksgiving case: Thu 2026-11-19 is a holiday,
+    # so the prior completed session is Tue 2026-11-17 and the weekday fallback
+    # (Thu) is wrong. The scheduler resolves the session against the provider
+    # calendar and passes it as the expected session.
+    friday_morning = datetime(2026, 11, 20, 14, 35, tzinfo=UTC)
+    with pytest.raises(CollectionError, match="expected the prior completed session"):
+        _load_bars(path, friday_morning)
+    loaded, validation = _load_bars(path, friday_morning, expected_session=last)
+    assert validation["expected_previous_session"] == last.isoformat()
+    assert loaded.session_dates()[-1] == last

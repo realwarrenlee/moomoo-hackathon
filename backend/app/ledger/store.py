@@ -13,6 +13,7 @@ from app.models.contracts import (
     TradingActivation,
     can_transition,
 )
+from app.risk.policy import POLICY_VERSION_V3
 
 
 class SQLiteLedger:
@@ -61,7 +62,9 @@ class SQLiteLedger:
                     client_order_key TEXT PRIMARY KEY,
                     proposal_id TEXT NOT NULL,
                     approved_at_utc TEXT NOT NULL,
-                    approved_by TEXT NOT NULL
+                    approved_by TEXT NOT NULL,
+                    policy_version TEXT,
+                    superseded_at_utc TEXT
                 );
                 CREATE TABLE IF NOT EXISTS equity_days (
                     account_fingerprint TEXT NOT NULL,
@@ -86,6 +89,7 @@ class SQLiteLedger:
                     max_daily_drawdown TEXT NOT NULL,
                     paper_only INTEGER NOT NULL,
                     order_writes_enabled INTEGER NOT NULL,
+                    expires_at_utc TEXT,
                     schema_version TEXT NOT NULL
                 );
                 CREATE TRIGGER IF NOT EXISTS trading_activations_no_update
@@ -103,6 +107,7 @@ class SQLiteLedger:
             for column in (
                 "min_effective_exposure_fraction",
                 "max_effective_exposure_fraction",
+                "expires_at_utc",
             ):
                 if column not in columns:
                     # Pre-risk-v2 databases keep their risk-v1 activation rows
@@ -141,6 +146,7 @@ class SQLiteLedger:
                             max_daily_drawdown TEXT NOT NULL,
                             paper_only INTEGER NOT NULL,
                             order_writes_enabled INTEGER NOT NULL,
+                            expires_at_utc TEXT,
                             schema_version TEXT NOT NULL
                         );
                         INSERT INTO trading_activations (
@@ -150,7 +156,8 @@ class SQLiteLedger:
                             max_single_exposure, max_total_exposure,
                             position_fraction, min_effective_exposure_fraction,
                             max_effective_exposure_fraction, max_daily_drawdown,
-                            paper_only, order_writes_enabled, schema_version
+                            paper_only, order_writes_enabled, expires_at_utc,
+                            schema_version
                         )
                         SELECT
                             activation_id, activated_at_utc, activated_by,
@@ -159,7 +166,8 @@ class SQLiteLedger:
                             max_single_exposure, max_total_exposure,
                             position_fraction, min_effective_exposure_fraction,
                             max_effective_exposure_fraction, max_daily_drawdown,
-                            paper_only, order_writes_enabled, schema_version
+                            paper_only, order_writes_enabled, NULL,
+                            schema_version
                         FROM trading_activations_pre_risk_v2;
                         DROP TABLE trading_activations_pre_risk_v2;
                         CREATE TRIGGER trading_activations_no_update
@@ -169,6 +177,18 @@ class SQLiteLedger:
                         BEFORE DELETE ON trading_activations
                         BEGIN SELECT RAISE(ABORT, 'trading activations are append-only'); END;
                         """
+                    )
+            approval_columns = {
+                row["name"]
+                for row in connection.execute("PRAGMA table_info(order_approvals)")
+            }
+            for column in ("policy_version", "superseded_at_utc"):
+                if column not in approval_columns:
+                    # Pre-risk-v3 approval rows keep NULL policy_version and
+                    # are never eligible under the current policy; only a
+                    # current-version approval passes the gate.
+                    connection.execute(
+                        f"ALTER TABLE order_approvals ADD COLUMN {column} TEXT"
                     )
 
     def append_event(
@@ -258,15 +278,31 @@ class SQLiteLedger:
         proposal_id: str,
         approved_at_utc: datetime,
         approved_by: str,
+        *,
+        policy_version: str = POLICY_VERSION_V3,
     ) -> None:
+        if policy_version != POLICY_VERSION_V3:
+            raise ValueError(
+                f"approvals must bind the current policy {POLICY_VERSION_V3!r}, "
+                f"not {policy_version!r}"
+            )
         with self._connect() as connection:
             connection.execute(
                 """
-                INSERT INTO order_approvals (client_order_key, proposal_id, approved_at_utc, approved_by)
-                VALUES (?, ?, ?, ?)
+                INSERT INTO order_approvals (
+                    client_order_key, proposal_id, approved_at_utc, approved_by,
+                    policy_version
+                )
+                VALUES (?, ?, ?, ?, ?)
                 ON CONFLICT(client_order_key) DO NOTHING
                 """,
-                (client_order_key, proposal_id, approved_at_utc.isoformat(), approved_by),
+                (
+                    client_order_key,
+                    proposal_id,
+                    approved_at_utc.isoformat(),
+                    approved_by,
+                    policy_version,
+                ),
             )
 
     def order_approval_count(self) -> int:
@@ -276,16 +312,50 @@ class SQLiteLedger:
             ).fetchone()
         return int(row["count"])
 
-    def is_first_order_approved(self, client_order_key: str, proposal_id: str) -> bool:
+    def is_first_order_approved(
+        self,
+        client_order_key: str,
+        proposal_id: str,
+        *,
+        policy_version: str = POLICY_VERSION_V3,
+    ) -> bool:
+        """True only for a current-policy, non-superseded exact-key approval.
+
+        Pre-risk-v3 rows carry NULL policy_version and stale-policy rows are
+        superseded, so retired approvals can never authorise a new order.
+        """
         with self._connect() as connection:
             row = connection.execute(
                 """
                 SELECT 1 FROM order_approvals
-                WHERE client_order_key = ? AND proposal_id = ?
+                WHERE client_order_key = ?
+                  AND proposal_id = ?
+                  AND policy_version = ?
+                  AND superseded_at_utc IS NULL
                 """,
-                (client_order_key, proposal_id),
+                (client_order_key, proposal_id, policy_version),
             ).fetchone()
         return row is not None
+
+    def supersede_order_approval(
+        self,
+        client_order_key: str,
+        superseded_at_utc: datetime,
+        superseded_by: str,
+        reason: str,
+    ) -> bool:
+        """Mark an approval superseded without deleting it. Returns True if a
+        row was newly superseded; already-superseded rows are a no-op."""
+        with self._connect() as connection:
+            cursor = connection.execute(
+                """
+                UPDATE order_approvals
+                SET superseded_at_utc = ?
+                WHERE client_order_key = ? AND superseded_at_utc IS NULL
+                """,
+                (superseded_at_utc.isoformat(), client_order_key),
+            )
+        return cursor.rowcount > 0
 
     def observe_equity(
         self,
@@ -329,6 +399,17 @@ class SQLiteLedger:
                     (str(peak), account_fingerprint, trading_day),
                 )
         return day_start, peak
+
+    def equity_days(self) -> list[dict[str, str]]:
+        """All recorded day-start equity observations, oldest first."""
+        with self._connect() as connection:
+            rows = connection.execute(
+                """
+                SELECT account_fingerprint, trading_day, day_start_equity, peak_equity
+                FROM equity_days ORDER BY trading_day
+                """
+            ).fetchall()
+        return [dict(row) for row in rows]
 
     def record_order(self, order: OrderRecord) -> None:
         with self._connect() as connection:
@@ -398,11 +479,10 @@ class SQLiteLedger:
                 INSERT INTO trading_activations (
                     activation_id, activated_at_utc, activated_by,
                     account_fingerprint, strategy_version, allowed_symbols_json,
-                    risk_policy_version, max_single_exposure, max_total_exposure,
-                    position_fraction, min_effective_exposure_fraction,
+                    risk_policy_version, min_effective_exposure_fraction,
                     max_effective_exposure_fraction, max_daily_drawdown, paper_only,
-                    order_writes_enabled, schema_version
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    order_writes_enabled, expires_at_utc, schema_version
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """,
                 (
                     activation_id,
@@ -412,24 +492,16 @@ class SQLiteLedger:
                     activation.strategy_version,
                     json.dumps(list(activation.allowed_symbols)),
                     activation.risk_policy_version,
-                    str(activation.max_single_exposure)
-                    if activation.max_single_exposure is not None
-                    else None,
-                    str(activation.max_total_exposure)
-                    if activation.max_total_exposure is not None
-                    else None,
-                    str(activation.position_fraction)
-                    if activation.position_fraction is not None
-                    else None,
-                    str(activation.min_effective_exposure_fraction)
-                    if activation.min_effective_exposure_fraction is not None
-                    else None,
-                    str(activation.max_effective_exposure_fraction)
-                    if activation.max_effective_exposure_fraction is not None
-                    else None,
+                    str(activation.min_effective_exposure_fraction),
+                    str(activation.max_effective_exposure_fraction),
                     str(activation.max_daily_drawdown),
                     1,
                     1,
+                    (
+                        activation.expires_at_utc.isoformat()
+                        if activation.expires_at_utc is not None
+                        else None
+                    ),
                     activation.schema_version,
                 ),
             )
@@ -440,7 +512,9 @@ class SQLiteLedger:
             row = connection.execute(
                 "SELECT * FROM trading_activations ORDER BY activated_at_utc DESC, rowid DESC LIMIT 1"
             ).fetchone()
-        if row is None:
+        # Never fall back to an older pin: unsupported latest rows remain
+        # immutable history, not authority to execute a retired policy.
+        if row is None or row["risk_policy_version"] != POLICY_VERSION_V3:
             return None
         return TradingActivation(
             activated_at_utc=row["activated_at_utc"],
@@ -449,26 +523,14 @@ class SQLiteLedger:
             strategy_version=row["strategy_version"],
             allowed_symbols=tuple(json.loads(row["allowed_symbols_json"])),
             risk_policy_version=row["risk_policy_version"],
-            max_single_exposure=(
-                Decimal(row["max_single_exposure"]) if row["max_single_exposure"] else None
-            ),
-            max_total_exposure=(
-                Decimal(row["max_total_exposure"]) if row["max_total_exposure"] else None
-            ),
-            position_fraction=(
-                Decimal(row["position_fraction"]) if row["position_fraction"] else None
-            ),
-            min_effective_exposure_fraction=(
-                Decimal(row["min_effective_exposure_fraction"])
-                if row["min_effective_exposure_fraction"]
-                else None
-            ),
-            max_effective_exposure_fraction=(
-                Decimal(row["max_effective_exposure_fraction"])
-                if row["max_effective_exposure_fraction"]
-                else None
-            ),
+            min_effective_exposure_fraction=row["min_effective_exposure_fraction"],
+            max_effective_exposure_fraction=row["max_effective_exposure_fraction"],
             max_daily_drawdown=Decimal(row["max_daily_drawdown"]),
+            expires_at_utc=(
+                datetime.fromisoformat(row["expires_at_utc"])
+                if row["expires_at_utc"] is not None
+                else None
+            ),
         )
 
     def latest_event_payload(

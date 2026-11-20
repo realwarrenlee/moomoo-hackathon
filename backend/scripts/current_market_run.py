@@ -83,7 +83,10 @@ def _observation_quote(observation: QuoteObservation) -> Quote:
 
 
 def _load_bars(
-    path: Path, now: datetime, window: str = "session"
+    path: Path,
+    now: datetime,
+    window: str = "session",
+    expected_session: date | None = None,
 ) -> tuple[MarketHistory, dict[str, object]]:
     if window not in {"session", "post-close"}:
         raise CollectionError("bar validation window is not supported")
@@ -97,7 +100,12 @@ def _load_bars(
     last_session = next(iter(last_dates.values()))
     now_et = now.astimezone(NY)
     today_et = now_et.date()
-    expected = _previous_weekday(today_et)
+    # The scheduler resolves the prior completed session against the provider
+    # trading calendar (holidays included); the weekday fallback only applies
+    # when no calendar-aware session is supplied.
+    expected = (
+        expected_session if expected_session is not None else _previous_weekday(today_et)
+    )
     if window == "session":
         if last_session >= today_et:
             raise CollectionError("bar file contains an incomplete current-session bar")
@@ -285,7 +293,7 @@ def _control_state(ledger: SQLiteLedger) -> ControlState:
         order_writes_enabled=False,
         kill_switch_engaged=ledger.kill_switch_engaged(),
         circuit_breaker_open=False,
-        first_order_approved=ledger.order_approval_count() > 0,
+        first_order_approved=False,
     )
 
 

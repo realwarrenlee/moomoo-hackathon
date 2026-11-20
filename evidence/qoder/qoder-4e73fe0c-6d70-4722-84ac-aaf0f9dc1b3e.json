@@ -1,0 +1,258 @@
+{
+  "schema_version": "1",
+  "run_id": "qoder-4e73fe0c-6d70-4722-84ac-aaf0f9dc1b3e",
+  "mode": "CURRENT_MARKET_READ_ONLY",
+  "strategy_version": "spy-directional",
+  "status": "COMPLETED",
+  "outcome": "POLICY_REJECTED",
+  "session_ids": {
+    "coordinator": "sess_00vz6kz5eascg3a2379k",
+    "researcher": "sess_00vz6l3pdlxxckxuzjmt",
+    "auditor": "sess_00vz6ljhhjta8plumawz"
+  },
+  "notice": "Current read-only Moomoo evidence captured during/after the regular session. No order was submitted, approved or filled.",
+  "data_collection": {
+    "mode": "session",
+    "provenance": "CURRENT_MARKET_READ_ONLY",
+    "collected_at_utc": "2026-11-19T14:54:42.522513+00:00",
+    "us_eastern_time": "2026-11-19T09:54:42.522513-05:00",
+    "quotes": [
+      {
+        "symbol": "SPY",
+        "price": "736.67",
+        "data_time_utc": "2026-11-19T14:54:42.534000+00:00",
+        "age_seconds": 0.0,
+        "sec_status": "NORMAL",
+        "suspended": false,
+        "market_state": "AFTERNOON",
+        "regular_session_open": true,
+        "provenance": "LIVE_BROKER_READ"
+      },
+      {
+        "symbol": "UPRO",
+        "price": "128.6101",
+        "data_time_utc": "2026-11-19T14:54:36.128000+00:00",
+        "age_seconds": 6.4,
+        "sec_status": "NORMAL",
+        "suspended": false,
+        "market_state": "AFTERNOON",
+        "regular_session_open": true,
+        "provenance": "LIVE_BROKER_READ"
+      },
+      {
+        "symbol": "SH",
+        "price": "33.6801",
+        "data_time_utc": "2026-11-19T14:54:06.674000+00:00",
+        "age_seconds": 35.8,
+        "sec_status": "NORMAL",
+        "suspended": false,
+        "market_state": "AFTERNOON",
+        "regular_session_open": true,
+        "provenance": "LIVE_BROKER_READ"
+      },
+      {
+        "symbol": "SPXU",
+        "price": "38.38",
+        "data_time_utc": "2026-11-19T14:54:42.432000+00:00",
+        "age_seconds": 0.1,
+        "sec_status": "NORMAL",
+        "suspended": false,
+        "market_state": "AFTERNOON",
+        "regular_session_open": true,
+        "provenance": "LIVE_BROKER_READ"
+      }
+    ],
+    "account": {
+      "masked_id": "****0101",
+      "equity": "99991.02",
+      "cash": "99991.02",
+      "buying_power": "99991.02",
+      "day_start_equity": "99991.02",
+      "positions_count": 0,
+      "open_orders_count": 0,
+      "reconciled": true,
+      "unknown_orders": 0,
+      "as_of_utc": "2026-11-19T14:54:44.510888+00:00",
+      "age_seconds": 0.0,
+      "provenance": "LIVE_BROKER_READ"
+    },
+    "positions": [],
+    "orders": {
+      "today_count": 0,
+      "history_count": 2,
+      "open_count": 0
+    },
+    "history": {
+      "path": "evidence\\current-market\\2026-11-18\\daily-bars.json",
+      "source": {
+        "provider": "Moomoo REST history-kline",
+        "endpoint": "/api/v1.0/quote/{code}/history-kline",
+        "arguments": {
+          "ktype": 2,
+          "autype": 1,
+          "extended_time": 0,
+          "num": 370
+        },
+        "fetched_at_utc": "2026-11-19T14:39:11.581614+00:00",
+        "last_completed_session": "20261118",
+        "note": "Read-only completed daily bars fetched from the documented Moomoo REST history-kline endpoint. No account identifiers or credentials are included."
+      },
+      "window": "session",
+      "today_session_et": "2026-11-19",
+      "last_completed_session": "2026-11-18",
+      "today_bar_available": false,
+      "expected_previous_session": "2026-11-18",
+      "bars_per_symbol": {
+        "SPY": 370,
+        "UPRO": 370,
+        "SH": 370,
+        "SPXU": 370
+      },
+      "fetch_age_hours": 0.26,
+      "complete": true
+    },
+    "validations": {
+      "account_verified_paper": true,
+      "account_reconciled": true,
+      "account_age_seconds": 0.0,
+      "regular_session_required": true,
+      "quotes_collected": 4,
+      "history_complete": true,
+      "order_writes_enabled": false
+    }
+  },
+  "research": {
+    "ok": true,
+    "mode": "CURRENT_MARKET_READ_ONLY",
+    "run_id": "qoder-4e73fe0c-6d70-4722-84ac-aaf0f9dc1b3e",
+    "snapshot": {
+      "strategy_version": "spy-directional",
+      "decision_time_utc": "2026-11-19T14:54:42.522513+00:00",
+      "data_as_of_utc": "2026-11-18T21:00:00+00:00",
+      "spy_session_date": "2026-11-18",
+      "spy_close": "730.2",
+      "spy_return_10d": "-0.0477432480014605964971766148",
+      "spy_sma50": "762.2828597323",
+      "spy_trend_pct": "-0.0420878671515281375163860859",
+      "spy_volatility_20d": "0.22882025429109049",
+      "market_state": "STRONG_BEARISH",
+      "direction": "BEARISH",
+      "target_symbol": "SH",
+      "target_effective_exposure": "-1",
+      "current_symbol": null,
+      "current_quantity": 0,
+      "action": "BUY",
+      "reentry_symbol": null,
+      "candidates": [
+        {
+          "symbol": "SPY",
+          "direction": 1,
+          "leverage": "1",
+          "effective_exposure": "1",
+          "close": "730.2",
+          "eligible": false,
+          "selected": false,
+          "reasons": [
+            "Instrument direction does not match the SPY signal"
+          ]
+        },
+        {
+          "symbol": "UPRO",
+          "direction": 1,
+          "leverage": "3",
+          "effective_exposure": "3",
+          "close": "125.4",
+          "eligible": false,
+          "selected": false,
+          "reasons": [
+            "Instrument direction does not match the SPY signal"
+          ]
+        },
+        {
+          "symbol": "SH",
+          "direction": -1,
+          "leverage": "1",
+          "effective_exposure": "-1",
+          "close": "34",
+          "eligible": true,
+          "selected": true,
+          "reasons": []
+        },
+        {
+          "symbol": "SPXU",
+          "direction": -1,
+          "leverage": "3",
+          "effective_exposure": "-3",
+          "close": "39.39",
+          "eligible": true,
+          "selected": false,
+          "reasons": []
+        }
+      ],
+      "selected_symbol": "SH",
+      "decision_reason": "STRONG_BEARISH target SH; buy 1764 shares (MODERATE tier target of -60% effective exposure).",
+      "no_trade_reason": null,
+      "target_exposure_fraction": "-0.60",
+      "exposure_tier": "MODERATE",
+      "duration_exit": false
+    },
+    "proposal": {
+      "schema_version": "1",
+      "proposal_id": "spy-directional-2026-11-18-SH-BUY",
+      "run_id": "qoder-4e73fe0c-6d70-4722-84ac-aaf0f9dc1b3e",
+      "strategy_version": "spy-directional",
+      "decision_time_utc": "2026-11-19T14:54:42.522513Z",
+      "data_as_of_utc": "2026-11-18T21:00:00Z",
+      "symbol": "SH",
+      "action": "BUY",
+      "requested_quantity": 1764,
+      "thesis": "SPY closed at 730.2 with a 10-session return of -4.77%, a 50-session SMA of 762.28 and 22.88% annualized volatility. The MODERATE tier sets a target of -60% of equity in S&P 500 exposure; SH at 1x daily leverage expresses it with about 60% of equity in cash.",
+      "invalidation": "The tier is re-evaluated on every completed session: exit or reduce when the tier drops or the direction flips, and 3x holdings exit after the holding-duration limit. Overnight gaps can move the position beyond the 2% daily drawdown brake.",
+      "evidence_ids": [
+        "bar:SPY:2026-11-18",
+        "bar:SH:20261118"
+      ],
+      "target_exposure_fraction": "-0.60"
+    },
+    "notice": "Current read-only Moomoo evidence captured during the regular session; not an order, owner approval or fill."
+  },
+  "risk": {
+    "ok": true,
+    "mode": "CURRENT_MARKET_READ_ONLY",
+    "run_id": "qoder-4e73fe0c-6d70-4722-84ac-aaf0f9dc1b3e",
+    "risk_decision": {
+      "proposal_id": "spy-directional-2026-11-18-SH-BUY",
+      "policy_version": "risk-v2",
+      "decision": "REJECT",
+      "reasons": [
+        {
+          "rule_id": "R010",
+          "message": "Order writes are disabled by control state",
+          "details": {
+            "writes_enabled": "False",
+            "kill_switch": "False",
+            "circuit_breaker": "False"
+          }
+        },
+        {
+          "rule_id": "R014",
+          "message": "This paper order requires explicit owner approval",
+          "details": {}
+        }
+      ],
+      "approved_quantity": 0,
+      "account_snapshot_id": "mm-9649035d9287093edaf9",
+      "expires_at_utc": "2026-11-19T14:55:32.407843Z"
+    },
+    "evaluated_at_utc": "2026-11-19T14:55:02.407843+00:00",
+    "control_context": "Fresh read-only REST account and quote inputs with writes disabled; an APPROVE is not owner authorization.",
+    "notice": "An APPROVE result is a policy evaluation, never an order authorization."
+  },
+  "agent_summaries": {
+    "coordinator_ready": "READY qoder-4e73fe0c-6d70-4722-84ac-aaf0f9dc1b3e\n\nMode: CURRENT_MARKET_READ_ONLY\n\nRun boundary confirmed: read-only, strategy allowlist `spy-directional`, selected strategy `spy-directional`. NO_TRADE preserved. This run is not an order, fill, owner approval, or live-account claim. No tools, credentials, or order actions involved.",
+    "researcher": "**Mode returned: `CURRENT_MARKET_READ_ONLY`** (single artifact; no re-runs)\n\n| Field | Value |\n|---|---|\n| decision_time_utc | 2026-11-19T14:54:42.522513+00:00 |\n| data_as_of_utc | 2026-11-18T21:00:00+00:00 |\n| SPY session / close | 2026-11-18 / 730.2 |\n| 10-session return | -4.7743% |\n| 50-session SMA | 762.2829 |\n| Trend (close vs SMA50) | -4.2088% |\n| 20-session volatility (ann.) | 22.8820% |\n| market_state / direction | STRONG_BEARISH / BEARISH |\n\n**Target** — SH (1x inverse), effective exposure -1; exposure tier MODERATE, target_exposure_fraction -0.60. Selection reason: SH is the eligible inverse instrument matching the bearish signal (SPXU and the long instruments SPY/UPRO were rejected or unselected on direction/leverage grounds as listed in `candidates`).\n\n**Current holding** — `current_symbol: null`, `current_quantity: 0` (no position).\n\n**Action** — `BUY` SH, requested_quantity 1764, per `decision_reason`: “STRONG_BEARISH target SH; buy 1764 shares (MODERATE tier target of -60% effective exposure).” `no_trade_reason` is null; `duration_exit` is false — no CASH, NO_TRADE or HOLD state applies to this decision.\n\n**Proposal** — `spy-directional-2026-11-18-SH-BUY` (schema v1), run_id `qoder-4e73fe0c-6d70-4722-84ac-aaf0f9dc1b3e`.\n- Thesis: SPY 730.2, -4.77% over 10 sessions, SMA50 762.28, 22.88% annualized vol; MODERATE tier sets -60% S&P 500 exposure, expressed via 1x SH with ~60% of equity in cash.\n- Invalidation: tier re-evaluated each completed session; exit/reduce if tier drops or direction flips; 3x holdings exit at the holding-duration limit; overnight gaps can breach the 2% daily drawdown brake.\n- evidence_ids: `bar:SPY:2026-11-18`, `bar:SH:20261118`\n\nTool notice: read-only Moomoo evidence captured during the regular session — not an order, owner approval or fill. I cannot evaluate risk, approve or execute anything, and have no broker or credential access.",
+    "auditor": "## Audit result — run `qoder-4e73fe0c-6d70-4722-84ac-aaf0f9dc1b3e`\n\nCalled `evaluate_proposal` once with the run_id and proposal exactly as supplied (no modification).\n\n**Deterministic risk_decision: `REJECT`** (policy `risk-v2`, mode `CURRENT_MARKET_READ_ONLY`)\n- **R010** — Order writes are disabled by control state (`writes_enabled=False`, kill_switch=False, circuit_breaker=False)\n- **R014** — Paper order requires explicit owner approval\n- `approved_quantity`: **0**; account snapshot `mm-9649035d9287093edaf9`; expires `2026-11-19T14:55:32Z`\n\nNote the gate is enforced on the control state, not the thesis quality — even a fully sound rationale yields zero approved quantity here. This is a policy evaluation, not owner authorization or an order instruction. I have no execution access or credentials.\n\n**Strongest counterargument (to the proposal's thesis, independent of the gate)**\n- The proposal is an omitted inconsistency worth flagging: it names symbol **SH** (inverse S&P, ~1x daily) with action **BUY**, yet describes the target as \"-60% of equity in S&P 500 exposure\" with \"about 60% of equity in cash.\" A BUY of SH is a long position in an inverse fund, not a cash-holding expression; the framing conflates the two. The 1764-share size also isn't reconciled to account equity or SH's price in the evidence, so sizing is unverifiable from the cited `bar:SH:20261118` alone.\n- Signal is a single-day snapshot: -4.77% 10-session return below a 762.28 SMA describes a drawdown/trend state; shorting into a 22.88% vol regime risks mean-reversion and whipsaw on any tier flip.\n\n**Downside**\n- SH is a daily-reset inverse product: in a flat-but-choppy market, compounding decay erodes value even with no net underlying move; a sharp SPY rebound produces amplified losses.\n- Quantity 1764 at unknown price = unquantified notional; no stop or max-loss stated beyond the 2% \"brake\" the invalidation itself concedes can be jumped overnight.\n\n**Invalidation risk**\n- The tier is re-evaluated each completed session; a single up-day or tier drop exits/reduces the position, so holding period may be short and turnover/decay costs non-trivial.\n- Overnight gaps can breach the 2% daily drawdown brake before any exit can act — the stated invalidation is not a hard stop.\n- 3x holdings carry a holding-duration limit (not applicable to SH 1x, but noted in the invalidation).\n\nThe REJECT and approved_quantity 0 above are final; nothing in this commentary changes or overrides them.",
+    "coordinator_final": "Closed run qoder-4e73fe0c-6d70-4722-84ac-aaf0f9dc1b3e — mode CURRENT_MARKET_READ_ONLY.\n\n**Deterministic outcome: POLICY_REJECTED**\n- Proposal `spy-directional-2026-11-18-SH-BUY` (SH, BUY, requested qty 1764, target exposure -0.60) evaluated once, unmodified.\n- Risk policy `risk-v2` decision: **REJECT**, `approved_quantity` **0**.\n  - R010 — order writes disabled by control state (`writes_enabled=False`).\n  - R014 — paper order requires explicit owner approval.\n- Account snapshot reference `mm-9649035d9287093edaf9`; gate expiry `2026-11-19T14:55:32Z`.\n- NO_TRADE preserved. The artifact's signal context reads STRONG_BEARISH/BEARISH (SPY 730.2, 10d -4.77%, SMA50 762.28, vol20d 22.88%).\n\n**Limitations**\n- Rejection is on control state, not thesis quality; sound or unsound rationale both yield zero here.\n- This is a policy evaluation, not owner authorization, an order, or an execution instruction. No broker fill, no current approval, no live account state is implied.\n- The supplied commentary flags unresolved inconsistencies in the proposal itself (BUY of inverse fund SH described as a cash-holding expression; unverifiable 1764-share sizing) and daily-reset decay / overnight-gap risk that the stated invalidation does not hard-stop. These are observations only and do not modify the deterministic result.\n\nFinal status stands: POLICY_REJECTED, approved quantity 0, no trade."
+  },
+  "completed_at_utc": "2026-11-19T14:55:11.536056+00:00"
+}

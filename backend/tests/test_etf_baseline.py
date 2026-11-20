@@ -14,7 +14,6 @@ from app.research.etf_baseline import (
     default_period,
     simulate_monthly_trend,
 )
-from app.risk.policy import RiskGate
 
 FIXTURES = Path(__file__).parent / "fixtures"
 BARS = FIXTURES / "moomoo_daily_bars_2026-11-16.json"
@@ -25,9 +24,8 @@ def history():
     return MarketHistory.from_file(BARS)
 
 
-def test_baseline_uses_policy_single_instrument_cap():
-    gate = RiskGate(expected_account_fingerprint="baseline-test")
-    assert POLICY_MAX_SINGLE_EXPOSURE == gate.max_single_exposure == Decimal("0.10")
+def test_historical_baseline_retains_its_frozen_study_allocation():
+    assert POLICY_MAX_SINGLE_EXPOSURE == Decimal("0.10")
 
 
 def test_default_period_starts_after_month_end_and_sma_warmup(history):

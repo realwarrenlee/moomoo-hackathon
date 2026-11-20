@@ -2,7 +2,7 @@
 
 **Purpose:** a runbook another developer can follow to install, verify and operate MooTrade safely. Read [`docs/integrations.md`](integrations.md) first for what has been verified against the real providers, and [`docs/strategy-and-risk.md`](strategy-and-risk.md) for the policy rules referenced below.
 
-**Safety posture:** every command below is read-only unless explicitly stated. The only write-capable order command is `moomoo-supervised-execute`, which additionally requires two explicit flags, a durable owner approval and every preflight check. The operator control command `moomoo-kill-switch` changes the persistent kill-switch state only (never submits or cancels orders) and requires explicit confirmation flags. `ORDER_WRITES_ENABLED` must remain `false` except inside a single supervised or scheduled execution invocation. Do not paste credentials into terminals, chat messages, commits or screenshots.
+**Safety posture:** every command below is read-only unless explicitly stated. Under the current mandate, the only authorised order workflow is `moomoo-supervised-execute`, requiring two explicit flags, a durable owner approval for the **exact proposal/key of EVERY BUY and SELL**, and every preflight check. `TRADING_MODE=SUPERVISED_PAPER` and `ORDER_WRITES_ENABLED=false` remain unchanged; writes may be scoped only to a separately approved supervised invocation, not a scheduled autonomous run. Execution scope is SPY/SH only (risk-v3, 20 November 2026); UPRO/SPXU were removed from the universe and are rejected by default-deny symbol validation, with their historical records preserved. This is not new activation, permission or an order. SPY/SH MARKET capacity was verified read-only on 19 November (112/2,476 cash-buy shares), without establishing guaranteed order acceptance. The operator control command `moomoo-kill-switch` changes persistent kill-switch state only (never submits or cancels orders) and requires explicit confirmation. Do not paste credentials into terminals, chat messages, commits or screenshots.
 
 ## Prerequisites
 
@@ -35,8 +35,8 @@ Copy `.env.example` to `.env` and set:
 | Variable | Purpose |
 |---|---|
 | `APP_ENV` | `development` or `demo` |
-| `TRADING_MODE` | `READ_ONLY` (default), `SUPERVISED_PAPER` or `AUTO_PAPER`; enforced by the supervised executor and the autonomous pipeline. The legacy `paper_only` value fails closed and must be replaced |
-| `ORDER_WRITES_ENABLED` | stays `false` in `.env` in every mode; the auto-paper scheduler scopes it `true` in-process for the executor only (see below) |
+| `TRADING_MODE` | `READ_ONLY` default; `.env` stays `SUPERVISED_PAPER`. `AUTO_PAPER` is authorised only for the time-limited activation recorded on 20 November 2026 (expires 2026-11-27T18:00Z) and only via the scheduler wrapper; legacy `paper_only` fails closed |
+| `ORDER_WRITES_ENABLED` | stays `false` in `.env`; only a separately approved supervised invocation may enable its own transport |
 | `DATABASE_URL` | SQLite path, default `sqlite:///./data/mootrade.db` |
 | `COMPETITION_ACCOUNT_MASKED_ID` | masked identity, e.g. `****0101` |
 | `COMPETITION_ACCOUNT_FINGERPRINT` | SHA-256 fingerprint from `fingerprint-account` |
@@ -54,22 +54,31 @@ The account lock fails closed if the masked id or fingerprint is missing; the ma
 - The browser dashboard never receives tokens, the full account id or the fingerprint.
 - Treat the execution `trade:write` consent as potentially account-wide; account-exclusive write scope is unverified. See `docs/integrations.md`.
 
-## Trading modes and AUTO_PAPER activation
+## Trading modes and historical activation records
 
-`TRADING_MODE` is read from the environment by every relevant command:
+- `READ_ONLY` is the default when unset; execution refuses. Unknown values (including legacy `paper_only`) fail closed.
+- **Current runtime:** `SUPERVISED_PAPER` in `.env`, with `ORDER_WRITES_ENABLED=false`. Every supervised BUY and SELL requires a durable exact-proposal/key approval, `--enable-order-writes`, exact `--confirm-client-order-key` and a fresh passing RiskGate decision. Separately, a time-limited `AUTO_PAPER` activation (recorded 20 November 2026, expiring 2026-11-27T18:00Z) authorises the scheduled autonomous executor for the pinned risk-v3 policy only; it never applies to supervised invocations.
+- **Active policy:** risk-v3 only: tiered research targets of `0%` or `10%`/`25–40%`/`40%` signed-exposure magnitude, 40% signed-effective ceiling, ±5 percentage-point target tolerance, one-position RiskGate maximum (matching the strategy), 2% daily drawdown, US$5 cash buffer, quotes ≤300s and account snapshots ≤60s, 1x leverage maximum, plus the competition 40% single-security concentration cap (`R019`). Only the supervised path skips the 10% floor; it does not waive the other rules. Risk-v1 and the pre-simplification risk-v2 (20 November 2026 cutover) are retired and cannot be selected or reactivated.
 
-- `READ_ONLY` (default when unset): all read paths work; `moomoo-supervised-execute` refuses with exit 2. Any unknown value (including the legacy `paper_only` convention) also fails closed.
-- `SUPERVISED_PAPER`: the operator-supervised execution workflow behaves as before — per-proposal durable approval, `--enable-order-writes` and exact `--confirm-client-order-key`.
-- `AUTO_PAPER`: additionally requires a durable activation pin recorded by `moomoo-activate-auto-paper`. The pin binds the exact competition-account SHA-256 fingerprint, strategy `spy-directional`, the allowed symbols and a versioned risk policy. The **recorded pin is `risk-v2`** (18 November 2026 23:58Z: SPY/UPRO/SH/SPXU, 20% minimum / 150% maximum signed effective exposure, 3x leverage, 2% drawdown), owner-approved at the cutover. The earlier `risk-v1` pin (SPY/SH, 10% single / 30% gross / 2% drawdown, 5% position fraction, no leverage; 18 November 2026 16:03Z) is retained append-only. The record is append-only in the ledger.
+**HISTORICAL pins:** the append-only 18 November risk-v1 pin (16:03Z: SPY/SH, 10% single / 30% gross / 2% drawdown, 5% position fraction, no leverage) and pre-simplification risk-v2 pin (23:58Z: SPY/UPRO/SH/SPXU, 20% minimum / 150% maximum signed-effective exposure, 3x, 2% drawdown; `order_submitted=false`) remain audit evidence. They are not current unattended authority. A risk-v3 activation pin binds only SPY/SH, 10%/40% limits and the 2% drawdown; `latest_trading_activation` returns nothing for non-risk-v3 rows. R014 is mode-aware: an exact-order approval authorises supervised orders, while only a valid, unexpired risk-v3 activation authorises autonomous orders — and it never applies on the supervised gate.
+
+**Superseding a stale approval:** `moomoo-supersede-approval` marks an approval row superseded (append-only; the row remains as historical evidence) and records an `APPROVAL_SUPERSEDED` event. It never submits an order and requires `--confirm-supersede`:
 
 ```bash
-.venv/Scripts/python -m app.cli moomoo-auto-paper-status   # mode, write flag, kill switch, activation pin
-.venv/Scripts/python -m app.cli moomoo-activate-auto-paper --confirm-auto-paper
+.venv/Scripts/python -m app.cli moomoo-supersede-approval \
+  --proposal-id <proposal-id> --strategy-version spy-directional \
+  --reason "<why the approval is superseded>" --confirm-supersede
 ```
 
-Activation records a pin only; it never submits an order. It refuses unless `TRADING_MODE=AUTO_PAPER` and `ORDER_WRITES_ENABLED=true` are already set (a temporary one-time condition), and it stores the pin for the configured competition-account fingerprint. The pin is the durable write-authority record. Autonomous submission additionally requires, at every run: `TRADING_MODE=AUTO_PAPER` from `.env`, `ORDER_WRITES_ENABLED=true` **scoped in-process by the auto-paper scheduler for the executor only** (`.env` itself keeps it `false` so the read-only scheduler, risk monitor and dashboard API keep working), a matching activation pin, an unengaged kill switch and a fresh RiskGate decision. To stop autonomous trading: set `TRADING_MODE=READ_ONLY` in `.env`, or engage the persistent kill switch for an immediate stop of new submissions.
+The 576-SH BUY approval (`spy-directional-2026-11-19-SH-BUY`, old 20% weak tier) was superseded on 20 November 2026 under the risk-v3 cutover; new orders need a fresh policy-bound approval for a new proposal id and client order key.
 
-**Current state:** the owner approved the risk-v2 cutover on 18 November 2026 and the risk-v2 activation pin was recorded at 23:58Z (`order_submitted=false`). During the acceptance phase `.env` holds `TRADING_MODE=SUPERVISED_PAPER` and `ORDER_WRITES_ENABLED=false`, so no autonomous submission can occur. The remaining cutover steps are: (1) one supervised UPRO acceptance order and one supervised SPXU acceptance order during the next regular session, each behind the owner's explicit go-ahead and broker reconciliation; (2) restore `TRADING_MODE=AUTO_PAPER` in `.env`, leaving `ORDER_WRITES_ENABLED=false` (the scheduler scopes writes true in-process for the executor). From then on autonomous risk-v2 trading continues without individual order approvals.
+Inspecting state is read-only:
+
+```bash
+.venv/Scripts/python -m app.cli moomoo-auto-paper-status
+```
+
+Do not reactivate old pins or restore `AUTO_PAPER` after acceptance orders. Future autonomy requires separate explicit owner authorisation; this runbook does not grant it.
 
 ## Read-only account verification
 
@@ -112,7 +121,7 @@ Open `http://localhost:3000`. API docs at `http://127.0.0.1:8000/api/docs`. The 
 
 The pipeline is read-only and has no order path. Commands run from `backend/`.
 
-**Historical dry run** (pinned decision time, reproducible; uses committed bar fixtures):
+**Historical-data dry run** (pinned decision time; uses committed bar fixtures with the current v2-only rules, never reactivates retired risk-v1). Frozen old artifacts retain their original policy/results:
 
 ```bash
 ../.venv/Scripts/python -m scripts.qoder_readonly_run \
@@ -127,15 +136,13 @@ The pipeline is read-only and has no order path. Commands run from `backend/`.
 **Current-market run** (fresh read-only Moomoo bars, quotes and account state, then the same three-agent review):
 
 ```bash
-../.venv/Scripts/python -m scripts.refresh_daily_bars.py   # refreshes evidence/current-market/<session>/daily-bars.json
-../.venv/Scripts/python -m scripts.current_market_run.py
+../.venv/Scripts/python -m scripts.refresh_daily_bars
+../.venv/Scripts/python -m scripts.current_market_run \
+  --bars ../evidence/current-market/<completed-session>/daily-bars.json \
+  --window session --strategy spy-directional
 ```
 
-**Read-only preflight** (records a sanitised preflight artifact with a diagnostic QQQ preview; never contacts an order endpoint):
-
-```bash
-../.venv/Scripts/python -m scripts.readonly_preflight.py
-```
+**Historical diagnostic preflight:** `scripts.readonly_preflight.py` produced sanitised QQQ diagnostic previews without contacting an order endpoint. Those artifacts remain evidence only, not a current strategy proposal or a reason to repeat diagnostics. Use the exact research proposal in the supervised preview below.
 
 Agent ids for the current-market config live in `backend/config/current_market.json`; never commit Qoder access tokens there.
 
@@ -154,26 +161,13 @@ powershell -ExecutionPolicy Bypass -File backend/scripts/register_readonly_task.
 
 For one-time timer validation add `-ValidationDelayMinutes 2`, then remove the validation trigger afterwards (see `docs/integrations.md`).
 
-## Autonomous AUTO_PAPER schedule
+## Morning AUTO_PAPER schedule — Mode A supervised decision, Mode B autonomous (time-limited)
 
-The autonomous trading loop reuses the read-only scheduler for its evening decision phase and adds a separate execution-phase task. AUTO_PAPER was activated on 18 November 2026 (16:03Z); before that every execution attempt recorded an abstention.
+The read-only evening decision task remains separate from execution: at 16:20 ET it refreshes completed bars to `evidence/current-market/<session>/daily-bars.json` and records the three-agent workflow in `evidence/qoder/<run-id>.json`. A completed artifact is research evidence, not owner approval.
 
-**Decision phase (read-only, existing task `MooTrade Read-Only Scheduler`):** at 16:20 ET it refreshes completed daily bars to `evidence/current-market/<session>/daily-bars.json` and runs the three-agent Qoder workflow into `evidence/qoder/<run-id>.json`. This is the pinned decision artifact the execution phase consumes.
+**Mode A (supervised):** with `TRADING_MODE=SUPERVISED_PAPER`, `MooTrade Auto Paper Scheduler` invokes `backend/scripts/schedule_auto_paper.py` at 13:35Z/14:35Z inside a 09:35–10:30 ET window. The morning phase validates the pinned prior-session artifact, recomputes the deterministic risk-v3 decision on fresh broker reads and records an `AUTO_PAPER_DECISION` event. **It never submits an order**; a BUY/SELL outcome reports the exact proposal and client order key and awaits `moomoo-supervised-execute` after explicit owner approval. Writes are scoped to the executor subprocess only in `AUTO_PAPER` mode, never in this mode.
 
-**Execution phase (new task `MooTrade Auto Paper Scheduler`):** triggers at 13:35Z and 14:35Z (09:35 ET in either US DST offset); `backend/scripts/schedule_auto_paper.py` runs `scripts.auto_paper_run` only while the wall clock is inside 09:35-10:30 ET. It re-reads the prior session's bars and decision artifact, recomputes the deterministic signal and holdings comparison, and auto-submits only when `TRADING_MODE=AUTO_PAPER`, the activation pin matches, the kill switch is clean, no `UNKNOWN` submission exists and a fresh execution-time RiskGate approves. `ORDER_WRITES_ENABLED` is set to `true` only inside that scheduled invocation and restored afterwards; the dashboard and all read paths never see it enabled.
-
-Register the task:
-
-```powershell
-powershell -ExecutionPolicy Bypass -File backend/scripts/register_auto_paper_task.ps1
-```
-
-- Durable state: `data/auto_paper_schedule.json` (per-session history), `data/auto-scheduler-events.jsonl` (append-only events), `data/auto_paper_schedule.lock`.
-- A session is attempted once: an abstained or completed run is never retried later the same day, and missed windows are not backfilled (fail closed; the next session re-evaluates).
-- After a mid-week market holiday the prior weekday may not be the last bar session; the executor then abstains for that morning instead of trading on stale data.
-- Disabling the read-only scheduler (or its failure) also stops autonomous trading: the execution phase abstains when the pinned decision artifact is missing.
-- The task runs in the interactive user session (DPAPI) and cannot wake a machine in Modern Standby; `WakeToRun=true` is set for ordinary standby. If the machine sleeps through 09:35-10:30 ET, no trade occurs that day.
-- Stop autonomous trading: set `TRADING_MODE=READ_ONLY` and `ORDER_WRITES_ENABLED=false` in `.env`, engage the kill switch, or disable the `MooTrade Auto Paper Scheduler` task.
+**Mode B (autonomous, active until 2026-11-27T18:00Z):** the wrapper `backend/scripts/run_auto_paper_schedule.cmd` sets `TRADING_MODE=AUTO_PAPER` with `ORDER_WRITES_ENABLED=false`; `schedule_auto_paper` scopes `ORDER_WRITES_ENABLED=true` to the in-process executor only. The durable risk-v3 activation pin (recorded 2026-11-20T02:25:30Z by explicit owner authorisation, expiring 2026-11-27T18:00:00Z — the exact close of the final shortened 27 November session, verified against the provider trading calendar) binds the account fingerprint, strategy version, SPY/SH allowlist, 10%/40% exposure limits and 2% daily drawdown. Every submission still passes the full RiskGate (R001–R019, mode-aware R014 satisfied only by the valid activation) plus per-run checks: fresh bars and account snapshot, pinned artifact verification, kill switch, no UNKNOWN submissions, fresh regular-session quote and a fresh version-bound client order key. A failed or ambiguous submission is never blindly retried; the activation cannot authorise supervised orders and expires automatically. The scheduler passes the provider-calendar-resolved prior session (`--expected-session`) so post-holiday mornings (e.g. the Friday after Thanksgiving) validate correctly. State: `data/auto_paper_schedule.json`, `data/auto-scheduler-events.jsonl`, `data/auto_paper_schedule.lock`. The design does not retry an abstained/completed session or backfill a missed execution window.
 
 ## Daily risk monitor
 
@@ -186,13 +180,13 @@ powershell -ExecutionPolicy Bypass -File backend/scripts/register_risk_monitor_t
 - The task runs `backend/scripts/run_risk_monitor.cmd`, which invokes `scripts.risk_monitor --scheduled` and logs to `data/risk-monitor-task.log`.
 - Durable state: `data/risk_monitor_schedule.json`, `data/risk-monitor-events.jsonl` (append-only), `data/risk_monitor_schedule.lock`. Evidence reports: `evidence/risk-monitor/<session>/<window>-<utc>.json`.
 - The monitor is strictly read-only: it builds its stack with `order_writes_enabled=False` and refuses to run if the environment has `ORDER_WRITES_ENABLED=true` or a trade-write token.
-- Breaches are appended as `RISK_BREACH` events. The persistent kill switch engages only on a daily-drawdown breach or ambiguous submissions still unresolved at pre-close; exposure, holding-duration and open-order breaches are reported only so the deterministic reduction rules can exit positions at the next execution window.
+- Breaches are appended as `RISK_BREACH` events. The persistent kill switch engages on daily drawdown or unresolved ambiguity at pre-close; exposure, holding-duration and open-order breaches are reported only. Any resulting reduction or exit requires its own exact-proposal/key owner approval; the monitor never places it.
 - For a one-time timer validation add `-ValidationDelayMinutes 2`, then remove the validation trigger afterwards.
 
 ## Running tests
 
 ```bash
-.venv/Scripts/python -m pytest                     # backend: 400 tests, 19 November 2026
+.venv/Scripts/python -m pytest                     # compare observed results with docs/evidence.md
 cd frontend && npx --yes pnpm@10 run test          # formatting regression tests
 cd frontend && npx --yes pnpm@10 run typecheck && npx --yes pnpm@10 run lint && npx --yes pnpm@10 run build
 ```
@@ -201,56 +195,63 @@ Negative-path tests (oversized orders, stale quotes, kill switch, ambiguous time
 
 ## Inspecting decisions and audit logs
 
-- Dashboard: `/dashboard` (overview), `/agents` (latest Qoder run), `/risk` (policy state), `/audit` (ledger timeline), `/portfolio` (broker state), `/analytics` (historical curves only).
+- Dashboard: `/dashboard` (overview), `/agents` (latest Qoder run), `/risk` (policy state), `/audit` (ledger timeline), `/portfolio` (broker state), `/analytics` (competition period only: paper-account day-start equity vs SPY/cash, 17 Nov to 30 Nov 2026).
 - Ledger: SQLite at `data/mootrade.db`. The `events` table is append-only (SQL triggers forbid UPDATE/DELETE). Useful tables: `events`, `submissions` (idempotency), `order_approvals`, `controls` (kill switch), `equity_days` (drawdown baseline).
 - Qoder run artifacts: `evidence/qoder/qoder-<run-id>.md` and `.json` (sanitised; raw session event logs are never exported).
 - Preflight artifacts: `evidence/preflight/preflight-<UTC>.json`.
 
 ## Executing supervised paper trades
 
-The order path is a prototype and remains provider-unproven. Read `docs/integrations.md` (execution section) before considering it. Sequence:
+The provider-observed lifecycle is the historical QQQ diagnostic round trip only, not SPY/SH acceptance or strategy performance. Do not repeat diagnostics or substitute a new key to bypass idempotency. Read `docs/integrations.md` before considering an order. The prepared CLI adds `--proposal-file` to the existing preview/execute arguments; all required flags remain required and must match the file. Use the exact research `TradeProposal`, preserving its timestamps, evidence IDs and declared target rather than reconstructing a proposal from flags. Current verification results and the genuine SH preview are recorded in `docs/evidence.md`.
 
-1. **Preview** — evaluates the real gate with writes hypothetically enabled; prints the payload and risk result; never submits:
+1. **Preview** — use values from that exact proposal, not the placeholder text below. Evaluates with writes hypothetically enabled, reports per-rule states and current/post-order signed-effective exposure, and never submits:
 
    ```bash
    .venv/Scripts/python -m app.cli moomoo-supervised-preview \
-     --symbol QQQ --action BUY --quantity 1 --proposal-id <proposal-id> \
+     --proposal-file <research-proposal.json> \
+     --symbol <symbol> --action <BUY-or-SELL> --quantity <quantity> --proposal-id <proposal-id> \
      --strategy-version spy-directional \
-     --thesis "Diagnostic supervised-preview thesis" \
-     --invalidation "Diagnostic invalidation"
+     --thesis "<exact thesis from proposal>" \
+     --invalidation "<exact invalidation from proposal>"
    ```
 
-2. **Owner approval** — records a durable approval bound to the proposal and its client order key; never submits:
+2. **Owner approval for EVERY BUY and SELL** — only after explicit approval of the exact proposal and key. The historical command name remains `approve-first-order`, but it is used for each supervised order, not just the first. Recording approval never submits:
 
    ```bash
    .venv/Scripts/python -m app.cli approve-first-order \
      --proposal-id <proposal-id> --strategy-version spy-directional
    ```
 
-3. **Execute** — the only write-capable command. Requires both `--enable-order-writes` and the exact `--confirm-client-order-key`, plus a durable approval, a fresh regular-session quote (≤300 s, `AFTERNOON`), a reconciled competition account, a clean kill switch, no `UNKNOWN` submissions and every `RiskGate` rule. Submits at most once and never retries an ambiguous outcome. The client order key is `mootrade-` plus the SHA-256 of `<strategy-version>:<proposal-id>` (`build_client_order_key` in `backend/app/service.py`); compute it with:
-
-   ```bash
-   .venv/Scripts/python -c "import hashlib; print('mootrade-' + hashlib.sha256('spy-directional:<proposal-id>'.encode()).hexdigest())"
-   ```
+3. **Execute** — only for that approved proposal/key, with runtime still `SUPERVISED_PAPER`. Requires `--enable-order-writes`, exact `--confirm-client-order-key`, durable approval, fresh quote (≤300s), account (≤60s), provider `AFTERNOON` (09:30–16:00 ET per official Q&A), reconciliation, clean kill switch, no `UNKNOWN` submissions and every applicable risk-v3 rule. The 10% floor is skipped only in the supervised path (including its preview); the 40% signed-effective ceiling, ±5pp target tolerance and 40% competition concentration cap (`R019`) are unchanged. The key is derived from the existing strategy/proposal identity by `build_client_order_key`; do not invent a replacement key. Submits at most once, with no ambiguous-outcome retry:
 
    ```bash
    .venv/Scripts/python -m app.cli moomoo-supervised-execute \
-     --symbol QQQ --action BUY --quantity 1 --proposal-id <proposal-id> \
+     --proposal-file <research-proposal.json> \
+     --symbol <symbol> --action <BUY-or-SELL> --quantity <quantity> --proposal-id <proposal-id> \
      --strategy-version spy-directional \
-     --thesis "Diagnostic supervised-order thesis" \
-     --invalidation "Diagnostic invalidation" \
+     --thesis "<exact thesis from proposal>" \
+     --invalidation "<exact invalidation from proposal>" \
      --enable-order-writes --confirm-client-order-key <client-order-key>
    ```
 
    Exit codes: `2` risk did not approve; `3` outcome `UNKNOWN`.
 
-4. **Reconcile** — read-only; reports the local order plus the latest reconciliation event:
+4. **Resolve an `UNKNOWN` submission** — after an ambiguous outcome the broker must first be re-verified read-only (no matching correlation tag in Today's Orders or history); only then may the local row be resolved. Refuses without that live re-verification, without `--confirm-resolve`, or when the local status is not `UNKNOWN`; appends an `UNKNOWN_RESOLVED` audit event:
+
+   ```bash
+   .venv/Scripts/python -m app.cli moomoo-supervised-resolve-unknown \
+     --client-order-key <client-order-key> --confirm-resolve
+   ```
+
+   Exit codes: `2` refused (a broker order matched, local status not `UNKNOWN`, or confirmation missing). Resolving clears the `R009` block on new submissions. Re-submitting the same proposal is blocked by `R011`; a retry requires a new proposal id with its own recorded owner approval for the identical order.
+
+5. **Reconcile** — read-only; reports the local order and latest reconciliation event:
 
    ```bash
    .venv/Scripts/python -m app.cli moomoo-supervised-reconcile --client-order-key <client-order-key>
    ```
 
-**Approval boundaries:** approval is durable, bound to one proposal and key, and expires with the risk decision (30-second policy TTL; a changed account snapshot requires re-evaluation). Nothing in the dashboard, the agents or the scheduler can approve or submit. There is no unattended-trading scope; a later autonomous mode requires separate explicit owner authorisation.
+**Approval boundaries:** owner approval is durable and bound to one exact proposal/key; **the 30-second TTL belongs to the risk decision, not the owner approval**. Re-evaluate expired risk decisions or changed account snapshots before submission. A previous fill, approval or activation never approves the next BUY/SELL. The dashboard, agents and scheduler cannot grant owner approval. There is no current unattended-trading scope; future autonomy requires separate explicit authorisation.
 
 ## Stopping operations safely
 

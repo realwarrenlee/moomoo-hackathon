@@ -15,6 +15,7 @@ from app.models.contracts import (
     Quote,
     RiskDecision,
     TradeProposal,
+    TradingActivation,
     can_transition,
 )
 from app.risk.policy import RiskGate
@@ -53,7 +54,14 @@ class TradingService:
         self.order_writes_enabled = order_writes_enabled
         self._source = getattr(broker, "source_name", "mock_broker")
 
-    def execute(self, proposal: TradeProposal, quote: Quote | None, now: datetime) -> ExecutionResult:
+    def execute(
+        self,
+        proposal: TradeProposal,
+        quote: Quote | None,
+        now: datetime,
+        *,
+        autonomous_activation: TradingActivation | None = None,
+    ) -> ExecutionResult:
         try:
             account = self.broker.get_account_snapshot()
         except Exception as exc:
@@ -61,14 +69,14 @@ class TradingService:
 
         existing = self.ledger.submission_for_proposal(proposal.proposal_id)
         client_order_key = build_client_order_key(proposal.strategy_version, proposal.proposal_id)
-        first_order = self.ledger.submission_count() == 0
-        approval_ok = not first_order or self.ledger.is_first_order_approved(
+        approval_ok = self.ledger.is_first_order_approved(
             client_order_key, proposal.proposal_id
         )
         control = ControlState(
             order_writes_enabled=self.order_writes_enabled,
             kill_switch_engaged=self.ledger.kill_switch_engaged(),
             first_order_approved=approval_ok,
+            autonomous_activation=autonomous_activation,
         )
         decision = self.risk_gate.evaluate(
             proposal=proposal,
@@ -144,7 +152,12 @@ class TradingService:
             order = self.broker.submit_order(request, now)
         except Exception as exc:
             return self._mark_unknown(
-                pending, decision, proposal, now, "ORDER_UNKNOWN", type(exc).__name__
+                pending,
+                decision,
+                proposal,
+                now,
+                "ORDER_UNKNOWN",
+                f"{type(exc).__name__}: {exc}",
             )
         try:
             order = self._validate_broker_order(pending, order)

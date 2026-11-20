@@ -1,3 +1,5 @@
+import pytest
+
 from app.broker.mock import MockPaperBroker
 from app.ledger.store import SQLiteLedger
 from app.models.contracts import OrderStatus, PolicyDecision
@@ -232,6 +234,44 @@ def test_approval_for_another_proposal_does_not_unlock(
     assert broker.submission_calls == 0
 
 
+@pytest.mark.parametrize("action", ["BUY", "SELL"])
+def test_second_order_requires_its_own_approval_after_restart(
+    tmp_path, account, risk_gate, proposal, quote, now, action
+):
+    path = tmp_path / "audit.db"
+    ledger = SQLiteLedger(path)
+    broker, service = make_service(account, risk_gate, ledger, proposal, now)
+    assert service.execute(proposal, quote, now).order.status is OrderStatus.FILLED
+    other = proposal.model_validate(
+        {**proposal.model_dump(), "proposal_id": "proposal-2", "action": action}
+    )
+    restarted = TradingService(broker, risk_gate, SQLiteLedger(path), order_writes_enabled=True)
+
+    blocked = restarted.execute(other, quote, now)
+
+    assert blocked.decision.decision is PolicyDecision.REJECT
+    assert {reason.rule_id for reason in blocked.decision.reasons} == {"R014"}
+    assert blocked.order is None
+    assert broker.submission_calls == 1
+    approve_first(ledger, other, now)
+    approved = restarted.execute(other, quote, now)
+    assert approved.order.status is OrderStatus.FILLED
+    assert broker.submission_calls == 2
+
+
+def test_same_proposal_id_with_a_different_strategy_needs_its_exact_key(
+    tmp_path, account, risk_gate, proposal, quote, now
+):
+    ledger = SQLiteLedger(tmp_path / "audit.db")
+    broker, service = make_service(account, risk_gate, ledger, proposal, now)
+    other = proposal.model_copy(update={"strategy_version": "another-strategy"})
+
+    result = service.execute(other, quote, now)
+
+    assert {reason.rule_id for reason in result.decision.reasons} == {"R014"}
+    assert broker.submission_calls == 0
+
+
 def test_missing_quote_never_reaches_broker(
     tmp_path, account, risk_gate, proposal, now
 ):
@@ -326,6 +366,11 @@ def test_accepted_but_timed_out_order_stays_unknown_until_reconciled(
     assert ledger.has_unknown_submissions() is False
     assert broker.submission_calls == 1
 
+    still_blocked = service.execute(other, quote, now)
+    assert {reason.rule_id for reason in still_blocked.decision.reasons} == {"R014"}
+    assert broker.submission_calls == 1
+
+    approve_first(ledger, other, now)
     retried = service.execute(other, quote, now)
 
     assert retried.decision.decision is PolicyDecision.APPROVE

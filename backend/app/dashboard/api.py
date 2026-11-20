@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import hmac
 import os
-from typing import Any
+from typing import Any, Literal
 
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
@@ -257,11 +257,9 @@ class PreflightView(ApiModel):
 
 
 class RiskLimits(ApiModel):
-    max_single_exposure_pct: float | None = None
-    max_total_exposure_pct: float | None = None
-    min_effective_exposure_pct: float | None = None
-    max_effective_exposure_pct: float | None = None
-    max_leverage: float | None = None
+    min_effective_exposure_pct: float
+    max_effective_exposure_pct: float
+    max_leverage: float
     max_open_positions: int
     max_daily_drawdown_pct: float
     max_quote_age_seconds: int
@@ -269,12 +267,20 @@ class RiskLimits(ApiModel):
     buying_power_buffer_usd: float
 
 
+class ActivationView(ApiModel):
+    policy_version: str
+    allowed_symbols: list[str]
+    activated_at_utc: str
+    expires_at_utc: str | None = None
+    status: Literal["ACTIVE", "EXPIRED"]
+
+
 class RiskResponse(ApiModel):
     state: str
     generated_at_utc: str
     mode: str
     read_only: bool
-    policy_version: str
+    policy_version: Literal["risk-v3"]
     limits: RiskLimits
     allowed_symbols: list[str] | None = None
     controls: SafetyView
@@ -283,6 +289,7 @@ class RiskResponse(ApiModel):
     account: AccountView | None
     quotes: list[QuoteView]
     last_real_preflight: PreflightView | None
+    activation: ActivationView | None = None
     warnings: list[str]
 
 
@@ -328,6 +335,7 @@ class AnalyticsDataset(ApiModel):
     curves: list[Curve]
     metrics: list[MetricRow]
     limitations: list[str]
+    axis_dates: list[str] | None = None
     provenance: str
 
 

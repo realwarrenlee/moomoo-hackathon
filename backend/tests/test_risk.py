@@ -1,12 +1,58 @@
 from datetime import timedelta
 from decimal import Decimal
 
-from app.models.contracts import PolicyDecision, Position, ProposalAction
+import pytest
+
+from app.models.contracts import (
+    ControlState,
+    OpenOrder,
+    OrderSide,
+    PolicyDecision,
+    Position,
+    ProposalAction,
+)
 from app.risk.policy import RiskGate
+from app.trading_mode import build_auto_paper_activation
 
 
 def rule_ids(decision):
     return {reason.rule_id for reason in decision.reasons}
+
+
+@pytest.mark.parametrize("version", ["risk-v1", "risk-v2", ""])
+def test_unsupported_policy_cannot_be_selected(version, account):
+    with pytest.raises(ValueError, match="unsupported risk policy"):
+        RiskGate(account.account_fingerprint, policy_version=version)
+
+
+def test_v3_floor_rejects_small_strategy_order(proposal, account, quote, control, now):
+    decision = RiskGate(account.account_fingerprint).evaluate(
+        proposal, account, quote, control, now
+    )
+    assert "R016" in rule_ids(decision)
+
+
+def test_v3_declared_target_is_recomputed(proposal, account, quote, control, now):
+    proposal = proposal.model_copy(update={
+        "requested_quantity": 200,
+        "target_exposure_fraction": Decimal("0.60"),
+    })
+    decision = RiskGate(account.account_fingerprint).evaluate(
+        proposal, account, quote, control, now
+    )
+    assert "R018" in rule_ids(decision)
+
+
+def test_v3_never_allows_leverage_above_one(proposal, account, quote, control, now):
+    gate = RiskGate(account.account_fingerprint, leverage_by_symbol={"SPY": Decimal("4")})
+    decision = gate.evaluate(proposal, account, quote, control, now)
+    assert "R015" in rule_ids(decision)
+
+
+def test_invalid_daily_baseline_fails_closed(risk_gate, proposal, account, quote, control, now):
+    account = account.model_copy(update={"day_start_equity": Decimal("0")})
+    decision = risk_gate.evaluate(proposal, account, quote, control, now)
+    assert "R007" in rule_ids(decision)
 
 
 def test_valid_buy_is_approved(risk_gate, proposal, account, quote, control, now):
@@ -17,12 +63,12 @@ def test_valid_buy_is_approved(risk_gate, proposal, account, quote, control, now
 
 
 def test_oversized_order_is_rejected(risk_gate, proposal, account, quote, control, now):
-    proposal = proposal.model_copy(update={"requested_quantity": 1000})
+    proposal = proposal.model_copy(update={"requested_quantity": 2000})
 
     decision = risk_gate.evaluate(proposal, account, quote, control, now)
 
     assert decision.decision is PolicyDecision.REJECT
-    assert "R004" in rule_ids(decision)
+    assert "R017" in rule_ids(decision)
     assert decision.approved_quantity == 0
 
 
@@ -232,12 +278,121 @@ def test_first_paper_order_requires_explicit_approval(risk_gate, proposal, accou
     assert "R014" in rule_ids(decision)
 
 
-def _leveraged_gate(fingerprint: str, allow_leveraged: bool):
+def _autonomous_activation(fingerprint, now):
+    return build_auto_paper_activation(fingerprint, now - timedelta(days=1))
+
+
+def _autonomous_proposal(proposal):
+    return proposal.model_copy(
+        update={"requested_quantity": 100, "target_exposure_fraction": Decimal("0.10")}
+    )
+
+
+def _autonomous_control(activation, *, first_order_approved=False):
+    return ControlState(
+        order_writes_enabled=True,
+        first_order_approved=first_order_approved,
+        autonomous_activation=activation,
+    )
+
+
+def test_valid_autonomous_activation_satisfies_r014(account, proposal, quote, now, account_fingerprint):
+    activation = _autonomous_activation(account_fingerprint, now)
+    decision = RiskGate.from_activation(activation).evaluate(
+        _autonomous_proposal(proposal), account, quote, _autonomous_control(activation), now
+    )
+
+    assert "R014" not in rule_ids(decision)
+    assert decision.decision is PolicyDecision.APPROVE
+    assert decision.approved_quantity == 100
+
+
+def test_autonomous_activation_never_applies_on_the_supervised_gate(account, proposal, quote, now, account_fingerprint):
+    activation = _autonomous_activation(account_fingerprint, now)
+    decision = RiskGate(
+        account.account_fingerprint, enforce_min_exposure=False
+    ).evaluate(proposal, account, quote, _autonomous_control(activation), now)
+
+    assert "R014" in rule_ids(decision)
+    assert decision.approved_quantity == 0
+
+
+def test_expired_autonomous_activation_is_rejected(account, proposal, quote, now, account_fingerprint):
+    activation = _autonomous_activation(account_fingerprint, now).model_copy(
+        update={"expires_at_utc": now - timedelta(seconds=1)}
+    )
+    decision = RiskGate.from_activation(activation).evaluate(
+        _autonomous_proposal(proposal), account, quote, _autonomous_control(activation), now
+    )
+
+    assert "R014" in rule_ids(decision)
+    assert decision.approved_quantity == 0
+
+
+def test_future_dated_autonomous_activation_is_rejected(account, proposal, quote, now, account_fingerprint):
+    activation = _autonomous_activation(account_fingerprint, now).model_copy(
+        update={"activated_at_utc": now + timedelta(days=1)}
+    )
+    decision = RiskGate.from_activation(activation).evaluate(
+        _autonomous_proposal(proposal), account, quote, _autonomous_control(activation), now
+    )
+
+    assert "R014" in rule_ids(decision)
+
+
+def test_autonomous_activation_binds_the_account_fingerprint(account, proposal, quote, now, account_fingerprint):
+    activation = _autonomous_activation(account_fingerprint, now)
+    gate = RiskGate.from_activation(activation)
+    mismatched = activation.model_copy(update={"account_fingerprint": "b" * 64})
+    decision = gate.evaluate(
+        _autonomous_proposal(proposal), account, quote, _autonomous_control(mismatched), now
+    )
+
+    assert "R001" not in rule_ids(decision)
+    assert "R014" in rule_ids(decision)
+
+
+def test_autonomous_activation_binds_the_strategy_version(account, proposal, quote, now, account_fingerprint):
+    activation = _autonomous_activation(account_fingerprint, now)
+    proposal = _autonomous_proposal(proposal).model_copy(
+        update={"strategy_version": "other-strategy"}
+    )
+    decision = RiskGate.from_activation(activation).evaluate(
+        proposal, account, quote, _autonomous_control(activation), now
+    )
+
+    assert "R014" in rule_ids(decision)
+
+
+def test_autonomous_activation_binds_the_pinned_limits(account, proposal, quote, now, account_fingerprint):
+    activation = _autonomous_activation(account_fingerprint, now)
+    gate = RiskGate.from_activation(activation)
+    altered = activation.model_copy(
+        update={"max_effective_exposure_fraction": Decimal("0.35")}
+    )
+    decision = gate.evaluate(
+        _autonomous_proposal(proposal), account, quote, _autonomous_control(altered), now
+    )
+
+    assert "R014" in rule_ids(decision)
+
+
+def test_autonomous_activation_binds_the_symbol_allowlist(account, proposal, quote, now, account_fingerprint):
+    activation = _autonomous_activation(account_fingerprint, now)
+    gate = RiskGate.from_activation(activation)
+    altered = activation.model_copy(update={"allowed_symbols": ("SPY",)})
+    decision = gate.evaluate(
+        _autonomous_proposal(proposal), account, quote, _autonomous_control(altered), now
+    )
+
+    assert "R014" in rule_ids(decision)
+
+
+def _leveraged_gate(fingerprint: str):
     return RiskGate(
         expected_account_fingerprint=fingerprint,
         allowed_symbols=frozenset({"SPY", "UPRO"}),
         leverage_by_symbol={"UPRO": Decimal("3")},
-        allow_leveraged=allow_leveraged,
     )
 
 
@@ -245,42 +400,32 @@ def test_leveraged_instrument_is_rejected_by_default(proposal, account, quote, c
     proposal = proposal.model_copy(update={"symbol": "UPRO", "requested_quantity": 2})
     quote = quote.model_copy(update={"symbol": "UPRO"})
 
-    decision = _leveraged_gate(account.account_fingerprint, allow_leveraged=False).evaluate(
+    decision = _leveraged_gate(account.account_fingerprint).evaluate(
         proposal, account, quote, control, now
     )
 
     assert "R015" in rule_ids(decision)
-    assert "R004" not in rule_ids(decision)
+    assert "R017" not in rule_ids(decision)
     assert decision.approved_quantity == 0
 
 
-def test_leveraged_instrument_is_exposure_checked_when_opted_in(
+def test_leveraged_instrument_is_rejected_regardless_of_size(
     proposal, account, quote, control, now
 ):
-    proposal = proposal.model_copy(update={"symbol": "UPRO", "requested_quantity": 100})
-    quote = quote.model_copy(update={"symbol": "UPRO"})
+    """risk-v3 caps daily leverage at 1x: a 3x instrument is rejected with
+    R015 whether the order is small or exposes the full account."""
+    for quantity in (100, 600):
+        proposal = proposal.model_copy(
+            update={"symbol": "UPRO", "requested_quantity": quantity}
+        )
+        quote = quote.model_copy(update={"symbol": "UPRO"})
 
-    decision = _leveraged_gate(account.account_fingerprint, allow_leveraged=True).evaluate(
-        proposal, account, quote, control, now
-    )
+        decision = _leveraged_gate(account.account_fingerprint).evaluate(
+            proposal, account, quote, control, now
+        )
 
-    assert "R015" not in rule_ids(decision)
-    assert "R004" in rule_ids(decision)
-    assert decision.approved_quantity == 0
-
-
-def test_small_leveraged_order_passes_exposure_limits_when_opted_in(
-    proposal, account, quote, control, now
-):
-    proposal = proposal.model_copy(update={"symbol": "UPRO", "requested_quantity": 20})
-    quote = quote.model_copy(update={"symbol": "UPRO"})
-
-    decision = _leveraged_gate(account.account_fingerprint, allow_leveraged=True).evaluate(
-        proposal, account, quote, control, now
-    )
-
-    assert decision.decision is PolicyDecision.APPROVE
-    assert decision.approved_quantity == 20
+        assert "R015" in rule_ids(decision)
+        assert decision.approved_quantity == 0
 
 
 def test_invalid_leverage_metadata_is_rejected(proposal, account, quote, control, now):
@@ -294,3 +439,105 @@ def test_invalid_leverage_metadata_is_rejected(proposal, account, quote, control
 
     assert "R007" in rule_ids(decision)
     assert decision.approved_quantity == 0
+
+
+def test_entry_above_the_competition_concentration_cap_is_rejected(
+    risk_gate, proposal, account, quote, control, now
+):
+    proposal = proposal.model_copy(update={"requested_quantity": 600})  # $60k > $40k
+
+    decision = risk_gate.evaluate(proposal, account, quote, control, now)
+
+    assert "R019" in rule_ids(decision)
+    assert decision.approved_quantity == 0
+
+
+def test_entry_at_the_competition_concentration_cap_is_approved(
+    risk_gate, proposal, account, quote, control, now
+):
+    proposal = proposal.model_copy(update={"requested_quantity": 400})  # $40k == 40%
+
+    decision = risk_gate.evaluate(proposal, account, quote, control, now)
+
+    assert decision.decision is PolicyDecision.APPROVE
+    assert "R019" not in rule_ids(decision)
+    assert decision.approved_quantity == 400
+
+
+def test_buy_above_the_cap_with_an_existing_holding_is_rejected(
+    risk_gate, proposal, account, quote, control, now
+):
+    account = account.model_copy(
+        update={
+            "cash": Decimal("80000"),
+            "buying_power": Decimal("80000"),
+            "positions": (Position(symbol="SPY", quantity=200, market_value=Decimal("20000")),),
+        }
+    )
+    proposal = proposal.model_copy(update={"requested_quantity": 250})  # $20k + $25k > $40k
+
+    decision = risk_gate.evaluate(proposal, account, quote, control, now)
+
+    assert "R019" in rule_ids(decision)
+    assert decision.approved_quantity == 0
+
+
+def test_pending_buy_for_the_same_symbol_counts_toward_the_cap(
+    risk_gate, proposal, account, quote, control, now
+):
+    account = account.model_copy(
+        update={
+            "cash": Decimal("80000"),
+            "buying_power": Decimal("80000"),
+            "open_orders": (
+                OpenOrder(symbol="SPY", side=OrderSide.BUY, remaining_quantity=100, reference_price=Decimal("100")),
+            ),
+        }
+    )
+    proposal = proposal.model_copy(update={"requested_quantity": 320})  # $10k + $32k > $40k
+
+    decision = risk_gate.evaluate(proposal, account, quote, control, now)
+
+    assert "R019" in rule_ids(decision)
+    assert decision.approved_quantity == 0
+
+
+def test_pending_buy_for_another_symbol_blocks_a_second_position(
+    risk_gate, proposal, account, quote, control, now
+):
+    """risk-v3 allows one directional position: a pending SH buy blocks a
+    SPY entry (R013) even when the SPY size alone fits the 40% cap."""
+    account = account.model_copy(
+        update={
+            "cash": Decimal("60000"),
+            "buying_power": Decimal("60000"),
+            "open_orders": (
+                OpenOrder(symbol="SH", side=OrderSide.BUY, remaining_quantity=100, reference_price=Decimal("100")),
+            ),
+        }
+    )
+    proposal = proposal.model_copy(update={"requested_quantity": 400})  # exactly the cap
+
+    decision = risk_gate.evaluate(proposal, account, quote, control, now)
+
+    assert decision.decision is PolicyDecision.REJECT
+    assert "R013" in rule_ids(decision)
+
+
+def test_sell_is_not_subject_to_the_concentration_cap(
+    risk_gate, proposal, account, quote, control, now
+):
+    account = account.model_copy(
+        update={
+            "cash": Decimal("0"),
+            "buying_power": Decimal("0"),
+            "positions": (Position(symbol="SPY", quantity=600, market_value=Decimal("60000")),),
+        }
+    )
+    proposal = proposal.model_copy(
+        update={"action": ProposalAction.SELL, "requested_quantity": 600}
+    )
+
+    decision = risk_gate.evaluate(proposal, account, quote, control, now)
+
+    assert "R019" not in rule_ids(decision)

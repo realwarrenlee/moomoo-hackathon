@@ -22,13 +22,14 @@ from app.research.dryrun import (
 )
 from app.research.instruments import INSTRUMENTS
 from app.research.strategy import (
-    EXPOSURE_POLICY_V2,
+    EXPOSURE_POLICY_V3,
     STRATEGY_VERSION,
     ExposurePolicy,
     decide,
     screen,
 )
 from app.risk.policy import RiskGate
+from app.trading_mode import SUPERVISED_EXECUTION_SYMBOLS
 
 StrategyVersion = Literal["spy-directional"]
 MAX_INPUT_BYTES = 16_384
@@ -102,7 +103,7 @@ class QoderToolService:
         *,
         current: CurrentMarketContext | None = None,
         clock: Callable[[], datetime] | None = None,
-        exposure_policy: ExposurePolicy = EXPOSURE_POLICY_V2,
+        exposure_policy: ExposurePolicy = EXPOSURE_POLICY_V3,
     ) -> None:
         self.history = history
         self.fingerprint = fingerprint
@@ -244,10 +245,13 @@ class QoderToolService:
             )
         gate = RiskGate(
             expected_account_fingerprint=self.fingerprint,
-            allowed_symbols=frozenset(UNIVERSE),
+            allowed_symbols=(
+                frozenset(SUPERVISED_EXECUTION_SYMBOLS)
+                if self.current
+                else frozenset(UNIVERSE)
+            ),
             leverage_by_symbol={symbol: item.leverage for symbol, item in INSTRUMENTS.items()},
             policy_version=self.exposure_policy.version,
-            allow_leveraged=self.exposure_policy.allow_leveraged,
         )
         decision = gate.evaluate(
             proposal=proposal,

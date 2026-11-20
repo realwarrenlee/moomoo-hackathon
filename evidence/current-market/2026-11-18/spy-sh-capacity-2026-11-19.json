@@ -1,0 +1,29 @@
+{
+  "provenance": "PAPER_BROKER_READ_ONLY",
+  "checked_at_utc": "2026-11-19T14:53:27.445059+00:00",
+  "masked_account": "****0101",
+  "account_verified": true,
+  "submission_performed": false,
+  "order_writes_enabled": false,
+  "instruments": [
+    {
+      "symbol": "SPY",
+      "order_type": "MARKET",
+      "http_status": 200,
+      "ret_code": 0,
+      "max_cash_buy_qty_round_lot": "112",
+      "max_sell_qty_round_lot": "0",
+      "positive_cash_buy_capacity": true
+    },
+    {
+      "symbol": "SH",
+      "order_type": "MARKET",
+      "http_status": 200,
+      "ret_code": 0,
+      "max_cash_buy_qty_round_lot": "2476",
+      "max_sell_qty_round_lot": "0",
+      "positive_cash_buy_capacity": true
+    }
+  ],
+  "limitation": "Capacity is not order acceptance; no broker write was performed."
+}

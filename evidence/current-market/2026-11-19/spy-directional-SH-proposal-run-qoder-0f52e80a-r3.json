@@ -1,0 +1,18 @@
+{
+  "schema_version": "1",
+  "proposal_id": "spy-directional-2026-11-18-SH-BUY-r3",
+  "run_id": "qoder-0f52e80a-8eab-486e-8056-d947b83eff8a",
+  "strategy_version": "spy-directional",
+  "decision_time_utc": "2026-11-19T15:29:11.289187Z",
+  "data_as_of_utc": "2026-11-18T21:00:00Z",
+  "symbol": "SH",
+  "action": "BUY",
+  "requested_quantity": 1764,
+  "thesis": "SPY closed at 730.2 with a 10-session return of -4.77%, a 50-session SMA of 762.28 and 22.88% annualized volatility. The MODERATE tier sets a target of -60% of equity in S&P 500 exposure; SH at 1x daily leverage expresses it with about 60% of equity in cash.",
+  "invalidation": "The tier is re-evaluated on every completed session: exit or reduce when the tier drops or the direction flips, and 3x holdings exit after the holding-duration limit. Overnight gaps can move the position beyond the 2% daily drawdown brake.",
+  "evidence_ids": [
+    "bar:SPY:2026-11-18",
+    "bar:SH:20261118"
+  ],
+  "target_exposure_fraction": "-0.60"
+}

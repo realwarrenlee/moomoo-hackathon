@@ -1,0 +1,42 @@
+{
+  "mode": "PAPER",
+  "supervised_execution": true,
+  "submission_attempted": true,
+  "order_writes_restored_disabled": true,
+  "granted_scopes": {
+    "quote:read": true,
+    "trade:read": true,
+    "trade:write": true,
+    "account_scope": true
+  },
+  "account_exclusive_write_scope_verified": false,
+  "account": {
+    "masked_id": "****0101",
+    "market_id": 100,
+    "account_type": 2,
+    "fingerprint_matches": true
+  },
+  "client_order_key": "mootrade-d73d1559164d6ac2347b1763289e1ea6b6a729a465b1cb79eeee887a6c6418de",
+  "proposal_id": "spy-directional-2026-11-18-SH-BUY-r2",
+  "risk_decision": {
+    "proposal_id": "spy-directional-2026-11-18-SH-BUY-r2",
+    "policy_version": "risk-v2",
+    "decision": "APPROVE",
+    "reasons": [],
+    "approved_quantity": 1764,
+    "account_snapshot_id": "mm-9649035d9287093edaf9",
+    "expires_at_utc": "2026-11-19T16:11:54.155965Z"
+  },
+  "order": {
+    "broker_order_id": null,
+    "status": "UNKNOWN",
+    "fills": [],
+    "submitted_at_utc": "2026-11-19T16:11:24.155965+00:00"
+  },
+  "reconciliation": {
+    "outcome": "RECONCILIATION_MISMATCH",
+    "status": "UNKNOWN",
+    "broker_order_id": null,
+    "fills": []
+  }
+}

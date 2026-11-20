@@ -32,14 +32,3 @@
 - Dashboard captures were removed from the repository in the 18 November cleanup; regenerate them from the running dashboard when needed.
 
 There is **no** `evidence/paper-orders/` because no broker order or fill has occurred. Never manufacture logs or favourable results; add new evidence folders only when genuine evidence exists.
-
-## Submission checklist
-
-- [ ] Runnable trading-agent package with README and locked dependency versions.
-- [ ] Qoder-generated deck.
-- [ ] Strategy thesis, version, entry/exit and invalidation conditions.
-- [ ] Risk thresholds, kill-switch implementation and tests.
-- [ ] Decision, order, fill and equity records (redacted).
-- [ ] Documentation of what worked, what failed and why.
-- [ ] Third-party attribution and licence compliance.
-- [ ] Final link/format confirmed against the current organiser instructions.

@@ -1,12 +1,18 @@
-"""AUTO_PAPER execution phase for the deterministic spy-directional strategy.
+"""Scheduled decision phase for the deterministic spy-directional strategy.
 
-This is the only unattended path that can submit a paper order. It runs at the
-start of the next US regular session after the read-only decision phase and
-fails closed on every ambiguity: no AUTO_PAPER activation pin, an engaged kill
-switch, an UNKNOWN submission, a missing decision artifact, a stale account, a
-closed market, a RiskGate rejection or a duplicate proposal all abort without
-submission. Each proposal is submitted at most once, and an ambiguous broker
-outcome is recorded and never retried.
+Two modes, selected by ``TRADING_MODE``:
+
+- ``SUPERVISED_PAPER`` (current mandate): the supervised decision phase
+  recomputes the deterministic decision on fresh broker state, records it and
+  awaits exact-order owner approval. It has no submission path.
+- ``AUTO_PAPER``: the only unattended path that can submit a paper order. It
+  runs at the start of the next US regular session after the read-only
+  decision phase and fails closed on every ambiguity: no AUTO_PAPER activation
+  pin, an expired pin, an engaged kill switch, an UNKNOWN submission, a
+  missing decision artifact, a stale account, a closed market, a RiskGate
+  rejection or a duplicate proposal all abort without submission. Each
+  proposal is submitted at most once, and an ambiguous broker outcome is
+  recorded and never retried.
 """
 
 from __future__ import annotations
@@ -14,7 +20,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
-from datetime import UTC, datetime
+from datetime import UTC, date, datetime
 from pathlib import Path
 from typing import Any, Mapping
 
@@ -22,7 +28,9 @@ from app.broker.account_lock import AccountLock
 from app.broker.moomoo_auth import (
     FileTokenStore,
     MoomooExecutionOAuth,
+    MoomooOAuth,
     default_execution_token_path,
+    default_token_path,
 )
 from app.cli import ledger_path_from_env, load_local_env
 from app.ledger.store import SQLiteLedger
@@ -31,17 +39,15 @@ from app.research.data import MarketHistory
 from app.research.instruments import CANDIDATE_SYMBOLS
 from app.research.strategy import (
     STRATEGY_VERSION,
-    ExposurePolicy,
     ResearchSnapshot,
     decide,
     screen,
 )
-from app.risk.policy import POLICY_VERSION_V1, POLICY_VERSION_V2, RiskGate
+from app.risk.policy import POLICY_VERSION_V3, RiskGate
 from app.service import build_client_order_key
 from app.supervised import SupervisedExecution, build_supervised_execution
 from app.trading_mode import (
     AUTO_PAPER_SYMBOLS,
-    LEGACY_AUTO_PAPER_SYMBOLS,
     TradingMode,
     TradingModeError,
     auto_paper_active,
@@ -92,23 +98,24 @@ def _auto_paper_block(
         return "ORDER_WRITES_ENABLED is not true"
     if activation is None:
         return "no AUTO_PAPER activation pin compatible with the current policy is recorded in the ledger"
+    if (
+        activation.expires_at_utc is not None
+        and datetime.now(UTC) >= activation.expires_at_utc
+    ):
+        return "the AUTO_PAPER activation pin has expired"
     if activation.account_fingerprint != fingerprint:
         return "activation pin does not match the configured competition-account fingerprint"
     if activation.strategy_version != STRATEGY_VERSION:
         return f"activation pin binds strategy {activation.strategy_version}, not {STRATEGY_VERSION}"
-    if activation.risk_policy_version == POLICY_VERSION_V1:
-        expected_symbols = LEGACY_AUTO_PAPER_SYMBOLS
-    elif activation.risk_policy_version == POLICY_VERSION_V2:
-        expected_symbols = AUTO_PAPER_SYMBOLS
-    else:
+    if activation.risk_policy_version != POLICY_VERSION_V3:
         return (
             f"activation pin binds unsupported risk policy "
             f"{activation.risk_policy_version}"
         )
-    if tuple(activation.allowed_symbols) != expected_symbols:
+    if tuple(activation.allowed_symbols) != AUTO_PAPER_SYMBOLS:
         return (
             f"activation pin allowlist is {tuple(activation.allowed_symbols)}, "
-            f"expected {expected_symbols}"
+            f"expected {AUTO_PAPER_SYMBOLS}"
         )
     if activation.paper_only is not True:
         return "activation pin is not paper-only"
@@ -151,15 +158,14 @@ def _pinned_artifact(artifact_dir: Path, session_iso: str) -> dict[str, Any]:
     )
 
 
-def _verify_signal(
-    artifact: Mapping[str, Any], snapshot: ResearchSnapshot, policy: ExposurePolicy
-) -> None:
+def _verify_signal(artifact: Mapping[str, Any], snapshot: ResearchSnapshot) -> None:
     pinned = _artifact_snapshot(artifact)
     if pinned is None:
         raise AutoPaperError("decision artifact carries no research snapshot")
-    keys = ["market_state", "direction", "target_symbol"]
-    if policy.version != POLICY_VERSION_V1:
-        keys += ["target_exposure_fraction", "exposure_tier"]
+    keys = (
+        "market_state", "direction", "target_symbol",
+        "target_exposure_fraction", "exposure_tier",
+    )
     for key in keys:
         pinned_value = pinned.get(key)
         actual = getattr(snapshot, key)
@@ -232,8 +238,8 @@ def _leveraged_reentry_blocked_through(
     exit_session = str(exit_event[0].get("session") or "")
     sessions = history.session_dates()
     for index, session in enumerate(sessions):
-        if session == exit_session and index + 1 < len(sessions):
-            return sessions[index + 1]
+        if session.isoformat() == exit_session and index + 1 < len(sessions):
+            return sessions[index + 1].isoformat()
     return None
 
 
@@ -267,6 +273,7 @@ def run_execution(
     ledger: SQLiteLedger,
     stack: SupervisedExecution,
     fingerprint: str,
+    expected_session: date | None = None,
 ) -> tuple[int, dict[str, object]]:
     """Run one AUTO_PAPER execution window. Returns (exit_code, report)."""
     if not stack.order_writes_enabled:
@@ -283,7 +290,9 @@ def run_execution(
             "an UNKNOWN submission exists; reconcile it before autonomous trading", now
         )
     try:
-        history, _validation = _load_bars(bars_path, now, "session")
+        history, _validation = _load_bars(
+            bars_path, now, "session", expected_session=expected_session
+        )
     except (CollectionError, OSError, ValueError) as exc:
         return 1, _abstain(f"bar validation failed: {exc}", now)
     session_iso = history.last_completed_session().isoformat()
@@ -291,7 +300,7 @@ def run_execution(
         artifact = _pinned_artifact(artifact_dir, session_iso)
         policy = exposure_policy_for_activation(activation)
         snapshot = screen(history, now, STRATEGY_VERSION, exposure_policy=policy)
-        _verify_signal(artifact, snapshot, policy)
+        _verify_signal(artifact, snapshot)
     except AutoPaperError as exc:
         return 1, _abstain(str(exc), now)
     try:
@@ -377,7 +386,9 @@ def run_execution(
     if not quote.regular_session_open:
         return 1, _abstain(f"{proposal.symbol} is not in the regular US session", now)
 
-    result = stack.service.execute(proposal, quote, now)
+    result = stack.service.execute(
+        proposal, quote, now, autonomous_activation=activation
+    )
     base_report.update(
         {
             "symbol": proposal.symbol,
@@ -443,6 +454,149 @@ def run_execution(
     return 0, base_report
 
 
+def _supervised_decision_block(environ: Mapping[str, str]) -> str | None:
+    try:
+        mode = resolve_trading_mode(environ)
+    except TradingModeError as exc:
+        return str(exc)
+    if mode is not TradingMode.SUPERVISED_PAPER:
+        return f"TRADING_MODE={mode.value}; the supervised decision phase requires SUPERVISED_PAPER"
+    return None
+
+
+def run_supervised_decision(
+    *,
+    now: datetime,
+    environ: Mapping[str, str],
+    bars_path: Path,
+    artifact_dir: Path,
+    ledger: SQLiteLedger,
+    stack: SupervisedExecution,
+    fingerprint: str,
+    expected_session: date | None = None,
+) -> tuple[int, dict[str, object]]:
+    """Supervised scheduler phase: research, decide and record; never submit.
+
+    The three-agent review is the read-only scheduler's evening phase; this
+    morning phase validates its artifact, recomputes the deterministic
+    decision on fresh broker state and records it for exact-order approval.
+    """
+    if stack.order_writes_enabled:
+        return 1, _abstain(
+            "supervised decision stack must be built without order writes", now
+        )
+    if not fingerprint:
+        return 1, _abstain("competition account fingerprint is not configured", now)
+    if block := _supervised_decision_block(environ):
+        return 1, _abstain(block, now)
+    if ledger.has_unknown_submissions():
+        return 1, _abstain(
+            "an UNKNOWN submission exists; reconcile it before the next decision", now
+        )
+    try:
+        history, _validation = _load_bars(
+            bars_path, now, "session", expected_session=expected_session
+        )
+    except (CollectionError, OSError, ValueError) as exc:
+        return 1, _abstain(f"bar validation failed: {exc}", now)
+    session_iso = history.last_completed_session().isoformat()
+    policy = exposure_policy_for_activation(ledger.latest_trading_activation())
+    try:
+        artifact = _pinned_artifact(artifact_dir, session_iso)
+        snapshot = screen(history, now, STRATEGY_VERSION, exposure_policy=policy)
+        _verify_signal(artifact, snapshot)
+    except AutoPaperError as exc:
+        return 1, _abstain(str(exc), now)
+    try:
+        account = stack.reads.get_account_snapshot()
+    except Exception as exc:
+        return 1, _abstain(f"account read failed ({type(exc).__name__})", now)
+    if stale := _account_is_fresh(account, fingerprint, now):
+        return 1, _abstain(stale, now)
+
+    holding_entry_session = _holding_entry_session(ledger, account, session_iso, now)
+    _record_exit_if_position_gone(ledger, account, session_iso, now)
+    blocked_through = _leveraged_reentry_blocked_through(ledger, history, session_iso)
+    decision_snapshot, proposal = decide(
+        snapshot,
+        history,
+        account,
+        exposure_policy=policy,
+        holding_entry_session=holding_entry_session,
+        leveraged_reentry_blocked_through=blocked_through,
+    )
+    ledger.append_event(
+        "AUTO_PAPER_DECISION",
+        now,
+        getattr(proposal, "run_id", None),
+        "supervised_scheduler",
+        {
+            "session": session_iso,
+            "policy_version": policy.version,
+            "exposure_tier": decision_snapshot.exposure_tier,
+            "target_exposure_fraction": (
+                str(decision_snapshot.target_exposure_fraction)
+                if decision_snapshot.target_exposure_fraction is not None
+                else None
+            ),
+            "action": decision_snapshot.action,
+            "symbol": getattr(proposal, "symbol", None),
+            "requested_quantity": getattr(proposal, "requested_quantity", 0),
+            "reason": decision_snapshot.decision_reason,
+        },
+        getattr(proposal, "proposal_id", None),
+    )
+    report: dict[str, object] = {
+        "schema_version": "1",
+        "mode": "SUPERVISED_DECISION",
+        "status": "COMPLETED",
+        "executed_at_utc": now.isoformat(),
+        "session": session_iso,
+        "policy_version": policy.version,
+        "exposure_tier": decision_snapshot.exposure_tier,
+        "target_exposure_fraction": (
+            str(decision_snapshot.target_exposure_fraction)
+            if decision_snapshot.target_exposure_fraction is not None
+            else None
+        ),
+        "market_state": decision_snapshot.market_state,
+        "target_symbol": decision_snapshot.target_symbol,
+        "action": decision_snapshot.action,
+        "decision_reason": decision_snapshot.decision_reason,
+        "submission_performed": False,
+        "order_writes_enabled": False,
+        "kill_switch_engaged": ledger.kill_switch_engaged(),
+        "approval_required": proposal is not None,
+        "outcome": decision_snapshot.action,
+    }
+    if proposal is not None:
+        report.update(
+            {
+                "proposal": {
+                    "proposal_id": proposal.proposal_id,
+                    "symbol": proposal.symbol,
+                    "action": proposal.action.value,
+                    "requested_quantity": proposal.requested_quantity,
+                    "target_exposure_fraction": (
+                        str(proposal.target_exposure_fraction)
+                        if proposal.target_exposure_fraction is not None
+                        else None
+                    ),
+                    "client_order_key": build_client_order_key(
+                        proposal.strategy_version, proposal.proposal_id
+                    ),
+                    "approval_note": (
+                        "No order is submitted by the scheduler. Use "
+                        "moomoo-supervised-preview and moomoo-supervised-execute "
+                        "only after explicit owner approval of this exact "
+                        "proposal and client order key."
+                    ),
+                }
+            }
+        )
+    return 0, report
+
+
 def _execution_stack(
     args: argparse.Namespace, ledger: SQLiteLedger, lock: AccountLock
 ) -> SupervisedExecution:
@@ -470,6 +624,26 @@ def _execution_stack(
     )
 
 
+def _supervised_decision_stack(
+    args: argparse.Namespace, ledger: SQLiteLedger, lock: AccountLock
+) -> SupervisedExecution:
+    """Read-only stack for the supervised scheduler decision phase."""
+    store = FileTokenStore(default_token_path())
+    record = store.load()
+    if record is None:
+        raise AutoPaperError("read-only authorization is required")
+    if not record.access_token:
+        raise AutoPaperError(
+            "read client has no authorization token; complete moomoo-login"
+        )
+    return build_supervised_execution(
+        MoomooOAuth(store, open_browser=None),
+        lock,
+        ledger,
+        order_writes_enabled=False,
+    )
+
+
 def _emit(
     output_dir: Path, exit_code: int, report: dict[str, object], now: datetime
 ) -> int:
@@ -493,7 +667,19 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--ledger", type=Path, default=None)
     parser.add_argument("--store", type=Path, default=None)
     parser.add_argument("--env-file", type=Path, default=ROOT / ".env")
+    parser.add_argument(
+        "--expected-session",
+        type=str,
+        default=None,
+        help="prior completed session resolved against the provider trading calendar (ISO date)",
+    )
     args = parser.parse_args(argv)
+    expected_session: date | None = None
+    if args.expected_session:
+        try:
+            expected_session = date.fromisoformat(args.expected_session)
+        except ValueError as exc:
+            raise SystemExit(f"--expected-session must be an ISO date: {exc}") from exc
 
     load_local_env(Path(args.env_file))
     now = datetime.now(UTC)
@@ -509,6 +695,26 @@ def main(argv: list[str] | None = None) -> int:
         )
     ledger = SQLiteLedger(args.ledger or ledger_path_from_env(os.environ))
     try:
+        mode = resolve_trading_mode(os.environ)
+    except TradingModeError as exc:
+        return _emit(output_dir, 1, _abstain(str(exc), now), now)
+    if mode is TradingMode.SUPERVISED_PAPER:
+        try:
+            stack = _supervised_decision_stack(args, ledger, lock)
+        except AutoPaperError as exc:
+            return _emit(output_dir, 1, _abstain(str(exc), now), now)
+        exit_code, report = run_supervised_decision(
+            now=now,
+            environ=os.environ,
+            bars_path=args.bars,
+            artifact_dir=args.artifact_dir,
+            ledger=ledger,
+            stack=stack,
+            fingerprint=lock.expected_fingerprint,
+            expected_session=expected_session,
+        )
+        return _emit(output_dir, exit_code, report, now)
+    try:
         stack = _execution_stack(args, ledger, lock)
     except AutoPaperError as exc:
         return _emit(output_dir, 1, _abstain(str(exc), now), now)
@@ -521,6 +727,7 @@ def main(argv: list[str] | None = None) -> int:
         ledger=ledger,
         stack=stack,
         fingerprint=lock.expected_fingerprint,
+        expected_session=expected_session,
     )
     return _emit(output_dir, exit_code, report, now)
 
